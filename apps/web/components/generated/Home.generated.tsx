@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 export function Home() {
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-xl font-semibold text-red-500">
+      <h1 className="text-xl font-semibold">
         Welcome again you god damn hole!
       </h1>
       <p className="text-base">This page was generated from a UI spec.</p>
