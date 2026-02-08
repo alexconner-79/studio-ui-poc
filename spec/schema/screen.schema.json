@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScreenSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "layout", "children"],
+  "properties": {
+    "id": { "type": "string" },
+    "layout": { "type": "string", "enum": ["stack"] },
+    "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
+    "children": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/stackNode" },
+        { "$ref": "#/$defs/headingNode" },
+        { "$ref": "#/$defs/textNode" },
+        { "$ref": "#/$defs/cardNode" },
+        { "$ref": "#/$defs/buttonNode" }
+      ]
+    },
+    "stackNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "children"],
+      "properties": {
+        "type": { "const": "stack" },
+        "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        }
+      }
+    },
+    "headingNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "heading" },
+        "text": { "type": "string" },
+        "variant": { "type": "string", "enum": ["heading"] }
+      }
+    },
+    "textNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string" },
+        "variant": { "type": "string", "enum": ["body", "muted"] }
+      }
+    },
+    "cardNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "children"],
+      "properties": {
+        "type": { "const": "card" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        }
+      }
+    },
+    "buttonNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label"],
+      "properties": {
+        "type": { "const": "button" },
+        "label": { "type": "string" },
+        "intent": { "type": "string", "enum": ["primary"] }
+      }
+    }
+  }
+}

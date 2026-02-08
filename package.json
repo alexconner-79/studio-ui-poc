@@ -1,0 +1,21 @@
+{
+  "name": "studio-poc",
+  "private": true,
+  "scripts": {
+    "compile": "ts-node compiler/compile.ts",
+    "watch": "ts-node compiler/watch.ts",
+    "publish:dry": "ts-node compiler/publish.ts --dry",
+    "publish:commit": "ts-node compiler/publish.ts --commit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "ajv": "latest",
+    "ajv-formats": "latest",
+    "chokidar": "latest",
+    "prettier": "latest",
+    "simple-git": "latest",
+    "ts-node": "^10.9.2",
+    "tsx": "latest",
+    "typescript": "^5.9.3"
+  }
+}

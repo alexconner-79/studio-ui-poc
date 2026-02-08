@@ -1,0 +1,43 @@
+{
+    "id": "home",
+    "layout": "stack",
+    "gap": "lg",
+    "children": [
+      {
+        "type": "heading",
+        "text": "Welcome again you god damn hole!",
+        "variant": "heading"
+      },
+      {
+        "type": "text",
+        "text": "This page was generated from a UI spec.",
+        "variant": "body"
+      },
+      {
+        "type": "card",
+        "children": [
+          {
+            "type": "stack",
+            "gap": "sm",
+            "children": [
+              {
+                "type": "text",
+                "text": "shadcn card component",
+                "variant": "muted"
+              },
+              {
+                "type": "button",
+                "label": "Action!",
+                "intent": "primary"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "button",
+        "label": "Get started",
+        "intent": "primary"
+      }
+    ]
+  }
