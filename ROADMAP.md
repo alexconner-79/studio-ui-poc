@@ -6,7 +6,7 @@ This roadmap bridges the current POC to the V1 target defined in the design spec
 
 Stabilise the existing system before expanding scope.
 
-- [ ] **E2E PR flow test** -- Run `pnpm publish:pr` against a real GitHub repo. Verify token auth, push, PR creation, and duplicate PR detection.
+- [x] **E2E PR flow test** -- Run `pnpm publish:pr` against a real GitHub repo. Verify token auth, push, PR creation, and duplicate PR detection.
 - [x] **Error handling polish** -- Handle push failures (permissions, branch protection), GitHub API rate limits, and network errors with clear user-facing messages.
 - [x] **CI validation** -- GitHub Action that runs `pnpm compile` on PR and verifies generated output matches what's committed. Prevents hand-editing of generated files.
 
