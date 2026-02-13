@@ -64,8 +64,12 @@ const buildPrBody = (
 
 export async function publish(): Promise<void> {
   const files = await compile({ write: false });
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const mode = modeFromArgs();
+
+  // Use a stable branch name so duplicate PR detection works. If a PR
+  // already exists for this branch, the adapter will report it instead of
+  // creating a second one.
+  const headBranch = "studio/pending";
 
   // For PR mode we need the summary first to build the body, but the
   // adapter needs the body at call time. We solve this by doing a two-pass
@@ -76,7 +80,7 @@ export async function publish(): Promise<void> {
     const dryResult = await publishToGitHub({
       repoPath: process.cwd(),
       baseBranch: "main",
-      headBranch: `studio/spec-update-${timestamp}`,
+      headBranch,
       title: "chore(studio): UI update",
       mode: "dry-run",
       files,
@@ -87,7 +91,7 @@ export async function publish(): Promise<void> {
   const result = await publishToGitHub({
     repoPath: process.cwd(),
     baseBranch: "main",
-    headBranch: `studio/spec-update-${timestamp}`,
+    headBranch,
     title: "chore(studio): UI update",
     body,
     mode,
