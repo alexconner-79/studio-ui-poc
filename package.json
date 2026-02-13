@@ -5,9 +5,11 @@
     "compile": "ts-node compiler/compile.ts",
     "watch": "ts-node compiler/watch.ts",
     "publish:dry": "ts-node compiler/publish.ts --dry",
-    "publish:commit": "ts-node compiler/publish.ts --commit"
+    "publish:commit": "ts-node compiler/publish.ts --commit",
+    "publish:pr": "ts-node compiler/publish.ts --pr"
   },
   "devDependencies": {
+    "@octokit/rest": "^22.0.1",
     "@types/node": "^25.2.2",
     "ajv": "latest",
     "ajv-formats": "latest",
