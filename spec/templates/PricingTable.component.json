@@ -1,0 +1,78 @@
+{
+  "name": "PricingTable",
+  "description": "3-tier pricing cards with features list and CTA",
+  "category": "Templates",
+  "tree": {
+    "id": "pricing-root",
+    "type": "Grid",
+    "props": { "columns": 3, "gap": "6" },
+    "children": [
+      {
+        "id": "plan-starter",
+        "type": "Card",
+        "props": {},
+        "children": [
+          {
+            "id": "starter-stack",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "4" },
+            "children": [
+              { "id": "starter-name", "type": "Heading", "props": { "level": 3, "text": "Starter" } },
+              { "id": "starter-price", "type": "Heading", "props": { "level": 2, "text": "$9/mo" } },
+              { "id": "starter-desc", "type": "Text", "props": { "text": "Perfect for individuals and small projects." } },
+              { "id": "starter-divider", "type": "Divider", "props": {} },
+              { "id": "starter-f1", "type": "Text", "props": { "text": "5 projects" } },
+              { "id": "starter-f2", "type": "Text", "props": { "text": "1 GB storage" } },
+              { "id": "starter-f3", "type": "Text", "props": { "text": "Email support" } },
+              { "id": "starter-cta", "type": "Button", "props": { "label": "Get Started", "intent": "outline" } }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "plan-pro",
+        "type": "Card",
+        "props": {},
+        "children": [
+          {
+            "id": "pro-stack",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "4" },
+            "children": [
+              { "id": "pro-name", "type": "Heading", "props": { "level": 3, "text": "Pro" } },
+              { "id": "pro-price", "type": "Heading", "props": { "level": 2, "text": "$29/mo" } },
+              { "id": "pro-desc", "type": "Text", "props": { "text": "For growing teams and businesses." } },
+              { "id": "pro-divider", "type": "Divider", "props": {} },
+              { "id": "pro-f1", "type": "Text", "props": { "text": "Unlimited projects" } },
+              { "id": "pro-f2", "type": "Text", "props": { "text": "10 GB storage" } },
+              { "id": "pro-f3", "type": "Text", "props": { "text": "Priority support" } },
+              { "id": "pro-cta", "type": "Button", "props": { "label": "Upgrade to Pro", "intent": "default" } }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "plan-enterprise",
+        "type": "Card",
+        "props": {},
+        "children": [
+          {
+            "id": "ent-stack",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "4" },
+            "children": [
+              { "id": "ent-name", "type": "Heading", "props": { "level": 3, "text": "Enterprise" } },
+              { "id": "ent-price", "type": "Heading", "props": { "level": 2, "text": "Custom" } },
+              { "id": "ent-desc", "type": "Text", "props": { "text": "Tailored solutions for large organisations." } },
+              { "id": "ent-divider", "type": "Divider", "props": {} },
+              { "id": "ent-f1", "type": "Text", "props": { "text": "Unlimited everything" } },
+              { "id": "ent-f2", "type": "Text", "props": { "text": "SSO & SAML" } },
+              { "id": "ent-f3", "type": "Text", "props": { "text": "Dedicated account manager" } },
+              { "id": "ent-cta", "type": "Button", "props": { "label": "Contact Sales", "intent": "outline" } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "name": "Dashboard",
+  "description": "Application dashboard with sidebar nav and content area",
+  "preview": "App shell with sidebar navigation, header, and main content grid",
+  "spec": {
+    "version": 1,
+    "route": "/dashboard",
+    "meta": { "layout": "app", "auth": "required" },
+    "tree": {
+      "id": "root",
+      "type": "Stack",
+      "props": { "direction": "row", "gap": "0" },
+      "children": [
+        {
+          "id": "sidebar",
+          "type": "Stack",
+          "props": { "direction": "column", "gap": "2" },
+          "children": [
+            { "id": "sb-logo", "type": "Heading", "props": { "level": 4, "text": "App" } },
+            { "id": "sb-div", "type": "Divider", "props": {} },
+            { "id": "sb-l1", "type": "Link", "props": { "href": "/dashboard", "text": "Dashboard" } },
+            { "id": "sb-l2", "type": "Link", "props": { "href": "/projects", "text": "Projects" } },
+            { "id": "sb-l3", "type": "Link", "props": { "href": "/settings", "text": "Settings" } },
+            { "id": "sb-spacer", "type": "Spacer", "props": {} },
+            { "id": "sb-l4", "type": "Link", "props": { "href": "/logout", "text": "Logout" } }
+          ]
+        },
+        {
+          "id": "main",
+          "type": "Stack",
+          "props": { "direction": "column", "gap": "6" },
+          "children": [
+            { "id": "header", "type": "Heading", "props": { "level": 2, "text": "Dashboard" } },
+            {
+              "id": "stats",
+              "type": "Grid",
+              "props": { "columns": 3, "gap": "4" },
+              "children": [
+                {
+                  "id": "s1",
+                  "type": "Card",
+                  "props": {},
+                  "children": [
+                    {
+                      "id": "s1s",
+                      "type": "Stack",
+                      "props": { "direction": "column", "gap": "1" },
+                      "children": [
+                        { "id": "s1label", "type": "Text", "props": { "text": "Total Users" } },
+                        { "id": "s1val", "type": "Heading", "props": { "level": 3, "text": "12,345" } }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "s2",
+                  "type": "Card",
+                  "props": {},
+                  "children": [
+                    {
+                      "id": "s2s",
+                      "type": "Stack",
+                      "props": { "direction": "column", "gap": "1" },
+                      "children": [
+                        { "id": "s2label", "type": "Text", "props": { "text": "Revenue" } },
+                        { "id": "s2val", "type": "Heading", "props": { "level": 3, "text": "$54,321" } }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "s3",
+                  "type": "Card",
+                  "props": {},
+                  "children": [
+                    {
+                      "id": "s3s",
+                      "type": "Stack",
+                      "props": { "direction": "column", "gap": "1" },
+                      "children": [
+                        { "id": "s3label", "type": "Text", "props": { "text": "Active Projects" } },
+                        { "id": "s3val", "type": "Heading", "props": { "level": 3, "text": "42" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "recent",
+              "type": "Card",
+              "props": {},
+              "children": [
+                {
+                  "id": "recent-stack",
+                  "type": "Stack",
+                  "props": { "direction": "column", "gap": "3" },
+                  "children": [
+                    { "id": "recent-h", "type": "Heading", "props": { "level": 3, "text": "Recent Activity" } },
+                    { "id": "recent-t1", "type": "Text", "props": { "text": "Project Alpha was updated 2 hours ago" } },
+                    { "id": "recent-t2", "type": "Text", "props": { "text": "New user signed up via Google OAuth" } },
+                    { "id": "recent-t3", "type": "Text", "props": { "text": "Deployment to production completed" } }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

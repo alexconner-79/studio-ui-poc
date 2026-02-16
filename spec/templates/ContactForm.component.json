@@ -1,0 +1,25 @@
+{
+  "name": "ContactForm",
+  "description": "Contact form with name, email, message inputs and submit button",
+  "category": "Templates",
+  "tree": {
+    "id": "contact-root",
+    "type": "Form",
+    "props": { "action": "/api/contact" },
+    "children": [
+      {
+        "id": "contact-stack",
+        "type": "Stack",
+        "props": { "direction": "column", "gap": "4" },
+        "children": [
+          { "id": "contact-heading", "type": "Heading", "props": { "level": 2, "text": "Get in Touch" } },
+          { "id": "contact-desc", "type": "Text", "props": { "text": "Fill out the form below and we'll get back to you within 24 hours." } },
+          { "id": "contact-name", "type": "Input", "props": { "placeholder": "Your name", "type": "text" } },
+          { "id": "contact-email", "type": "Input", "props": { "placeholder": "Email address", "type": "email" } },
+          { "id": "contact-message", "type": "Input", "props": { "placeholder": "Your message", "type": "text" } },
+          { "id": "contact-submit", "type": "Button", "props": { "label": "Send Message", "intent": "default" } }
+        ]
+      }
+    ]
+  }
+}

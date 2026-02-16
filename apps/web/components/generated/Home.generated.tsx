@@ -2,17 +2,20 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export function Home() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-xl font-semibold">
-        Welcome again you god damn hole!
-      </h1>
+    <div className="flex-col flex gap-6 p-8">
+      <h1 className="text-xl font-semibold">Welcome to Studio UI</h1>
       <p className="text-base">This page was generated from a UI spec.</p>
+      <img
+        src="/assets/screenshot-2026-01-21-at-20.07.55.png"
+        alt="screenshot-2026-01-21-at-20.07.55.png"
+      />
       <Card>
         <div className="p-4">
-          <div className="flex flex-col gap-2">
+          <div className="flex-col flex gap-2">
             <p className="text-sm text-muted-foreground">
               shadcn card component
             </p>
@@ -21,6 +24,26 @@ export function Home() {
         </div>
       </Card>
       <Button>Get started</Button>
+      <Separator />
+      <h2 className="text-xl font-semibold">Key features</h2>
+      <ul className="list-disc pl-4">
+        <li>Spec-driven UI</li>
+        <li>Deterministic output</li>
+        <li>PR-based publishing</li>
+      </ul>
+      <div className="h-6" />
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <div className="p-4">
+            <p className="text-base">Feature one</p>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-4">
+            <p className="text-base">Feature two</p>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

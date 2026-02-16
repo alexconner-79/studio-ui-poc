@@ -3,5 +3,9 @@
 import { Home } from "@/components/generated";
 
 export default function Page() {
-  return <Home />;
+  return (
+    <>
+      <Home />
+    </>
+  );
 }

@@ -34,14 +34,14 @@ jobs:
 
       - name: Check for uncommitted changes in generated files
         run: |
-          if [ -n "$(git status --porcelain apps/web/app/page.tsx apps/web/components/generated/)" ]; then
+          if [ -n "$(git status --porcelain apps/web/app/ apps/web/components/generated/)" ]; then
             echo "ERROR: Generated files are out of date."
             echo ""
             echo "The following generated files differ from what the compiler produces:"
-            git diff --stat apps/web/app/page.tsx apps/web/components/generated/
+            git diff --stat apps/web/app/ apps/web/components/generated/
             echo ""
             echo "Full diff:"
-            git diff apps/web/app/page.tsx apps/web/components/generated/
+            git diff apps/web/app/ apps/web/components/generated/
             echo ""
             echo "Run 'pnpm compile' locally and commit the result."
             exit 1

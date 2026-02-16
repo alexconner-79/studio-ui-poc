@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "route": "/",
+  "meta": {
+    "layout": "default",
+    "auth": "public"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "gap": "lg",
+      "padding": "lg"
+    },
+    "children": [
+      {
+        "id": "heading_1",
+        "type": "Heading",
+        "props": {
+          "text": "Welcome to Studio UI",
+          "variant": "heading"
+        }
+      },
+      {
+        "id": "text_1",
+        "type": "Text",
+        "props": {
+          "text": "This page was generated from a UI spec.",
+          "variant": "body"
+        }
+      },
+      {
+        "id": "node_mlozlezn_1",
+        "type": "Image",
+        "props": {
+          "src": "/assets/screenshot-2026-01-21-at-20.07.55.png",
+          "alt": "screenshot-2026-01-21-at-20.07.55.png"
+        }
+      },
+      {
+        "id": "card_1",
+        "type": "Card",
+        "children": [
+          {
+            "id": "card_stack",
+            "type": "Stack",
+            "props": {
+              "gap": "sm"
+            },
+            "children": [
+              {
+                "id": "card_text",
+                "type": "Text",
+                "props": {
+                  "text": "shadcn card component",
+                  "variant": "muted"
+                }
+              },
+              {
+                "id": "card_button",
+                "type": "Button",
+                "props": {
+                  "label": "Action!",
+                  "intent": "primary"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cta_button",
+        "type": "Button",
+        "props": {
+          "label": "Get started",
+          "intent": "primary"
+        }
+      },
+      {
+        "id": "divider_1",
+        "type": "Divider"
+      },
+      {
+        "id": "features_heading",
+        "type": "Heading",
+        "props": {
+          "text": "Key features",
+          "level": 2
+        }
+      },
+      {
+        "id": "features_list",
+        "type": "List",
+        "props": {
+          "items": [
+            "Spec-driven UI",
+            "Deterministic output",
+            "PR-based publishing"
+          ]
+        }
+      },
+      {
+        "id": "spacer_1",
+        "type": "Spacer",
+        "props": {
+          "size": "md"
+        }
+      },
+      {
+        "id": "grid_1",
+        "type": "Grid",
+        "props": {
+          "columns": 2,
+          "gap": "md"
+        },
+        "children": [
+          {
+            "id": "grid_card_1",
+            "type": "Card",
+            "children": [
+              {
+                "id": "grid_card_1_text",
+                "type": "Text",
+                "props": {
+                  "text": "Feature one",
+                  "variant": "body"
+                }
+              }
+            ]
+          },
+          {
+            "id": "grid_card_2",
+            "type": "Card",
+            "children": [
+              {
+                "id": "grid_card_2_text",
+                "type": "Text",
+                "props": {
+                  "text": "Feature two",
+                  "variant": "body"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "LoginForm",
+  "description": "Login/signup form with email, password, button, and links",
+  "category": "Templates",
+  "tree": {
+    "id": "login-root",
+    "type": "Card",
+    "props": {},
+    "children": [
+      {
+        "id": "login-form",
+        "type": "Form",
+        "props": { "action": "/api/auth/login" },
+        "children": [
+          {
+            "id": "login-stack",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "4" },
+            "children": [
+              { "id": "login-heading", "type": "Heading", "props": { "level": 2, "text": "Welcome Back" } },
+              { "id": "login-sub", "type": "Text", "props": { "text": "Sign in to your account to continue." } },
+              { "id": "login-email", "type": "Input", "props": { "placeholder": "Email address", "type": "email" } },
+              { "id": "login-password", "type": "Input", "props": { "placeholder": "Password", "type": "password" } },
+              { "id": "login-submit", "type": "Button", "props": { "label": "Sign In", "intent": "default" } },
+              { "id": "login-divider", "type": "Divider", "props": {} },
+              { "id": "login-signup", "type": "Link", "props": { "href": "/signup", "text": "Don't have an account? Sign up" } },
+              { "id": "login-forgot", "type": "Link", "props": { "href": "/forgot-password", "text": "Forgot password?" } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

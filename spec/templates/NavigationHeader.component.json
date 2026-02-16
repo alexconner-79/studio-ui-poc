@@ -1,0 +1,25 @@
+{
+  "name": "NavigationHeader",
+  "description": "Navigation header with logo, links, and CTA button",
+  "category": "Templates",
+  "tree": {
+    "id": "nav-root",
+    "type": "Nav",
+    "props": {},
+    "children": [
+      {
+        "id": "nav-inner",
+        "type": "Stack",
+        "props": { "direction": "row", "gap": "6" },
+        "children": [
+          { "id": "nav-logo", "type": "Text", "props": { "text": "Studio UI" } },
+          { "id": "nav-spacer", "type": "Spacer", "props": {} },
+          { "id": "nav-link-features", "type": "Link", "props": { "href": "#features", "text": "Features" } },
+          { "id": "nav-link-pricing", "type": "Link", "props": { "href": "#pricing", "text": "Pricing" } },
+          { "id": "nav-link-docs", "type": "Link", "props": { "href": "#docs", "text": "Docs" } },
+          { "id": "nav-cta", "type": "Button", "props": { "label": "Sign Up", "intent": "default" } }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "route": "/dashboard",
+  "meta": {
+    "layout": "default",
+    "auth": "public"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "gap": "md",
+      "padding": "lg"
+    },
+    "children": [
+      {
+        "id": "heading_1",
+        "type": "Heading",
+        "props": {
+          "text": "Dashboard"
+        }
+      },
+      {
+        "id": "stack_mllhawvq_1",
+        "type": "Stack",
+        "props": {
+          "gap": "md",
+          "direction": "column"
+        },
+        "children": []
+      },
+      {
+        "id": "grid_mllhay5j_2",
+        "type": "Grid",
+        "props": {
+          "columns": 3,
+          "gap": "xl"
+        },
+        "children": [
+          {
+            "id": "icon_mlmg35tx_1",
+            "type": "Icon",
+            "props": {
+              "name": "Angry",
+              "size": 36
+            }
+          }
+        ]
+      },
+      {
+        "id": "heading_mllhbext_3",
+        "type": "Heading",
+        "props": {
+          "text": "Xerilox",
+          "level": 1
+        }
+      },
+      {
+        "id": "image_mllhcnqx_5",
+        "type": "Image",
+        "props": {
+          "src": "https://framerusercontent.com/images/2tU2RvJeuNYvqzq1JKGPFnA9i54.png?width=1780&height=1502",
+          "alt": "Xerilox logo"
+        }
+      }
+    ]
+  }
+}

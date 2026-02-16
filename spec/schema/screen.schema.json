@@ -1,81 +1,427 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ScreenSpec",
+  "title": "ScreenSpec V1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "layout", "children"],
+  "required": ["version", "route", "tree"],
   "properties": {
-    "id": { "type": "string" },
-    "layout": { "type": "string", "enum": ["stack"] },
-    "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
-    "children": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/node" }
-    }
+    "version": { "type": "integer", "const": 1 },
+    "route": { "type": "string", "pattern": "^/" },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "layout": { "type": "string" },
+        "auth": { "type": "string", "enum": ["public", "protected"] }
+      }
+    },
+    "tree": { "$ref": "#/$defs/node" }
   },
   "$defs": {
+    "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
+    "size": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
+    "nodeBase": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 }
+      }
+    },
     "node": {
-      "oneOf": [
-        { "$ref": "#/$defs/stackNode" },
-        { "$ref": "#/$defs/headingNode" },
-        { "$ref": "#/$defs/textNode" },
-        { "$ref": "#/$defs/cardNode" },
-        { "$ref": "#/$defs/buttonNode" }
+      "allOf": [
+        { "$ref": "#/$defs/nodeBase" },
+        {
+          "oneOf": [
+            { "$ref": "#/$defs/stackNode" },
+            { "$ref": "#/$defs/gridNode" },
+            { "$ref": "#/$defs/sectionNode" },
+            { "$ref": "#/$defs/scrollAreaNode" },
+            { "$ref": "#/$defs/spacerNode" },
+            { "$ref": "#/$defs/headingNode" },
+            { "$ref": "#/$defs/textNode" },
+            { "$ref": "#/$defs/imageNode" },
+            { "$ref": "#/$defs/inputNode" },
+            { "$ref": "#/$defs/linkNode" },
+            { "$ref": "#/$defs/dividerNode" },
+            { "$ref": "#/$defs/listNode" },
+            { "$ref": "#/$defs/cardNode" },
+            { "$ref": "#/$defs/buttonNode" },
+            { "$ref": "#/$defs/formNode" },
+            { "$ref": "#/$defs/modalNode" },
+            { "$ref": "#/$defs/tabsNode" },
+            { "$ref": "#/$defs/navNode" },
+            { "$ref": "#/$defs/dataTableNode" },
+            { "$ref": "#/$defs/iconNode" },
+            { "$ref": "#/$defs/repoComponentNode" }
+          ]
+        }
       ]
     },
     "stackNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "children"],
+      "required": ["id", "type", "children"],
       "properties": {
-        "type": { "const": "stack" },
-        "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
-        "children": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/node" }
+        "id": { "type": "string" },
+        "type": { "const": "Stack" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "gap": { "$ref": "#/$defs/gap" },
+            "padding": { "$ref": "#/$defs/size" },
+            "direction": { "type": "string", "enum": ["row", "column"] }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "gridNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "children"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Grid" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
+            "gap": { "$ref": "#/$defs/gap" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "sectionNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "children"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Section" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "padding": { "$ref": "#/$defs/size" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "scrollAreaNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "children"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "ScrollArea" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "height": { "type": "string" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "spacerNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Spacer" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "size": { "$ref": "#/$defs/size" }
+          }
         }
       }
     },
     "headingNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "text"],
+      "required": ["id", "type"],
       "properties": {
-        "type": { "const": "heading" },
-        "text": { "type": "string" },
-        "variant": { "type": "string", "enum": ["heading"] }
+        "id": { "type": "string" },
+        "type": { "const": "Heading" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": { "type": "string" },
+            "level": { "type": "integer", "minimum": 1, "maximum": 6 },
+            "variant": { "type": "string" }
+          }
+        }
       }
     },
     "textNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "text"],
+      "required": ["id", "type"],
       "properties": {
-        "type": { "const": "text" },
-        "text": { "type": "string" },
-        "variant": { "type": "string", "enum": ["body", "muted"] }
+        "id": { "type": "string" },
+        "type": { "const": "Text" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": { "type": "string" },
+            "variant": { "type": "string", "enum": ["body", "muted"] }
+          }
+        }
+      }
+    },
+    "imageNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Image" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["src", "alt"],
+          "properties": {
+            "src": { "type": "string" },
+            "alt": { "type": "string" },
+            "width": { "type": "integer" },
+            "height": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "inputNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Input" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "placeholder": { "type": "string" },
+            "type": { "type": "string", "enum": ["text", "email", "password", "number", "tel", "url"] },
+            "label": { "type": "string" }
+          }
+        }
+      }
+    },
+    "linkNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Link" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["href"],
+          "properties": {
+            "href": { "type": "string" },
+            "text": { "type": "string" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "dividerNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Divider" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {}
+        }
+      }
+    },
+    "listNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "List" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "items": { "type": "array", "items": { "type": "string" } },
+            "ordered": { "type": "boolean" }
+          }
+        }
       }
     },
     "cardNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "children"],
+      "required": ["id", "type"],
       "properties": {
-        "type": { "const": "card" },
-        "children": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/node" }
-        }
+        "id": { "type": "string" },
+        "type": { "const": "Card" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "padding": { "$ref": "#/$defs/size" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
       }
     },
     "buttonNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "label"],
+      "required": ["id", "type"],
       "properties": {
-        "type": { "const": "button" },
-        "label": { "type": "string" },
-        "intent": { "type": "string", "enum": ["primary"] }
+        "id": { "type": "string" },
+        "type": { "const": "Button" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string" },
+            "intent": { "type": "string", "enum": ["primary", "secondary", "destructive", "outline", "ghost", "link"] },
+            "size": { "type": "string", "enum": ["default", "xs", "sm", "lg", "icon"] }
+          }
+        }
+      }
+    },
+    "formNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Form" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "action": { "type": "string" },
+            "method": { "type": "string", "enum": ["get", "post"] }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "modalNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Modal" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string" },
+            "open": { "type": "boolean" }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "tabsNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Tabs" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tabs": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "navNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Nav" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orientation": { "type": "string", "enum": ["horizontal", "vertical"] },
+            "items": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "dataTableNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "DataTable" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "columns": { "type": "array", "items": { "type": "string" } },
+            "rows": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "iconNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "Icon" },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "size": { "type": "integer", "minimum": 8, "maximum": 256 },
+            "color": { "type": "string" }
+          }
+        }
+      }
+    },
+    "repoComponentNode": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "type": "string",
+          "not": {
+            "enum": ["Stack", "Grid", "Section", "ScrollArea", "Spacer", "Heading", "Text", "Image", "Input", "Link", "Divider", "List", "Icon", "Card", "Button", "Form", "Modal", "Tabs", "Nav", "DataTable"]
+          }
+        },
+        "props": { "type": "object" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
       }
     }
   }

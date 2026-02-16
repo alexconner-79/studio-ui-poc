@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "route": "/landing-page",
+  "meta": {
+    "layout": "default"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "direction": "column",
+      "gap": "0"
+    },
+    "children": [
+      {
+        "id": "nav",
+        "type": "Nav",
+        "props": {},
+        "children": [
+          {
+            "id": "nav-inner",
+            "type": "Stack",
+            "props": {
+              "direction": "row",
+              "gap": "6"
+            },
+            "children": [
+              {
+                "id": "nav-logo",
+                "type": "Text",
+                "props": {
+                  "text": "YourBrand"
+                }
+              },
+              {
+                "id": "nav-spacer",
+                "type": "Spacer",
+                "props": {}
+              },
+              {
+                "id": "nav-l1",
+                "type": "Link",
+                "props": {
+                  "href": "#features",
+                  "text": "Features"
+                }
+              },
+              {
+                "id": "nav-l2",
+                "type": "Link",
+                "props": {
+                  "href": "#pricing",
+                  "text": "Pricing"
+                }
+              },
+              {
+                "id": "nav-cta",
+                "type": "Button",
+                "props": {
+                  "label": "Get Started",
+                  "intent": "default"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hero",
+        "type": "Section",
+        "props": {},
+        "children": [
+          {
+            "id": "hero-stack",
+            "type": "Stack",
+            "props": {
+              "direction": "column",
+              "gap": "6"
+            },
+            "children": [
+              {
+                "id": "hero-h1",
+                "type": "Heading",
+                "props": {
+                  "level": 1,
+                  "text": "Build Something Amazing"
+                }
+              },
+              {
+                "id": "hero-sub",
+                "type": "Text",
+                "props": {
+                  "text": "A modern platform for teams who ship fast."
+                }
+              },
+              {
+                "id": "hero-btns",
+                "type": "Stack",
+                "props": {
+                  "direction": "row",
+                  "gap": "4"
+                },
+                "children": [
+                  {
+                    "id": "hero-btn1",
+                    "type": "Button",
+                    "props": {
+                      "label": "Start Free Trial",
+                      "intent": "default"
+                    }
+                  },
+                  {
+                    "id": "hero-btn2",
+                    "type": "Button",
+                    "props": {
+                      "label": "Watch Demo",
+                      "intent": "outline"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "heading_mlnycc23_1",
+                "type": "Heading",
+                "props": {
+                  "text": "Heading",
+                  "level": 1,
+                  "fontFamily": ""
+                }
+              },
+              {
+                "id": "feat-heading",
+                "type": "Heading",
+                "props": {
+                  "level": 2,
+                  "text": "Features"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "type": "Section",
+        "props": {},
+        "children": [
+          {
+            "id": "feat-grid",
+            "type": "Grid",
+            "props": {
+              "columns": 3,
+              "gap": "6"
+            },
+            "children": [
+              {
+                "id": "f1",
+                "type": "Card",
+                "props": {},
+                "children": [
+                  {
+                    "id": "f1s",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "column",
+                      "gap": "2"
+                    },
+                    "children": [
+                      {
+                        "id": "f1h",
+                        "type": "Heading",
+                        "props": {
+                          "level": 3,
+                          "text": "Fast"
+                        }
+                      },
+                      {
+                        "id": "f1t",
+                        "type": "Text",
+                        "props": {
+                          "text": "Lightning-fast performance."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "f2",
+                "type": "Card",
+                "props": {},
+                "children": [
+                  {
+                    "id": "f2s",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "column",
+                      "gap": "2"
+                    },
+                    "children": [
+                      {
+                        "id": "f2h",
+                        "type": "Heading",
+                        "props": {
+                          "level": 3,
+                          "text": "Secure"
+                        }
+                      },
+                      {
+                        "id": "f2t",
+                        "type": "Text",
+                        "props": {
+                          "text": "Enterprise-grade security."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "f3",
+                "type": "Card",
+                "props": {},
+                "children": [
+                  {
+                    "id": "f3s",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "column",
+                      "gap": "2"
+                    },
+                    "children": [
+                      {
+                        "id": "f3h",
+                        "type": "Heading",
+                        "props": {
+                          "level": 3,
+                          "text": "Scalable"
+                        }
+                      },
+                      {
+                        "id": "f3t",
+                        "type": "Text",
+                        "props": {
+                          "text": "Grows with your team."
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "footer-div",
+        "type": "Divider",
+        "props": {}
+      },
+      {
+        "id": "footer-text",
+        "type": "Text",
+        "props": {
+          "text": "2026 YourBrand. All rights reserved."
+        }
+      },
+      {
+        "id": "node_mlo6jiog_2",
+        "type": "Image",
+        "props": {
+          "src": "/assets/screenshot-2026-01-21-at-20.07.55.png",
+          "alt": "screenshot-2026-01-21-at-20.07.55.png"
+        }
+      }
+    ]
+  }
+}

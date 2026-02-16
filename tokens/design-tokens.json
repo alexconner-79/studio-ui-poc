@@ -1,0 +1,46 @@
+{
+  "spacing": {
+    "xs": { "value": "0.25rem", "type": "spacing" },
+    "sm": { "value": "0.5rem", "type": "spacing" },
+    "md": { "value": "1rem", "type": "spacing" },
+    "lg": { "value": "1.5rem", "type": "spacing" },
+    "xl": { "value": "2rem", "type": "spacing" },
+    "2xl": { "value": "3rem", "type": "spacing" }
+  },
+  "size": {
+    "xs": { "value": "0.5rem", "type": "sizing" },
+    "sm": { "value": "1rem", "type": "sizing" },
+    "md": { "value": "1.5rem", "type": "sizing" },
+    "lg": { "value": "2rem", "type": "sizing" },
+    "xl": { "value": "3rem", "type": "sizing" }
+  },
+  "color": {
+    "primary": { "value": "#3b82f6", "type": "color" },
+    "secondary": { "value": "#6b7280", "type": "color" },
+    "destructive": { "value": "#ef4444", "type": "color" },
+    "muted": { "value": "#9ca3af", "type": "color" },
+    "background": { "value": "#ffffff", "type": "color" },
+    "foreground": { "value": "#111827", "type": "color" },
+    "border": { "value": "#e5e7eb", "type": "color" }
+  },
+  "typography": {
+    "fontFamily": {
+      "sans": { "value": "Geist, system-ui, sans-serif", "type": "fontFamily" },
+      "mono": { "value": "Geist Mono, monospace", "type": "fontFamily" }
+    },
+    "fontSize": {
+      "xs": { "value": "0.75rem", "type": "fontSize" },
+      "sm": { "value": "0.875rem", "type": "fontSize" },
+      "base": { "value": "1rem", "type": "fontSize" },
+      "lg": { "value": "1.125rem", "type": "fontSize" },
+      "xl": { "value": "1.25rem", "type": "fontSize" },
+      "2xl": { "value": "1.5rem", "type": "fontSize" }
+    }
+  },
+  "borderRadius": {
+    "sm": { "value": "0.25rem", "type": "borderRadius" },
+    "md": { "value": "0.375rem", "type": "borderRadius" },
+    "lg": { "value": "0.5rem", "type": "borderRadius" },
+    "full": { "value": "9999px", "type": "borderRadius" }
+  }
+}

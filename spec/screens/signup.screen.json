@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "route": "/signup",
+  "meta": {
+    "layout": "default",
+    "auth": "public"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": { "gap": "md", "padding": "lg" },
+    "children": [
+      {
+        "id": "heading_1",
+        "type": "Heading",
+        "props": { "text": "Create your account" }
+      },
+      {
+        "id": "text_1",
+        "type": "Text",
+        "props": { "text": "Enter your details to get started.", "variant": "muted" }
+      },
+      {
+        "id": "input_email",
+        "type": "Input",
+        "props": { "placeholder": "Email", "type": "email" }
+      },
+      {
+        "id": "input_password",
+        "type": "Input",
+        "props": { "placeholder": "Password", "type": "password" }
+      },
+      {
+        "id": "submit",
+        "type": "Button",
+        "props": { "label": "Sign up", "intent": "primary" }
+      },
+      {
+        "id": "divider_1",
+        "type": "Divider"
+      },
+      {
+        "id": "login_link",
+        "type": "Link",
+        "props": { "href": "/login", "text": "Already have an account? Log in" }
+      }
+    ]
+  }
+}

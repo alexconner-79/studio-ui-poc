@@ -1,9 +1,14 @@
-import { compile } from "./compile";
+import chalk from "chalk";
+import { compile, type CompileResult } from "./compile";
 import {
   publishToGitHub,
   type PublishMode,
   type PublishSummary,
 } from "../adapters/github/publish";
+
+// -------------------------------------------------------------------------
+// Argument parsing
+// -------------------------------------------------------------------------
 
 const modeFromArgs = (): PublishMode => {
   if (process.argv.includes("--pr")) {
@@ -26,20 +31,66 @@ const modeFromArgs = (): PublishMode => {
   return "dry-run";
 };
 
+// -------------------------------------------------------------------------
+// Colourised output helpers
+// -------------------------------------------------------------------------
+
 const formatSummaryTable = (summary: {
   created: number;
   modified: number;
   deleted: number;
 }): string => {
   const lines = [
-    "Summary",
-    "-------",
-    `created:  ${summary.created}`,
-    `modified: ${summary.modified}`,
-    `deleted:  ${summary.deleted}`,
+    chalk.bold("Summary"),
+    chalk.dim("-------"),
+    `${chalk.green("created:")}  ${summary.created}`,
+    `${chalk.yellow("modified:")} ${summary.modified}`,
+    `${chalk.red("deleted:")}  ${summary.deleted}`,
   ];
   return lines.join("\n");
 };
+
+/**
+ * Colour a unified diff string line-by-line.
+ */
+const colouriseDiff = (diff: string): string => {
+  return diff
+    .split("\n")
+    .map((line) => {
+      if (line.startsWith("diff ")) return chalk.bold(line);
+      if (line.startsWith("---") || line.startsWith("+++"))
+        return chalk.bold.dim(line);
+      if (line.startsWith("@@")) return chalk.cyan(line);
+      if (line.startsWith("+")) return chalk.green(line);
+      if (line.startsWith("-")) return chalk.red(line);
+      return chalk.dim(line);
+    })
+    .join("\n");
+};
+
+/**
+ * Guess a per-file status symbol from the diff text.
+ * Looks for "new file mode" / "deleted file mode" markers.
+ */
+const fileStatusFromDiff = (
+  filePath: string,
+  diff: string
+): { symbol: string; color: (s: string) => string } => {
+  // Simple heuristic: search for the file in the diff and check markers
+  const escaped = filePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`diff --git a/${escaped}.*\\n(.*?)\\n`, "s");
+  const match = diff.match(pattern);
+  if (match) {
+    const nextLine = match[1] ?? "";
+    if (nextLine.includes("new file")) return { symbol: "+", color: chalk.green };
+    if (nextLine.includes("deleted file")) return { symbol: "-", color: chalk.red };
+  }
+  return { symbol: "~", color: chalk.yellow };
+};
+
+// -------------------------------------------------------------------------
+// PR body (plain text -- not colourised, this goes to GitHub)
+// -------------------------------------------------------------------------
 
 const buildPrBody = (
   timestamp: string,
@@ -62,8 +113,13 @@ const buildPrBody = (
   return lines.join("\n");
 };
 
+// -------------------------------------------------------------------------
+// Main
+// -------------------------------------------------------------------------
+
 export async function publish(): Promise<void> {
-  const files = await compile({ write: false });
+  const compileResult = await compile({ write: false });
+  const files = compileResult.files;
   const mode = modeFromArgs();
 
   // Use a stable branch name so duplicate PR detection works. If a PR
@@ -98,19 +154,25 @@ export async function publish(): Promise<void> {
     files,
   });
 
+  // -- Colourised terminal output --
+
   console.log(formatSummaryTable(result));
+
   if (result.paths.length > 0) {
-    console.log("\nChanged files:");
-    result.paths.forEach((filePath) => console.log(`- ${filePath}`));
+    console.log(chalk.bold("\nChanged files:"));
+    for (const filePath of result.paths) {
+      const { symbol, color } = fileStatusFromDiff(filePath, result.diff);
+      console.log(color(`  ${symbol} ${filePath}`));
+    }
   }
 
   if (mode === "dry-run" && result.diff.length > 0) {
-    console.log("\nDiff:\n");
-    console.log(result.diff);
+    console.log(chalk.bold("\nDiff:\n"));
+    console.log(colouriseDiff(result.diff));
   }
 
   if (result.prUrl) {
-    console.log(`\nPR: ${result.prUrl}`);
+    console.log(`\nPR: ${chalk.cyan.underline(result.prUrl)}`);
   }
 }
 

@@ -2,8 +2,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import chokidar from "chokidar";
 import { compile } from "./compile";
+import { loadConfig } from "./config";
 
-const SPEC_GLOB = "spec/**/*.json";
 const DEBOUNCE_MS = 150;
 const POLL_MS = 1000;
 
@@ -11,30 +11,33 @@ let timer: NodeJS.Timeout | undefined;
 let pollTimer: NodeJS.Timeout | undefined;
 const lastStats = new Map<string, number>();
 
-const logCompiledAt = () => {
+const logCompiledAt = (prefix?: string) => {
   const now = new Date();
   const time = now.toTimeString().slice(0, 8);
-  console.log(`Compiled at ${time}`);
+  const label = prefix ? `${prefix} ` : "";
+  console.log(`${label}Compiled at ${time}`);
 };
 
-const runCompile = (event?: string, filePath?: string) => {
-  if (timer) {
-    clearTimeout(timer);
-  }
-
-  timer = setTimeout(async () => {
-    try {
-      if (event && filePath) {
-        console.log(`${event} ${filePath}`);
-      }
-      await compile();
-      logCompiledAt();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown error";
-      console.log(`Compile failed: ${message}`);
+const createRunCompile = (prefix?: string) => {
+  return (event?: string, filePath?: string) => {
+    if (timer) {
+      clearTimeout(timer);
     }
-  }, DEBOUNCE_MS);
+
+    timer = setTimeout(async () => {
+      try {
+        if (event && filePath) {
+          console.log(`${prefix ? prefix + " " : ""}${event} ${filePath}`);
+        }
+        await compile();
+        logCompiledAt(prefix);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        console.log(`${prefix ? prefix + " " : ""}Compile failed: ${message}`);
+      }
+    }, DEBOUNCE_MS);
+  };
 };
 
 const listJsonFiles = (dir: string): string[] => {
@@ -47,7 +50,7 @@ const listJsonFiles = (dir: string): string[] => {
       files.push(...listJsonFiles(fullPath));
       continue;
     }
-    if (entry.isFile() && entry.name.endsWith(".json")) {
+    if (entry.isFile() && entry.name.endsWith(".screen.json")) {
       files.push(fullPath);
     }
   }
@@ -55,12 +58,13 @@ const listJsonFiles = (dir: string): string[] => {
   return files;
 };
 
-const startPollingFallback = () => {
+const startPollingFallback = (
+  specRoot: string,
+  runCompile: (event?: string, filePath?: string) => void
+) => {
   if (pollTimer) {
     clearInterval(pollTimer);
   }
-
-  const specRoot = path.resolve(process.cwd(), "spec");
 
   pollTimer = setInterval(() => {
     let files: string[] = [];
@@ -88,15 +92,26 @@ const startPollingFallback = () => {
   }, POLL_MS);
 };
 
-const start = async () => {
-  console.log("Watching spec/**/*.json...");
+/**
+ * Start the file watcher. Performs an initial compile then watches for
+ * changes to `*.screen.json` files.
+ *
+ * @param prefix Optional label prefix for log lines (e.g. "[compiler]")
+ */
+export async function startWatch(prefix?: string): Promise<void> {
+  const config = loadConfig();
+  const SPEC_GLOB = `${config.screensDir}/**/*.screen.json`;
+  const runCompile = createRunCompile(prefix);
+
+  const label = prefix ? `${prefix} ` : "";
+  console.log(`${label}Watching ${SPEC_GLOB}...`);
 
   try {
     await compile();
-    logCompiledAt();
+    logCompiledAt(prefix);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.log(`Compile failed: ${message}`);
+    console.log(`${label}Compile failed: ${message}`);
   }
 
   chokidar
@@ -115,7 +130,11 @@ const start = async () => {
     .on("change", (filePath) => runCompile("change", filePath))
     .on("unlink", (filePath) => runCompile("unlink", filePath));
 
-  startPollingFallback();
-};
+  const specRoot = path.resolve(process.cwd(), config.screensDir);
+  startPollingFallback(specRoot, runCompile);
+}
 
-void start();
+// Allow `ts-node compiler/watch.ts`
+if (require.main === module) {
+  void startWatch();
+}

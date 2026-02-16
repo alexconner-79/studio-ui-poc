@@ -1,0 +1,47 @@
+{
+  "name": "Login Page",
+  "description": "Centered login form with branding",
+  "preview": "Clean login page with card, email/password fields, and social links",
+  "spec": {
+    "version": 1,
+    "route": "/login",
+    "meta": { "layout": "auth" },
+    "tree": {
+      "id": "root",
+      "type": "Stack",
+      "props": { "direction": "column", "gap": "6" },
+      "children": [
+        { "id": "brand", "type": "Heading", "props": { "level": 2, "text": "YourBrand" } },
+        {
+          "id": "login-card",
+          "type": "Card",
+          "props": {},
+          "children": [
+            {
+              "id": "login-form",
+              "type": "Form",
+              "props": { "action": "/api/auth/login" },
+              "children": [
+                {
+                  "id": "form-stack",
+                  "type": "Stack",
+                  "props": { "direction": "column", "gap": "4" },
+                  "children": [
+                    { "id": "form-h", "type": "Heading", "props": { "level": 3, "text": "Sign In" } },
+                    { "id": "form-sub", "type": "Text", "props": { "text": "Enter your credentials to continue" } },
+                    { "id": "form-email", "type": "Input", "props": { "placeholder": "Email address", "type": "email" } },
+                    { "id": "form-pw", "type": "Input", "props": { "placeholder": "Password", "type": "password" } },
+                    { "id": "form-submit", "type": "Button", "props": { "label": "Sign In", "intent": "default" } },
+                    { "id": "form-div", "type": "Divider", "props": {} },
+                    { "id": "form-forgot", "type": "Link", "props": { "href": "/forgot-password", "text": "Forgot password?" } },
+                    { "id": "form-signup", "type": "Link", "props": { "href": "/signup", "text": "Don't have an account? Sign up" } }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

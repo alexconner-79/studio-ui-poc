@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "route": "/about-page",
+  "meta": {
+    "layout": "default",
+    "auth": "public"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "gap": "md",
+      "padding": "lg"
+    },
+    "children": [
+      {
+        "id": "grid_mlo7xw6e_1",
+        "type": "Grid",
+        "props": {
+          "columns": 2,
+          "gap": "md"
+        },
+        "children": [
+          {
+            "id": "heading_1",
+            "type": "Heading",
+            "props": {
+              "text": "About Page"
+            }
+          },
+          {
+            "id": "heading_mlo7ye24_2",
+            "type": "Heading",
+            "props": {
+              "text": "About Page"
+            }
+          }
+        ]
+      },
+      {
+        "id": "stack_mlo7yovo_3",
+        "type": "Stack",
+        "props": {
+          "gap": "md",
+          "direction": "column"
+        },
+        "children": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "route": "/test-page",
+  "meta": {
+    "layout": "default",
+    "auth": "public"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "gap": "md",
+      "padding": "lg"
+    },
+    "children": [
+      {
+        "id": "nav_mlozflw6_7",
+        "type": "Nav",
+        "props": {
+          "orientation": "horizontal",
+          "items": [
+            "Home|/",
+            "About|/about"
+          ]
+        },
+        "children": []
+      },
+      {
+        "id": "stack_mlozcxbq_1",
+        "type": "Stack",
+        "props": {
+          "gap": "md",
+          "direction": "row"
+        },
+        "children": [
+          {
+            "id": "button_mlozf8zv_5",
+            "type": "Button",
+            "props": {
+              "label": "Button",
+              "intent": "primary",
+              "size": "default"
+            }
+          },
+          {
+            "id": "text_mlozdjqy_3",
+            "type": "Text",
+            "props": {
+              "text": "Text content",
+              "fontFamily": ""
+            }
+          },
+          {
+            "id": "text_mlozdevu_2",
+            "type": "Text",
+            "props": {
+              "text": "Text content",
+              "fontFamily": ""
+            }
+          }
+        ]
+      },
+      {
+        "id": "heading_1",
+        "type": "Heading",
+        "props": {
+          "text": "Test Page"
+        }
+      },
+      {
+        "id": "tabs_mlozfjn9_6",
+        "type": "Tabs",
+        "props": {
+          "tabs": [
+            "Tab 1",
+            "Tab 2"
+          ]
+        },
+        "children": []
+      },
+      {
+        "id": "node_mlozf442_4",
+        "type": "Image",
+        "props": {
+          "src": "/assets/screenshot-2026-01-21-at-20.07.55.png",
+          "alt": "screenshot-2026-01-21-at-20.07.55.png"
+        }
+      }
+    ]
+  }
+}

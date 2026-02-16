@@ -1,0 +1,21 @@
+{
+  "framework": "nextjs",
+  "componentLibrary": "shadcn",
+  "appDir": "apps/web/app",
+  "componentsDir": "apps/web/components/ui",
+  "generatedDir": "apps/web/components/generated",
+  "screensDir": "spec/screens",
+  "schemaPath": "spec/schema/screen.schema.json",
+  "importAlias": "@/",
+  "tokens": "tokens/design-tokens.json",
+  "fonts": [
+    {
+      "family": "Roboto",
+      "source": "google"
+    },
+    {
+      "family": "Roboto Condensed",
+      "source": "google"
+    }
+  ]
+}

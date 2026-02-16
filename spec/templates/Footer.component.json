@@ -1,0 +1,62 @@
+{
+  "name": "Footer",
+  "description": "Multi-column footer with links and copyright",
+  "category": "Templates",
+  "tree": {
+    "id": "footer-root",
+    "type": "Section",
+    "props": {},
+    "children": [
+      {
+        "id": "footer-columns",
+        "type": "Grid",
+        "props": { "columns": 4, "gap": "8" },
+        "children": [
+          {
+            "id": "footer-brand",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "2" },
+            "children": [
+              { "id": "footer-logo", "type": "Heading", "props": { "level": 4, "text": "Studio UI" } },
+              { "id": "footer-tagline", "type": "Text", "props": { "text": "Design, build, and ship." } }
+            ]
+          },
+          {
+            "id": "footer-product",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "2" },
+            "children": [
+              { "id": "fp-title", "type": "Heading", "props": { "level": 5, "text": "Product" } },
+              { "id": "fp-l1", "type": "Link", "props": { "href": "#features", "text": "Features" } },
+              { "id": "fp-l2", "type": "Link", "props": { "href": "#pricing", "text": "Pricing" } },
+              { "id": "fp-l3", "type": "Link", "props": { "href": "#changelog", "text": "Changelog" } }
+            ]
+          },
+          {
+            "id": "footer-company",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "2" },
+            "children": [
+              { "id": "fc-title", "type": "Heading", "props": { "level": 5, "text": "Company" } },
+              { "id": "fc-l1", "type": "Link", "props": { "href": "#about", "text": "About" } },
+              { "id": "fc-l2", "type": "Link", "props": { "href": "#blog", "text": "Blog" } },
+              { "id": "fc-l3", "type": "Link", "props": { "href": "#careers", "text": "Careers" } }
+            ]
+          },
+          {
+            "id": "footer-legal",
+            "type": "Stack",
+            "props": { "direction": "column", "gap": "2" },
+            "children": [
+              { "id": "fl-title", "type": "Heading", "props": { "level": 5, "text": "Legal" } },
+              { "id": "fl-l1", "type": "Link", "props": { "href": "#privacy", "text": "Privacy" } },
+              { "id": "fl-l2", "type": "Link", "props": { "href": "#terms", "text": "Terms" } }
+            ]
+          }
+        ]
+      },
+      { "id": "footer-divider", "type": "Divider", "props": {} },
+      { "id": "footer-copyright", "type": "Text", "props": { "text": "2026 Studio UI. All rights reserved." } }
+    ]
+  }
+}

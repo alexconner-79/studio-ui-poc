@@ -1,0 +1,51 @@
+{
+  "name": "HeroSection",
+  "description": "Hero section with heading, subtext, CTA button, and optional image",
+  "category": "Templates",
+  "tree": {
+    "id": "hero-root",
+    "type": "Section",
+    "props": {},
+    "children": [
+      {
+        "id": "hero-stack",
+        "type": "Stack",
+        "props": { "direction": "column", "gap": "6" },
+        "children": [
+          {
+            "id": "hero-heading",
+            "type": "Heading",
+            "props": { "level": 1, "text": "Build Something Amazing" }
+          },
+          {
+            "id": "hero-subtext",
+            "type": "Text",
+            "props": { "text": "A powerful platform that helps you create, manage, and scale your projects with ease." }
+          },
+          {
+            "id": "hero-actions",
+            "type": "Stack",
+            "props": { "direction": "row", "gap": "4" },
+            "children": [
+              {
+                "id": "hero-cta",
+                "type": "Button",
+                "props": { "label": "Get Started", "intent": "default" }
+              },
+              {
+                "id": "hero-secondary",
+                "type": "Button",
+                "props": { "label": "Learn More", "intent": "outline" }
+              }
+            ]
+          },
+          {
+            "id": "hero-image",
+            "type": "Image",
+            "props": { "src": "/assets/hero-placeholder.png", "alt": "Hero illustration" }
+          }
+        ]
+      }
+    ]
+  }
+}
