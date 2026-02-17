@@ -9,8 +9,8 @@
     "id": "root",
     "type": "Stack",
     "props": {
-      "gap": "lg",
-      "padding": "lg"
+      "gap": "sm",
+      "padding": "xs"
     },
     "children": [
       {
@@ -18,23 +18,37 @@
         "type": "Heading",
         "props": {
           "text": "Welcome to Studio UI",
-          "variant": "heading"
+          "variant": "hero",
+          "level": 1
+        },
+        "style": {
+          "fontSize": "50px",
+          "fontWeight": "100",
+          "textAlign": "center"
         }
       },
       {
         "id": "text_1",
         "type": "Text",
         "props": {
-          "text": "This page was generated from a UI spec.",
-          "variant": "body"
+          "text": "This page was generated from a UI spec."
+        },
+        "style": {
+          "fontSize": "20px",
+          "textAlign": "left",
+          "color": "#d93030"
         }
       },
       {
-        "id": "node_mlozlezn_1",
+        "id": "image_mlpoual1_1",
         "type": "Image",
         "props": {
           "src": "/assets/screenshot-2026-01-21-at-20.07.55.png",
           "alt": "screenshot-2026-01-21-at-20.07.55.png"
+        },
+        "style": {
+          "width": "20%",
+          "height": "20%"
         }
       },
       {
@@ -54,6 +68,9 @@
                 "props": {
                   "text": "shadcn card component",
                   "variant": "muted"
+                },
+                "style": {
+                  "fontSize": "12px"
                 }
               },
               {
@@ -61,12 +78,21 @@
                 "type": "Button",
                 "props": {
                   "label": "Action!",
-                  "intent": "primary"
+                  "intent": "default"
                 }
               }
             ]
           }
-        ]
+        ],
+        "props": {
+          "padding": "sm"
+        },
+        "style": {
+          "paddingTop": "12",
+          "paddingRight": "12",
+          "paddingBottom": "12",
+          "paddingLeft": "12"
+        }
       },
       {
         "id": "cta_button",

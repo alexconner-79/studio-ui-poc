@@ -27,8 +27,12 @@ export type DesignTokens = {
   typography?: {
     fontFamily?: TokenGroup;
     fontSize?: TokenGroup;
+    fontWeight?: TokenGroup;
+    lineHeight?: TokenGroup;
+    letterSpacing?: TokenGroup;
   };
   borderRadius?: TokenGroup;
+  shadow?: TokenGroup;
   /** Raw parsed data for extension. */
   raw: Record<string, unknown>;
 };
@@ -38,7 +42,11 @@ export type ResolvedTokenMaps = {
   size: Record<string, string>;
   colors: Record<string, string>;
   fontSizes: Record<string, string>;
+  fontWeights: Record<string, string>;
+  lineHeights: Record<string, string>;
+  letterSpacings: Record<string, string>;
   radii: Record<string, string>;
+  shadows: Record<string, string>;
 };
 
 // -------------------------------------------------------------------------
@@ -90,21 +98,22 @@ export function loadTokens(tokensPath: string, rootDir?: string): DesignTokens {
     throw new Error(`Invalid JSON in tokens file: ${absPath}`);
   }
 
+  const typo = parsed.typography as Record<string, unknown> | undefined;
   return {
     spacing: extractGroup(parsed.spacing),
     size: extractGroup(parsed.size),
     color: extractGroup(parsed.color),
-    typography: parsed.typography
+    typography: typo
       ? {
-          fontFamily: extractGroup(
-            (parsed.typography as Record<string, unknown>).fontFamily
-          ),
-          fontSize: extractGroup(
-            (parsed.typography as Record<string, unknown>).fontSize
-          ),
+          fontFamily: extractGroup(typo.fontFamily),
+          fontSize: extractGroup(typo.fontSize),
+          fontWeight: extractGroup(typo.fontWeight),
+          lineHeight: extractGroup(typo.lineHeight),
+          letterSpacing: extractGroup(typo.letterSpacing),
         }
       : undefined,
     borderRadius: extractGroup(parsed.borderRadius),
+    shadow: extractGroup(parsed.shadow),
     raw: parsed,
   };
 }
@@ -137,53 +146,44 @@ function isTokenValue(value: unknown): value is TokenValue {
  * If a tokens file is provided, spacing/size tokens are used.
  * Otherwise falls back to the hardcoded Tailwind class maps.
  */
+function groupToMap(group?: TokenGroup): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (group) {
+    for (const [key, token] of Object.entries(group)) {
+      map[key] = token.value;
+    }
+  }
+  return map;
+}
+
 export function resolveTokenMaps(
   tokens?: DesignTokens
 ): ResolvedTokenMaps {
   const gap = { ...DEFAULT_GAP };
   const size = { ...DEFAULT_SIZE };
-  const colors: Record<string, string> = {};
-  const fontSizes: Record<string, string> = {};
-  const radii: Record<string, string> = {};
 
-  if (tokens) {
-    // Override gap map from spacing tokens
-    if (tokens.spacing) {
-      for (const [key, token] of Object.entries(tokens.spacing)) {
-        gap[key] = token.value;
-      }
+  if (tokens?.spacing) {
+    for (const [key, token] of Object.entries(tokens.spacing)) {
+      gap[key] = token.value;
     }
-
-    // Override size map
-    if (tokens.size) {
-      for (const [key, token] of Object.entries(tokens.size)) {
-        size[key] = token.value;
-      }
-    }
-
-    // Colors
-    if (tokens.color) {
-      for (const [key, token] of Object.entries(tokens.color)) {
-        colors[key] = token.value;
-      }
-    }
-
-    // Font sizes
-    if (tokens.typography?.fontSize) {
-      for (const [key, token] of Object.entries(tokens.typography.fontSize)) {
-        fontSizes[key] = token.value;
-      }
-    }
-
-    // Border radii
-    if (tokens.borderRadius) {
-      for (const [key, token] of Object.entries(tokens.borderRadius)) {
-        radii[key] = token.value;
-      }
+  }
+  if (tokens?.size) {
+    for (const [key, token] of Object.entries(tokens.size)) {
+      size[key] = token.value;
     }
   }
 
-  return { gap, size, colors, fontSizes, radii };
+  return {
+    gap,
+    size,
+    colors: groupToMap(tokens?.color),
+    fontSizes: groupToMap(tokens?.typography?.fontSize),
+    fontWeights: groupToMap(tokens?.typography?.fontWeight),
+    lineHeights: groupToMap(tokens?.typography?.lineHeight),
+    letterSpacings: groupToMap(tokens?.typography?.letterSpacing),
+    radii: groupToMap(tokens?.borderRadius),
+    shadows: groupToMap(tokens?.shadow),
+  };
 }
 
 /**

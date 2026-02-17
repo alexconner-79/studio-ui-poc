@@ -5,6 +5,7 @@ import { useEditorStore } from "@/lib/studio/store";
 import { NODE_SCHEMAS, type PropDef } from "@/lib/studio/node-schemas";
 import type { Node, NodeInteractions, InteractionAction, InteractionChangeAction, VisibilityOperator, DataSource, DataSourceType } from "@/lib/studio/types";
 import { IconPicker } from "./icon-picker";
+import { StylePanel } from "./style-sections";
 
 // -------------------------------------------------------------------------
 // Find node helper
@@ -734,6 +735,9 @@ export function PropertyPanel() {
           onChange={handleDataSourceChange}
           nodeType={selectedNode.type}
         />
+
+        {/* Style sections */}
+        <StylePanel nodeId={selectedNode.id} nodeType={selectedNode.type} />
       </div>
 
       {/* Delete button */}

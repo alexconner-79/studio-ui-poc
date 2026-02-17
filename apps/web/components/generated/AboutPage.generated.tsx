@@ -2,12 +2,12 @@
 
 export function AboutPage() {
   return (
-    <div className="flex-col flex gap-4 p-8">
-      <div className="grid grid-cols-2 gap-4">
-        <h1 className="text-xl font-semibold">About Page</h1>
-        <h1 className="text-xl font-semibold">About Page</h1>
+    <div className="flex-col flex gap-[1rem] p-[2rem]">
+      <div className="grid grid-cols-2 gap-[1rem]">
+        <h1 className="text-3xl font-bold">About Page</h1>
+        <h1 className="text-3xl font-bold">About Page</h1>
       </div>
-      <div className="flex-col flex gap-4"></div>
+      <div className="flex-col flex gap-[1rem]"></div>
     </div>
   );
 }

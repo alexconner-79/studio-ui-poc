@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function TestPage() {
   return (
-    <div className="flex-col flex gap-4 p-8">
+    <div className="flex-col flex gap-[1rem] p-[2rem]">
       <nav className="flex flex-row gap-1 border-b pb-2">
         <Link
           href="/"
@@ -20,12 +20,12 @@ export function TestPage() {
           About
         </Link>
       </nav>
-      <div className="flex-row flex gap-4">
+      <div className="flex-row flex gap-[1rem]">
         <Button>Button</Button>
         <p>Text content</p>
         <p>Text content</p>
       </div>
-      <h1 className="text-xl font-semibold">Test Page</h1>
+      <h1 className="text-3xl font-bold">Test Page</h1>
       <div>
         <div className="flex border-b mb-3">
           <button className="border-b-2 border-blue-500 text-blue-600 font-medium px-4 py-2 text-sm">

@@ -6,33 +6,55 @@ import { Separator } from "@/components/ui/separator";
 
 export function Home() {
   return (
-    <div className="flex-col flex gap-6 p-8">
-      <h1 className="text-xl font-semibold">Welcome to Studio UI</h1>
-      <p className="text-base">This page was generated from a UI spec.</p>
-      <img
-        src="/assets/screenshot-2026-01-21-at-20.07.55.png"
-        alt="screenshot-2026-01-21-at-20.07.55.png"
-      />
-      <Card>
-        <div className="p-4">
-          <div className="flex-col flex gap-2">
-            <p className="text-sm text-muted-foreground">
-              shadcn card component
-            </p>
-            <Button>Action!</Button>
+    <div className="flex-col flex gap-[0.5rem] p-[0.5rem]">
+      <div
+        className="text-center"
+        style={{ fontSize: "50px", fontWeight: "100" }}
+      >
+        <h1 className="text-5xl font-bold tracking-tight">
+          Welcome to Studio UI
+        </h1>
+      </div>
+      <div className="text-left" style={{ fontSize: "20px", color: "#d93030" }}>
+        <p>This page was generated from a UI spec.</p>
+      </div>
+      <div style={{ width: "20%", height: "20%" }}>
+        <img
+          src="/assets/screenshot-2026-01-21-at-20.07.55.png"
+          alt="screenshot-2026-01-21-at-20.07.55.png"
+        />
+      </div>
+      <div
+        style={{
+          paddingTop: "12",
+          paddingRight: "12",
+          paddingBottom: "12",
+          paddingLeft: "12",
+        }}
+      >
+        <Card>
+          <div className="p-[1rem]">
+            <div className="flex-col flex gap-[0.5rem]">
+              <div style={{ fontSize: "12px" }}>
+                <p className="text-sm text-muted-foreground">
+                  shadcn card component
+                </p>
+              </div>
+              <Button variant="default">Action!</Button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
       <Button>Get started</Button>
       <Separator />
-      <h2 className="text-xl font-semibold">Key features</h2>
+      <h2 className="text-2xl font-semibold">Key features</h2>
       <ul className="list-disc pl-4">
         <li>Spec-driven UI</li>
         <li>Deterministic output</li>
         <li>PR-based publishing</li>
       </ul>
-      <div className="h-6" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="h-[1.5rem]" />
+      <div className="grid grid-cols-2 gap-[1rem]">
         <Card>
           <div className="p-4">
             <p className="text-base">Feature one</p>

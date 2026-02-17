@@ -64,6 +64,80 @@ export type DataSource = {
   mapping?: Record<string, string>;
 };
 
+// ---------------------------------------------------------------------------
+// Style values (token-aware)
+// ---------------------------------------------------------------------------
+
+/** A style value: either a raw CSS value or a token reference ("$color.primary") */
+export type StyleValue = string | number;
+
+export type NodeStyle = {
+  // Typography
+  fontSize?: StyleValue;
+  fontWeight?: StyleValue;
+  fontStyle?: "normal" | "italic";
+  lineHeight?: StyleValue;
+  letterSpacing?: StyleValue;
+  textAlign?: "left" | "center" | "right" | "justify";
+  textDecoration?: "none" | "underline" | "line-through";
+  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  color?: StyleValue;
+
+  // Sizing
+  width?: StyleValue;
+  height?: StyleValue;
+  minWidth?: StyleValue;
+  maxWidth?: StyleValue;
+  minHeight?: StyleValue;
+  maxHeight?: StyleValue;
+
+  // Spacing (per-side)
+  paddingTop?: StyleValue;
+  paddingRight?: StyleValue;
+  paddingBottom?: StyleValue;
+  paddingLeft?: StyleValue;
+  marginTop?: StyleValue;
+  marginRight?: StyleValue;
+  marginBottom?: StyleValue;
+  marginLeft?: StyleValue;
+
+  // Background
+  backgroundColor?: StyleValue;
+  backgroundImage?: string;
+
+  // Border
+  borderWidth?: StyleValue;
+  borderColor?: StyleValue;
+  borderStyle?: "none" | "solid" | "dashed" | "dotted";
+  borderRadius?: StyleValue;
+  borderTopLeftRadius?: StyleValue;
+  borderTopRightRadius?: StyleValue;
+  borderBottomLeftRadius?: StyleValue;
+  borderBottomRightRadius?: StyleValue;
+
+  // Effects
+  opacity?: number;
+  boxShadow?: StyleValue;
+
+  // Layout (flex child / container)
+  overflow?: "visible" | "hidden" | "auto" | "scroll";
+  justifyContent?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around";
+  alignItems?: "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
+  flexWrap?: "nowrap" | "wrap";
+  gap?: StyleValue;
+  flexGrow?: number;
+  flexShrink?: number;
+  alignSelf?: "auto" | "flex-start" | "center" | "flex-end" | "stretch";
+
+  // Position
+  position?: "static" | "relative" | "absolute" | "fixed" | "sticky";
+  top?: StyleValue;
+  right?: StyleValue;
+  bottom?: StyleValue;
+  left?: StyleValue;
+  zIndex?: number;
+};
+
 export type Node = {
   id: string;
   type: string; // BuiltInNodeType or repo component name
@@ -71,6 +145,7 @@ export type Node = {
   children?: Node[];
   interactions?: NodeInteractions;
   dataSource?: DataSource;
+  style?: NodeStyle;
 };
 
 // ---------------------------------------------------------------------------

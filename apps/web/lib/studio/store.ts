@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { produce, enableMapSet } from "immer";
-import type { Node, ScreenSpec } from "./types";
+import type { Node, NodeStyle, ScreenSpec, DesignTokens } from "./types";
 
 // Enable Immer support for Set/Map (needed for hiddenNodeIds, lockedNodeIds)
 enableMapSet();
@@ -65,7 +65,10 @@ export function cloneWithNewIds(node: Node): Node {
     children: node.children
       ? node.children.map(cloneWithNewIds)
       : undefined,
+    style: node.style ? JSON.parse(JSON.stringify(node.style)) : undefined,
   };
+  if (node.interactions) clone.interactions = JSON.parse(JSON.stringify(node.interactions));
+  if (node.dataSource) clone.dataSource = JSON.parse(JSON.stringify(node.dataSource));
   return clone;
 }
 
@@ -118,6 +121,9 @@ type EditorState = {
   // Canvas frames (new multi-frame mode)
   activeFrames: Array<"mobile" | "tablet" | "desktop">;
 
+  // Design tokens (loaded from /api/studio/tokens)
+  designTokens: DesignTokens | null;
+
   // Rename trigger (set by R shortcut, consumed by Layers panel)
   renamingNodeId: string | null;
 
@@ -164,6 +170,12 @@ type EditorState = {
   setRenamingNodeId: (id: string | null) => void;
   groupIntoStack: () => void;
 
+  // Style
+  updateNodeStyle: (nodeId: string, style: Partial<NodeStyle>) => void;
+
+  // Design tokens
+  loadDesignTokens: () => Promise<void>;
+
   copyNode: () => void;
   pasteNode: () => void;
   duplicateNode: () => void;
@@ -200,6 +212,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   customComponents: [],
   viewportBreakpoint: "full",
   activeFrames: ["desktop"],
+  designTokens: null,
   renamingNodeId: null,
   history: [],
   historyIndex: -1,
@@ -451,6 +464,42 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         state.dirty = true;
       })
     ),
+
+  updateNodeStyle: (nodeId, style) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        if (state.lockedNodeIds.has(nodeId)) return;
+        pushHistory(state);
+        const node = findNode(state.spec.tree, nodeId);
+        if (!node) return;
+        node.style = { ...(node.style ?? {}), ...style };
+        // Remove undefined/null values
+        const s = node.style as Record<string, unknown>;
+        for (const key of Object.keys(s)) {
+          if (s[key] === undefined || s[key] === null || s[key] === "") {
+            delete s[key];
+          }
+        }
+        if (Object.keys(node.style).length === 0) {
+          delete node.style;
+        }
+        state.dirty = true;
+      })
+    ),
+
+  loadDesignTokens: async () => {
+    try {
+      const res = await fetch("/api/studio/tokens");
+      if (res.ok) {
+        const data = await res.json();
+        const tokens = data.tokens ?? data;
+        set({ designTokens: { ...tokens, raw: tokens } });
+      }
+    } catch {
+      // silently fail - tokens are optional
+    }
+  },
 
   copyNode: () => {
     const { spec, selectedNodeId } = get();

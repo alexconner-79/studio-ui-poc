@@ -7,33 +7,33 @@ import { Separator } from "@/components/ui/separator";
 
 export function LandingPage() {
   return (
-    <div className="flex-col flex gap-4">
+    <div className="flex-col flex gap-[1rem]">
       <nav className="flex flex-row gap-1 border-b pb-2">
-        <div className="flex-row flex gap-4">
+        <div className="flex-row flex gap-[1rem]">
           <p>YourBrand</p>
-          <div className="h-6" />
+          <div className="h-[1.5rem]" />
           <Link href="#features">Features</Link>
           <Link href="#pricing">Pricing</Link>
           <Button variant="default">Get Started</Button>
         </div>
       </nav>
       <section className="w-full">
-        <div className="flex-col flex gap-4">
-          <h1 className="text-xl font-semibold">Build Something Amazing</h1>
+        <div className="flex-col flex gap-[1rem]">
+          <h1 className="text-3xl font-bold">Build Something Amazing</h1>
           <p>A modern platform for teams who ship fast.</p>
-          <div className="flex-row flex gap-4">
+          <div className="flex-row flex gap-[1rem]">
             <Button variant="default">Start Free Trial</Button>
             <Button variant="outline">Watch Demo</Button>
           </div>
-          <h1 className="text-xl font-semibold">Heading</h1>
-          <h2 className="text-xl font-semibold">Features</h2>
+          <h1 className="text-3xl font-bold">Heading</h1>
+          <h2 className="text-2xl font-semibold">Features</h2>
         </div>
       </section>
       <section className="w-full">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-[1rem]">
           <Card>
             <div className="p-4">
-              <div className="flex-col flex gap-4">
+              <div className="flex-col flex gap-[1rem]">
                 <h3 className="text-xl font-semibold">Fast</h3>
                 <p>Lightning-fast performance.</p>
               </div>
@@ -41,7 +41,7 @@ export function LandingPage() {
           </Card>
           <Card>
             <div className="p-4">
-              <div className="flex-col flex gap-4">
+              <div className="flex-col flex gap-[1rem]">
                 <h3 className="text-xl font-semibold">Secure</h3>
                 <p>Enterprise-grade security.</p>
               </div>
@@ -49,7 +49,7 @@ export function LandingPage() {
           </Card>
           <Card>
             <div className="p-4">
-              <div className="flex-col flex gap-4">
+              <div className="flex-col flex gap-[1rem]">
                 <h3 className="text-xl font-semibold">Scalable</h3>
                 <p>Grows with your team.</p>
               </div>

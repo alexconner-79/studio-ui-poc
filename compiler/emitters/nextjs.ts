@@ -1,6 +1,8 @@
-import type { Node, NodeInteractions, DataSource, ScreenSpec } from "../types";
+import type { Node, NodeInteractions, DataSource, ScreenSpec, NodeStyle, StyleValue } from "../types";
 import type { StudioConfig } from "../config";
 import type { Emitter, EmittedFile, EmitScreenResult } from "./types";
+import { loadTokens, resolveTokenMaps, type ResolvedTokenMaps, type DesignTokens } from "../tokens";
+import { resolveStyleValue } from "../resolve-token";
 
 type EmitResult = {
   jsx: string;
@@ -8,33 +10,58 @@ type EmitResult = {
 };
 
 // ---------------------------------------------------------------------------
-// Token maps
+// Token maps (loaded from design-tokens.json, with hardcoded fallback)
 // ---------------------------------------------------------------------------
 
-const GAP_MAP: Record<string, string> = {
-  xs: "1",
-  sm: "2",
-  md: "4",
-  lg: "6",
-  xl: "8",
+const DEFAULT_GAP: Record<string, string> = {
+  xs: "1", sm: "2", md: "4", lg: "6", xl: "8",
+};
+const DEFAULT_SIZE: Record<string, string> = {
+  xs: "2", sm: "4", md: "6", lg: "8", xl: "12",
 };
 
-const SIZE_MAP: Record<string, string> = {
-  xs: "2",
-  sm: "4",
-  md: "6",
-  lg: "8",
-  xl: "12",
-};
+let _tokenMaps: ResolvedTokenMaps | null = null;
+let _designTokens: DesignTokens | null = null;
+
+function getTokenMaps(config: StudioConfig): ResolvedTokenMaps {
+  if (_tokenMaps) return _tokenMaps;
+  try {
+    _designTokens = loadTokens(config.tokens ?? "tokens/design-tokens.json");
+    _tokenMaps = resolveTokenMaps(_designTokens);
+  } catch {
+    _designTokens = null;
+    _tokenMaps = {
+      gap: { ...DEFAULT_GAP },
+      size: { ...DEFAULT_SIZE },
+      colors: {},
+      fontSizes: {},
+      fontWeights: {},
+      lineHeights: {},
+      letterSpacings: {},
+      radii: {},
+      shadows: {},
+    };
+  }
+  return _tokenMaps;
+}
+
+// Active token maps for the current compilation run (set at start of emitScreen)
+let _maps: ResolvedTokenMaps;
+
+// Check if a value is a plain Tailwind scale number (e.g. "4", "0.5", "12")
+const isTailwindScale = (v: string): boolean => /^\d+(\.\d+)?$/.test(v);
+
+// Wrap non-standard values in Tailwind arbitrary value syntax: "1rem" -> "[1rem]"
+const tw = (v: string): string => (isTailwindScale(v) ? v : `[${v}]`);
 
 const resolveGap = (gap?: unknown): string => {
-  if (typeof gap !== "string") return GAP_MAP.md;
-  return GAP_MAP[gap] ?? GAP_MAP.md;
+  if (typeof gap !== "string") return tw(_maps.gap.md ?? "4");
+  return tw(_maps.gap[gap] ?? _maps.gap.md ?? "4");
 };
 
 const resolveSize = (size?: unknown): string => {
-  if (typeof size !== "string") return SIZE_MAP.md;
-  return SIZE_MAP[size] ?? SIZE_MAP.md;
+  if (typeof size !== "string") return tw(_maps.size.md ?? "6");
+  return tw(_maps.size[size] ?? _maps.size.md ?? "6");
 };
 
 // ---------------------------------------------------------------------------
@@ -63,6 +90,86 @@ const indentLines = (value: string, spaces: number): string => {
 const mergeImports = (target: Set<string>, source: Set<string>): void => {
   source.forEach((item) => target.add(item));
 };
+
+// ---------------------------------------------------------------------------
+// Style emission: NodeStyle -> Tailwind classes + inline style
+// ---------------------------------------------------------------------------
+
+/** Maps certain CSS properties to Tailwind utility prefixes where possible. */
+const TAILWIND_MAP: Record<string, Record<string, string>> = {
+  textAlign: { left: "text-left", center: "text-center", right: "text-right", justify: "text-justify" },
+  fontStyle: { italic: "italic", normal: "not-italic" },
+  textDecoration: { underline: "underline", "line-through": "line-through", none: "no-underline" },
+  textTransform: { uppercase: "uppercase", lowercase: "lowercase", capitalize: "capitalize", none: "normal-case" },
+  overflow: { hidden: "overflow-hidden", auto: "overflow-auto", scroll: "overflow-scroll", visible: "overflow-visible" },
+  flexWrap: { wrap: "flex-wrap", nowrap: "flex-nowrap" },
+  position: { relative: "relative", absolute: "absolute", fixed: "fixed", sticky: "sticky", static: "static" },
+};
+
+/**
+ * Emit style classes and inline style object for a node's `style` field.
+ * Returns { classes: string[], styleObj: Record<string, string> }
+ */
+function emitStyleAttr(style: NodeStyle | undefined): { classes: string[]; styleObj: Record<string, string | number> } {
+  if (!style) return { classes: [], styleObj: {} };
+
+  const classes: string[] = [];
+  const styleObj: Record<string, string | number> = {};
+
+  for (const [key, rawValue] of Object.entries(style)) {
+    if (rawValue === undefined || rawValue === null) continue;
+
+    // Try Tailwind shortcut
+    const twMap = TAILWIND_MAP[key];
+    if (twMap && typeof rawValue === "string" && twMap[rawValue]) {
+      classes.push(twMap[rawValue]);
+      continue;
+    }
+
+    // Resolve token references
+    const resolved = resolveStyleValue(rawValue as StyleValue, _designTokens);
+    if (resolved === undefined) continue;
+
+    // Map to CSS property name (camelCase to kebab-case for JSX style)
+    styleObj[key] = resolved;
+  }
+
+  return { classes, styleObj };
+}
+
+/**
+ * Merge style attributes into existing className and style strings for JSX emission.
+ */
+function mergeStyleIntoJSX(
+  existingClassName: string,
+  existingStyleAttr: string,
+  nodeStyle: NodeStyle | undefined
+): { className: string; styleAttr: string } {
+  const { classes, styleObj } = emitStyleAttr(nodeStyle);
+
+  let className = existingClassName;
+  if (classes.length > 0) {
+    className = className
+      ? `${className} ${classes.join(" ")}`
+      : classes.join(" ");
+  }
+
+  let styleAttr = existingStyleAttr;
+  if (Object.keys(styleObj).length > 0) {
+    const styleEntries = Object.entries(styleObj)
+      .map(([k, v]) => `${k}: ${typeof v === "number" ? v : JSON.stringify(String(v))}`)
+      .join(", ");
+    if (styleAttr) {
+      // Merge with existing style attribute
+      const existingInner = styleAttr.replace(/^\s*style=\{\{/, "").replace(/\}\}\s*$/, "");
+      styleAttr = ` style={{ ${existingInner}, ${styleEntries} }}`;
+    } else {
+      styleAttr = ` style={{ ${styleEntries} }}`;
+    }
+  }
+
+  return { className, styleAttr };
+}
 
 /**
  * Derive a PascalCase component name from a route.
@@ -276,6 +383,34 @@ function emitNode(node: Node): EmitResult {
   const props = node.props ?? {};
   const type = node.type;
 
+  // Compute style overlay (applied after the main JSX is generated)
+  const nodeStyleResult = emitStyleAttr(node.style);
+  const hasStyleOverlay = nodeStyleResult.classes.length > 0 || Object.keys(nodeStyleResult.styleObj).length > 0;
+
+  const result = emitNodeInner(node, props, type);
+
+  // If the node has a style overlay, wrap it in a <div> with the style
+  if (hasStyleOverlay) {
+    const styleParts: string[] = [];
+    if (nodeStyleResult.classes.length > 0) {
+      styleParts.push(`className="${nodeStyleResult.classes.join(" ")}"`);
+    }
+    if (Object.keys(nodeStyleResult.styleObj).length > 0) {
+      const entries = Object.entries(nodeStyleResult.styleObj)
+        .map(([k, v]) => `${k}: ${typeof v === "number" ? v : JSON.stringify(String(v))}`)
+        .join(", ");
+      styleParts.push(`style={{ ${entries} }}`);
+    }
+    return {
+      jsx: `<div ${styleParts.join(" ")}>\n${indentLines(result.jsx, 2)}\n</div>`,
+      imports: result.imports,
+    };
+  }
+
+  return result;
+}
+
+function emitNodeInner(node: Node, props: Record<string, unknown>, type: string): EmitResult {
   switch (type) {
     // -- Layout primitives --------------------------------------------------
 
@@ -738,6 +873,9 @@ export function emitScreen(
   spec: ScreenSpec,
   config: StudioConfig
 ): EmitScreenResult {
+  // Initialize token maps for this compilation run
+  _maps = getTokenMaps(config);
+
   const componentName = componentNameFromRoute(spec.route);
   const pagePath = pagePathFromRoute(spec.route, config.appDir);
   const generatedPath = `${config.generatedDir}/${componentName}.generated.tsx`;

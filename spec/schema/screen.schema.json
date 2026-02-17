@@ -3,57 +3,164 @@
   "title": "ScreenSpec V1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "route", "tree"],
+  "required": [
+    "version",
+    "route",
+    "tree"
+  ],
   "properties": {
-    "version": { "type": "integer", "const": 1 },
-    "route": { "type": "string", "pattern": "^/" },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "route": {
+      "type": "string",
+      "pattern": "^/"
+    },
     "meta": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "layout": { "type": "string" },
-        "auth": { "type": "string", "enum": ["public", "protected"] }
+        "layout": {
+          "type": "string"
+        },
+        "auth": {
+          "type": "string",
+          "enum": [
+            "public",
+            "protected"
+          ]
+        }
       }
     },
-    "tree": { "$ref": "#/$defs/node" }
+    "tree": {
+      "$ref": "#/$defs/node"
+    }
   },
   "$defs": {
-    "gap": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
-    "size": { "type": "string", "enum": ["xs", "sm", "md", "lg", "xl"] },
+    "gap": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ]
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ]
+    },
+    "styleValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "nodeStyle": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/styleValue"
+      }
+    },
     "nodeBase": {
       "type": "object",
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "type": { "type": "string", "minLength": 1 }
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "node": {
       "allOf": [
-        { "$ref": "#/$defs/nodeBase" },
+        {
+          "$ref": "#/$defs/nodeBase"
+        },
         {
           "oneOf": [
-            { "$ref": "#/$defs/stackNode" },
-            { "$ref": "#/$defs/gridNode" },
-            { "$ref": "#/$defs/sectionNode" },
-            { "$ref": "#/$defs/scrollAreaNode" },
-            { "$ref": "#/$defs/spacerNode" },
-            { "$ref": "#/$defs/headingNode" },
-            { "$ref": "#/$defs/textNode" },
-            { "$ref": "#/$defs/imageNode" },
-            { "$ref": "#/$defs/inputNode" },
-            { "$ref": "#/$defs/linkNode" },
-            { "$ref": "#/$defs/dividerNode" },
-            { "$ref": "#/$defs/listNode" },
-            { "$ref": "#/$defs/cardNode" },
-            { "$ref": "#/$defs/buttonNode" },
-            { "$ref": "#/$defs/formNode" },
-            { "$ref": "#/$defs/modalNode" },
-            { "$ref": "#/$defs/tabsNode" },
-            { "$ref": "#/$defs/navNode" },
-            { "$ref": "#/$defs/dataTableNode" },
-            { "$ref": "#/$defs/iconNode" },
-            { "$ref": "#/$defs/repoComponentNode" }
+            {
+              "$ref": "#/$defs/stackNode"
+            },
+            {
+              "$ref": "#/$defs/gridNode"
+            },
+            {
+              "$ref": "#/$defs/sectionNode"
+            },
+            {
+              "$ref": "#/$defs/scrollAreaNode"
+            },
+            {
+              "$ref": "#/$defs/spacerNode"
+            },
+            {
+              "$ref": "#/$defs/headingNode"
+            },
+            {
+              "$ref": "#/$defs/textNode"
+            },
+            {
+              "$ref": "#/$defs/imageNode"
+            },
+            {
+              "$ref": "#/$defs/inputNode"
+            },
+            {
+              "$ref": "#/$defs/linkNode"
+            },
+            {
+              "$ref": "#/$defs/dividerNode"
+            },
+            {
+              "$ref": "#/$defs/listNode"
+            },
+            {
+              "$ref": "#/$defs/cardNode"
+            },
+            {
+              "$ref": "#/$defs/buttonNode"
+            },
+            {
+              "$ref": "#/$defs/formNode"
+            },
+            {
+              "$ref": "#/$defs/modalNode"
+            },
+            {
+              "$ref": "#/$defs/tabsNode"
+            },
+            {
+              "$ref": "#/$defs/navNode"
+            },
+            {
+              "$ref": "#/$defs/dataTableNode"
+            },
+            {
+              "$ref": "#/$defs/iconNode"
+            },
+            {
+              "$ref": "#/$defs/repoComponentNode"
+            }
           ]
         }
       ]
@@ -61,367 +168,928 @@
     "stackNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "children"],
+      "required": [
+        "id",
+        "type",
+        "children"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Stack" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Stack"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "gap": { "$ref": "#/$defs/gap" },
-            "padding": { "$ref": "#/$defs/size" },
-            "direction": { "type": "string", "enum": ["row", "column"] }
+            "gap": {
+              "$ref": "#/$defs/gap"
+            },
+            "padding": {
+              "$ref": "#/$defs/size"
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "row",
+                "column"
+              ]
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "gridNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "children"],
+      "required": [
+        "id",
+        "type",
+        "children"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Grid" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Grid"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
-            "gap": { "$ref": "#/$defs/gap" }
+            "columns": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "gap": {
+              "$ref": "#/$defs/gap"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "sectionNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "children"],
+      "required": [
+        "id",
+        "type",
+        "children"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Section" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Section"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "padding": { "$ref": "#/$defs/size" }
+            "padding": {
+              "$ref": "#/$defs/size"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "scrollAreaNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "children"],
+      "required": [
+        "id",
+        "type",
+        "children"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "ScrollArea" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "ScrollArea"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "height": { "type": "string" }
+            "height": {
+              "type": "string"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "spacerNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Spacer" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Spacer"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "size": { "$ref": "#/$defs/size" }
+            "size": {
+              "$ref": "#/$defs/size"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "headingNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Heading" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Heading"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "text": { "type": "string" },
-            "level": { "type": "integer", "minimum": 1, "maximum": 6 },
-            "variant": { "type": "string" }
+            "text": {
+              "type": "string"
+            },
+            "level": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            "variant": {
+              "type": "string"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "textNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Text" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Text"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "text": { "type": "string" },
-            "variant": { "type": "string", "enum": ["body", "muted"] }
+            "text": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string",
+              "enum": [
+                "body",
+                "muted"
+              ]
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "imageNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Image" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Image"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["src", "alt"],
+          "required": [
+            "src",
+            "alt"
+          ],
           "properties": {
-            "src": { "type": "string" },
-            "alt": { "type": "string" },
-            "width": { "type": "integer" },
-            "height": { "type": "integer" }
+            "src": {
+              "type": "string"
+            },
+            "alt": {
+              "type": "string"
+            },
+            "width": {
+              "type": "integer"
+            },
+            "height": {
+              "type": "integer"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "inputNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Input" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Input"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "placeholder": { "type": "string" },
-            "type": { "type": "string", "enum": ["text", "email", "password", "number", "tel", "url"] },
-            "label": { "type": "string" }
+            "placeholder": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "text",
+                "email",
+                "password",
+                "number",
+                "tel",
+                "url"
+              ]
+            },
+            "label": {
+              "type": "string"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "linkNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Link" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Link"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["href"],
+          "required": [
+            "href"
+          ],
           "properties": {
-            "href": { "type": "string" },
-            "text": { "type": "string" }
+            "href": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "dividerNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Divider" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Divider"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {}
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "listNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "List" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "List"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "items": { "type": "array", "items": { "type": "string" } },
-            "ordered": { "type": "boolean" }
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ordered": {
+              "type": "boolean"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "cardNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Card" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Card"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "padding": { "$ref": "#/$defs/size" }
+            "padding": {
+              "$ref": "#/$defs/size"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "buttonNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Button" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Button"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "label": { "type": "string" },
-            "intent": { "type": "string", "enum": ["primary", "secondary", "destructive", "outline", "ghost", "link"] },
-            "size": { "type": "string", "enum": ["default", "xs", "sm", "lg", "icon"] }
+            "label": {
+              "type": "string"
+            },
+            "intent": {
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "destructive",
+                "outline",
+                "ghost",
+                "link"
+              ]
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "default",
+                "xs",
+                "sm",
+                "lg",
+                "icon"
+              ]
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "formNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Form" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Form"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "action": { "type": "string" },
-            "method": { "type": "string", "enum": ["get", "post"] }
+            "action": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "get",
+                "post"
+              ]
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "modalNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Modal" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Modal"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "title": { "type": "string" },
-            "open": { "type": "boolean" }
+            "title": {
+              "type": "string"
+            },
+            "open": {
+              "type": "boolean"
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "tabsNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Tabs" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Tabs"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "tabs": { "type": "array", "items": { "type": "string" } }
+            "tabs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "navNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Nav" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Nav"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "orientation": { "type": "string", "enum": ["horizontal", "vertical"] },
-            "items": { "type": "array", "items": { "type": "string" } }
+            "orientation": {
+              "type": "string",
+              "enum": [
+                "horizontal",
+                "vertical"
+              ]
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     },
     "dataTableNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "DataTable" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "DataTable"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "columns": { "type": "array", "items": { "type": "string" } },
-            "rows": { "type": "array", "items": { "type": "string" } }
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "iconNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "type": { "const": "Icon" },
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Icon"
+        },
         "props": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "name": { "type": "string" },
-            "size": { "type": "integer", "minimum": 8, "maximum": 256 },
-            "color": { "type": "string" }
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 8,
+              "maximum": 256
+            },
+            "color": {
+              "type": "string"
+            }
           }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
         }
       }
     },
     "repoComponentNode": {
       "type": "object",
-      "required": ["id", "type"],
+      "required": [
+        "id",
+        "type"
+      ],
       "properties": {
-        "id": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
         "type": {
           "type": "string",
           "not": {
-            "enum": ["Stack", "Grid", "Section", "ScrollArea", "Spacer", "Heading", "Text", "Image", "Input", "Link", "Divider", "List", "Icon", "Card", "Button", "Form", "Modal", "Tabs", "Nav", "DataTable"]
+            "enum": [
+              "Stack",
+              "Grid",
+              "Section",
+              "ScrollArea",
+              "Spacer",
+              "Heading",
+              "Text",
+              "Image",
+              "Input",
+              "Link",
+              "Divider",
+              "List",
+              "Icon",
+              "Card",
+              "Button",
+              "Form",
+              "Modal",
+              "Tabs",
+              "Nav",
+              "DataTable"
+            ]
           }
         },
-        "props": { "type": "object" },
-        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+        "props": {
+          "type": "object"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/nodeStyle"
+        },
+        "interactions": {
+          "type": "object"
+        },
+        "dataSource": {
+          "type": "object"
+        }
       }
     }
   }

@@ -6,6 +6,7 @@ import { resolveGap, resolveSize } from "@/lib/studio/tokens";
 import type { Node } from "@/lib/studio/types";
 import { CONTAINER_TYPES } from "@/lib/studio/types";
 import { useEditorStore } from "@/lib/studio/store";
+import { resolvedStyleToCSS } from "@/lib/studio/resolve-token";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -219,6 +220,9 @@ function renderChildren(
 export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isRoot }: RenderNodeProps) {
   const props = node.props ?? {};
   const type = node.type;
+  const designTokens = useEditorStore((s) => s.designTokens);
+  const nodeStyleCSS = resolvedStyleToCSS(node.style, designTokens);
+  const hasNodeStyle = Object.keys(nodeStyleCSS).length > 0;
 
   let content: React.ReactNode;
 
@@ -587,6 +591,20 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
           )}
         </div>
       );
+    }
+  }
+
+  // Apply node.style as inline CSS (designer overrides)
+  // Use cloneElement to apply styles directly on the rendered element so they
+  // override Tailwind classes (inline styles beat class-based styles in specificity).
+  if (hasNodeStyle) {
+    if (React.isValidElement(content)) {
+      const existing = (content.props as Record<string, unknown>).style as React.CSSProperties | undefined;
+      content = React.cloneElement(content as React.ReactElement<Record<string, unknown>>, {
+        style: { ...existing, ...nodeStyleCSS },
+      });
+    } else {
+      content = <div style={nodeStyleCSS}>{content}</div>;
     }
   }
 

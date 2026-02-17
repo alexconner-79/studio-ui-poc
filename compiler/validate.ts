@@ -173,6 +173,11 @@ function validateNode(nodeUnknown: unknown, nodePath: string): void {
     fail(`${nodePath}.dataSource`, "must be an object");
   }
 
+  // Style field (optional object)
+  if (node.style !== undefined && !isRecord(node.style)) {
+    fail(`${nodePath}.style`, "must be an object");
+  }
+
   // Type-specific validation
   if (BUILT_IN_TYPES.has(type)) {
     validateBuiltInNode(node, type, nodePath);
