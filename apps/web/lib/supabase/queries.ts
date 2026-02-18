@@ -418,12 +418,12 @@ export async function addProjectMember(
   // Since we can't query auth.users directly with anon key, we check
   // if there's a matching profile. If not, create a pending invite.
   const { data: authLookup } = await supabase.rpc("lookup_user_by_email", { lookup_email: email }).single();
+  const lookupResult = authLookup as Record<string, unknown> | null;
 
-  if (authLookup?.id) {
-    // User exists, add as member
+  if (lookupResult?.id) {
     const { data, error } = await supabase
       .from("project_members")
-      .insert({ project_id: projectId, user_id: authLookup.id, role, invited_by: user.id })
+      .insert({ project_id: projectId, user_id: lookupResult.id as string, role, invited_by: user.id })
       .select()
       .single();
     if (error) return { error: error.message };

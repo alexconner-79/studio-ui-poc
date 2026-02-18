@@ -180,7 +180,7 @@ function validateNode(nodeUnknown: unknown, nodePath: string): void {
 // ---------------------------------------------------------------------------
 
 type PropDef = {
-  type: "string" | "number" | "boolean" | "array";
+  type: "string" | "number" | "boolean" | "array" | "object";
   required?: boolean;
   enum?: unknown[];
 };
