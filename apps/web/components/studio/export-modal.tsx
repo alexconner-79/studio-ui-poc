@@ -2,17 +2,28 @@
 
 import React, { useState } from "react";
 
-type ExportFormat = "zip" | "docker" | "vercel" | "github";
+type ExportFormat = "zip" | "docker" | "vercel" | "github" | "expo";
+type FrameworkTarget = "nextjs" | "vue" | "svelte" | "html" | "expo";
 
 const FORMATS: { key: ExportFormat; label: string; description: string }[] = [
   { key: "zip", label: "Download Zip", description: "Download the full project as a zip archive." },
+  { key: "expo", label: "Expo (RN)", description: "Zip with Expo app structure for React Native." },
   { key: "docker", label: "Docker", description: "Zip with Dockerfile and docker-compose.yml included." },
   { key: "vercel", label: "Vercel", description: "Zip with vercel.json config for easy deployment." },
   { key: "github", label: "GitHub", description: "Get instructions and a script to push to a new GitHub repo." },
 ];
 
+const FRAMEWORKS: { key: FrameworkTarget; label: string }[] = [
+  { key: "nextjs", label: "Next.js" },
+  { key: "vue", label: "Vue" },
+  { key: "svelte", label: "Svelte" },
+  { key: "html", label: "HTML/CSS" },
+  { key: "expo", label: "Expo (RN)" },
+];
+
 export function ExportModal({ onClose }: { onClose: () => void }) {
   const [format, setFormat] = useState<ExportFormat>("zip");
+  const [framework, setFramework] = useState<FrameworkTarget>("nextjs");
   const [loading, setLoading] = useState(false);
   const [githubResult, setGithubResult] = useState<{
     message: string;
@@ -30,7 +41,7 @@ export function ExportModal({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/studio/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ format }),
+        body: JSON.stringify({ format, framework }),
       });
 
       if (format === "github") {
@@ -84,6 +95,26 @@ export function ExportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-6 space-y-4">
+          {/* Framework selection */}
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Target Framework</label>
+            <div className="flex flex-wrap gap-1.5">
+              {FRAMEWORKS.map((fw) => (
+                <button
+                  key={fw.key}
+                  onClick={() => setFramework(fw.key)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    framework === fw.key
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                      : "border hover:bg-muted"
+                  }`}
+                >
+                  {fw.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Format selection */}
           <div className="grid grid-cols-2 gap-2">
             {FORMATS.map((f) => (

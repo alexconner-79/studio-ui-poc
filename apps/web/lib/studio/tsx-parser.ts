@@ -25,9 +25,10 @@ function nextId(prefix: string): string {
 // Map HTML tags to Studio node types
 const TAG_MAP: Record<string, string> = {
   h1: "Heading", h2: "Heading", h3: "Heading", h4: "Heading", h5: "Heading", h6: "Heading",
-  p: "Text", span: "Text",
+  p: "Text", span: "Text", label: "Label",
   img: "Image",
-  input: "Input", textarea: "Input",
+  input: "Input", textarea: "Textarea",
+  select: "Select",
   a: "Link",
   button: "Button",
   hr: "Divider",
@@ -36,9 +37,17 @@ const TAG_MAP: Record<string, string> = {
   section: "Section",
   form: "Form",
   table: "DataTable",
+  video: "Video",
+  iframe: "Embed",
+  blockquote: "Blockquote",
+  code: "Code", pre: "Code",
+  dialog: "Dialog",
+  details: "Accordion",
+  progress: "Progress",
+  svg: "SVG",
 };
 
-// Map shadcn/common component names
+// Map shadcn/common component names (and common React library components)
 const COMPONENT_MAP: Record<string, string> = {
   Button: "Button",
   Card: "Card",
@@ -46,6 +55,46 @@ const COMPONENT_MAP: Record<string, string> = {
   Separator: "Divider",
   ScrollArea: "ScrollArea",
   Tabs: "Tabs",
+  Avatar: "Avatar",
+  Badge: "Badge",
+  Checkbox: "Checkbox",
+  Switch: "Switch",
+  Slider: "Slider",
+  Select: "Select",
+  Textarea: "Textarea",
+  RadioGroup: "RadioGroup",
+  Alert: "Alert",
+  AlertDialog: "Dialog",
+  Dialog: "Dialog",
+  Drawer: "Drawer",
+  Sheet: "Sheet",
+  Tooltip: "Tooltip",
+  Popover: "Popover",
+  HoverCard: "HoverCard",
+  DropdownMenu: "DropdownMenu",
+  Accordion: "Accordion",
+  Breadcrumb: "Breadcrumb",
+  Pagination: "Pagination",
+  Progress: "Progress",
+  Skeleton: "Skeleton",
+  Spinner: "Spinner",
+  Toast: "Toast",
+  Carousel: "Carousel",
+  Calendar: "Calendar",
+  Label: "Label",
+  Form: "Form",
+  Modal: "Modal",
+  Sidebar: "Sidebar",
+  AppBar: "AppBar",
+  Container: "Container",
+  Box: "Box",
+  Stack: "Stack",
+  Grid: "Grid",
+  Spacer: "Spacer",
+  Icon: "Icon",
+  Divider: "Divider",
+  Nav: "Nav",
+  DataTable: "DataTable",
 };
 
 function extractTextContent(node: t.JSXElement | t.JSXFragment): string {
@@ -76,6 +125,149 @@ function getAttrValue(attrs: (t.JSXAttribute | t.JSXSpreadAttribute)[], name: st
 
 function getClassName(attrs: (t.JSXAttribute | t.JSXSpreadAttribute)[]): string {
   return getAttrValue(attrs, "className") || getAttrValue(attrs, "class") || "";
+}
+
+function extractCommonProps(
+  type: string,
+  attrs: (t.JSXAttribute | t.JSXSpreadAttribute)[],
+  text: string,
+  children: StudioNode[],
+): Record<string, unknown> {
+  const props: Record<string, unknown> = {};
+
+  switch (type) {
+    case "Button":
+      props.label = text || getAttrValue(attrs, "children") || "Button";
+      props.variant = getAttrValue(attrs, "variant") || "default";
+      break;
+    case "Heading": {
+      props.text = text || "Heading";
+      const level = getAttrValue(attrs, "level");
+      if (level) props.level = parseInt(level, 10);
+      break;
+    }
+    case "Text":
+      props.text = text || "Text";
+      break;
+    case "Input":
+      props.placeholder = getAttrValue(attrs, "placeholder") || "";
+      props.type = getAttrValue(attrs, "type") || "text";
+      break;
+    case "Image":
+      props.src = getAttrValue(attrs, "src") || "";
+      props.alt = getAttrValue(attrs, "alt") || "";
+      break;
+    case "Link":
+      props.href = getAttrValue(attrs, "href") || "#";
+      props.text = text || getAttrValue(attrs, "href") || "Link";
+      break;
+    case "Avatar":
+      props.src = getAttrValue(attrs, "src") || "";
+      props.fallback = getAttrValue(attrs, "fallback") || text || "A";
+      break;
+    case "Badge":
+      props.text = text || getAttrValue(attrs, "children") || "Badge";
+      props.variant = getAttrValue(attrs, "variant") || "default";
+      break;
+    case "Alert":
+      props.title = getAttrValue(attrs, "title") || text || "Alert";
+      break;
+    case "Progress":
+      props.value = parseInt(getAttrValue(attrs, "value") || "50", 10);
+      break;
+    case "Video":
+      props.src = getAttrValue(attrs, "src") || "";
+      props.controls = true;
+      break;
+    case "Embed":
+      props.src = getAttrValue(attrs, "src") || "";
+      break;
+    case "Stack":
+      props.direction = getAttrValue(attrs, "direction") || "column";
+      break;
+    case "Grid":
+      props.columns = getAttrValue(attrs, "columns") || "3";
+      break;
+    default:
+      break;
+  }
+
+  return props;
+}
+
+const TAILWIND_SPACING: Record<string, string> = {
+  "0": "0", "1": "0.25rem", "2": "0.5rem", "3": "0.75rem", "4": "1rem",
+  "5": "1.25rem", "6": "1.5rem", "8": "2rem", "10": "2.5rem", "12": "3rem",
+  "16": "4rem", "20": "5rem", "24": "6rem",
+};
+
+function inferStyleFromTailwind(className: string): Record<string, unknown> {
+  const style: Record<string, unknown> = {};
+  if (!className) return style;
+
+  const paddingMatch = className.match(/\bp-(\d+)\b/);
+  if (paddingMatch && TAILWIND_SPACING[paddingMatch[1]]) {
+    const val = TAILWIND_SPACING[paddingMatch[1]];
+    style.paddingTop = val; style.paddingRight = val;
+    style.paddingBottom = val; style.paddingLeft = val;
+  }
+
+  const pxMatch = className.match(/\bpx-(\d+)\b/);
+  if (pxMatch && TAILWIND_SPACING[pxMatch[1]]) {
+    style.paddingLeft = TAILWIND_SPACING[pxMatch[1]];
+    style.paddingRight = TAILWIND_SPACING[pxMatch[1]];
+  }
+  const pyMatch = className.match(/\bpy-(\d+)\b/);
+  if (pyMatch && TAILWIND_SPACING[pyMatch[1]]) {
+    style.paddingTop = TAILWIND_SPACING[pyMatch[1]];
+    style.paddingBottom = TAILWIND_SPACING[pyMatch[1]];
+  }
+
+  const marginMatch = className.match(/\bm-(\d+)\b/);
+  if (marginMatch && TAILWIND_SPACING[marginMatch[1]]) {
+    const val = TAILWIND_SPACING[marginMatch[1]];
+    style.marginTop = val; style.marginRight = val;
+    style.marginBottom = val; style.marginLeft = val;
+  }
+
+  const gapMatch = className.match(/\bgap-(\d+)\b/);
+  if (gapMatch && TAILWIND_SPACING[gapMatch[1]]) {
+    style.gap = TAILWIND_SPACING[gapMatch[1]];
+  }
+
+  const roundedMap: Record<string, string> = {
+    "rounded-none": "0", "rounded-sm": "0.125rem", "rounded": "0.25rem",
+    "rounded-md": "0.375rem", "rounded-lg": "0.5rem", "rounded-xl": "0.75rem",
+    "rounded-2xl": "1rem", "rounded-full": "9999px",
+  };
+  for (const [cls, val] of Object.entries(roundedMap)) {
+    if (className.includes(cls)) { style.borderRadius = val; break; }
+  }
+
+  if (/\btext-center\b/.test(className)) style.textAlign = "center";
+  if (/\btext-right\b/.test(className)) style.textAlign = "right";
+  if (/\btext-left\b/.test(className)) style.textAlign = "left";
+  if (/\bfont-bold\b/.test(className)) style.fontWeight = "700";
+  if (/\bfont-semibold\b/.test(className)) style.fontWeight = "600";
+  if (/\bfont-medium\b/.test(className)) style.fontWeight = "500";
+  if (/\bitalic\b/.test(className)) style.fontStyle = "italic";
+
+  if (/\bw-full\b/.test(className)) style.width = "100%";
+  if (/\bh-full\b/.test(className)) style.height = "100%";
+
+  if (/\bjustify-center\b/.test(className)) style.justifyContent = "center";
+  if (/\bjustify-between\b/.test(className)) style.justifyContent = "space-between";
+  if (/\bitems-center\b/.test(className)) style.alignItems = "center";
+
+  if (/\brelative\b/.test(className)) style.position = "relative";
+  if (/\babsolute\b/.test(className)) style.position = "absolute";
+  if (/\bfixed\b/.test(className)) style.position = "fixed";
+  if (/\bsticky\b/.test(className)) style.position = "sticky";
+
+  if (/\boverflow-hidden\b/.test(className)) style.overflow = "hidden";
+  if (/\boverflow-auto\b/.test(className)) style.overflow = "auto";
+
+  return style;
 }
 
 function inferDivType(className: string): string {
@@ -126,10 +318,13 @@ function convertElement(element: t.JSXElement): StudioNode | null {
   const componentType = COMPONENT_MAP[tagName];
   if (componentType) {
     const node: StudioNode = { id: nextId(componentType.toLowerCase()), type: componentType };
-    if (componentType === "Button") {
-      node.props = { label: text || getAttrValue(attrs, "children") || "Button" };
+    const extractedProps = extractCommonProps(componentType, attrs, text, childNodes);
+    if (Object.keys(extractedProps).length > 0) node.props = extractedProps;
+    if (childNodes.length > 0 && !["Button", "Text", "Heading"].includes(componentType)) {
+      node.children = childNodes;
     }
-    if (childNodes.length > 0) node.children = childNodes;
+    const style = inferStyleFromTailwind(className);
+    if (Object.keys(style).length > 0) (node as StudioNode & { style: Record<string, unknown> }).style = style;
     return node;
   }
 
@@ -148,6 +343,9 @@ function convertElement(element: t.JSXElement): StudioNode | null {
       case "Text":
         node.props = { text: text || "Text" };
         break;
+      case "Label":
+        node.props = { text: text || "Label" };
+        break;
       case "Image": {
         const src = getAttrValue(attrs, "src") || "";
         const alt = getAttrValue(attrs, "alt") || "";
@@ -160,6 +358,12 @@ function convertElement(element: t.JSXElement): StudioNode | null {
         node.props = { type, placeholder };
         break;
       }
+      case "Textarea":
+        node.props = { placeholder: getAttrValue(attrs, "placeholder") || "" };
+        break;
+      case "Select":
+        if (childNodes.length > 0) node.children = childNodes;
+        break;
       case "Link": {
         const href = getAttrValue(attrs, "href") || "#";
         node.props = { href, text: text || href };
@@ -178,9 +382,30 @@ function convertElement(element: t.JSXElement): StudioNode | null {
         if (childNodes.length > 0) node.children = childNodes;
         break;
       }
+      case "Video":
+        node.props = { src: getAttrValue(attrs, "src") || "", controls: true };
+        break;
+      case "Embed":
+        node.props = { src: getAttrValue(attrs, "src") || "" };
+        break;
+      case "Blockquote":
+        node.props = { text: text || "" };
+        break;
+      case "Code":
+        node.props = { code: text || "" };
+        break;
+      case "Progress":
+        node.props = { value: parseInt(getAttrValue(attrs, "value") || "50", 10) };
+        break;
+      case "SVG":
+        node.props = { viewBox: getAttrValue(attrs, "viewBox") || "0 0 24 24" };
+        break;
       default:
         if (childNodes.length > 0) node.children = childNodes;
     }
+
+    const style = inferStyleFromTailwind(className);
+    if (Object.keys(style).length > 0) (node as StudioNode & { style: Record<string, unknown> }).style = style;
 
     return node;
   }

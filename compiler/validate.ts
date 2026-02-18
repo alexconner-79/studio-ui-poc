@@ -25,26 +25,16 @@ const isGap = (value: unknown): value is Gap =>
   value === "xl";
 
 const BUILT_IN_TYPES = new Set([
-  "Stack",
-  "Grid",
-  "Section",
-  "ScrollArea",
-  "Spacer",
-  "Heading",
-  "Text",
-  "Image",
-  "Input",
-  "Link",
-  "Divider",
-  "List",
-  "Card",
-  "Button",
-  "Form",
-  "Modal",
-  "Tabs",
-  "Nav",
-  "DataTable",
-  "Icon",
+  "Stack", "Grid", "Section", "ScrollArea", "Spacer", "Box", "Container", "AspectRatio",
+  "Heading", "Text", "Image", "Input", "Link", "Divider", "List", "Icon", "SVG",
+  "Card", "Button", "Form", "Modal", "Tabs", "Nav", "DataTable", "CustomComponent",
+  "Textarea", "Select", "Checkbox", "RadioGroup", "Switch", "Slider", "Label", "FileUpload",
+  "Avatar", "Badge", "Chip", "Tooltip", "Progress", "Skeleton", "Stat", "Rating",
+  "Alert", "Toast", "Spinner", "Dialog", "Drawer", "Sheet",
+  "Breadcrumb", "Pagination", "Stepper", "Sidebar", "DropdownMenu", "AppBar",
+  "Accordion", "Popover", "HoverCard",
+  "Video", "Embed", "Blockquote", "Code", "Carousel", "Calendar", "Timeline",
+  "ComponentRef",
 ]);
 
 const fail = (path: string, message: string): never => {
@@ -277,10 +267,76 @@ const ALLOWED_PROPS: Record<string, Record<string, PropDef>> = {
     size: { type: "number" },
     color: { type: "string" },
   },
+  // D2a
+  Box: {},
+  SVG: {
+    code: { type: "string" },
+    width: { type: "number" },
+    height: { type: "number" },
+  },
+  CustomComponent: {
+    importPath: { type: "string", required: true },
+    componentName: { type: "string", required: true },
+    propValues: { type: "string" },
+  },
+  // D2b
+  Textarea: { placeholder: { type: "string" }, rows: { type: "number" }, label: { type: "string" } },
+  Select: { placeholder: { type: "string" }, options: { type: "array" }, label: { type: "string" } },
+  Checkbox: { label: { type: "string" }, checked: { type: "boolean" } },
+  RadioGroup: { options: { type: "array" }, label: { type: "string" }, defaultValue: { type: "string" } },
+  Switch: { label: { type: "string" }, checked: { type: "boolean" } },
+  Slider: { min: { type: "number" }, max: { type: "number" }, step: { type: "number" }, defaultValue: { type: "number" }, label: { type: "string" } },
+  Label: { text: { type: "string" }, htmlFor: { type: "string" } },
+  FileUpload: { accept: { type: "string" }, label: { type: "string" } },
+  // D2c
+  Avatar: { src: { type: "string" }, fallback: { type: "string" }, size: { type: "number" } },
+  Badge: { text: { type: "string" }, variant: { type: "string", enum: ["default", "secondary", "destructive", "outline"] } },
+  Chip: { text: { type: "string" }, removable: { type: "boolean" } },
+  Tooltip: { content: { type: "string" }, side: { type: "string", enum: ["top", "bottom", "left", "right"] } },
+  Progress: { value: { type: "number" }, max: { type: "number" }, label: { type: "string" } },
+  Skeleton: { width: { type: "string" }, height: { type: "string" }, variant: { type: "string", enum: ["text", "circular", "rectangular"] } },
+  Stat: { label: { type: "string" }, value: { type: "string" }, change: { type: "string" }, trend: { type: "string", enum: ["up", "down", "neutral"] } },
+  Rating: { value: { type: "number" }, max: { type: "number" }, readonly: { type: "boolean" } },
+  // D2d
+  Alert: { title: { type: "string" }, description: { type: "string" }, variant: { type: "string", enum: ["default", "info", "success", "warning", "error"] } },
+  Toast: { title: { type: "string" }, description: { type: "string" }, variant: { type: "string", enum: ["default", "success", "error"] } },
+  Spinner: { size: { type: "number" }, label: { type: "string" } },
+  Dialog: { title: { type: "string" }, description: { type: "string" }, open: { type: "boolean" } },
+  Drawer: { title: { type: "string" }, side: { type: "string", enum: ["left", "right"] }, open: { type: "boolean" } },
+  Sheet: { title: { type: "string" }, open: { type: "boolean" } },
+  // D2e
+  Breadcrumb: { items: { type: "array" }, separator: { type: "string" } },
+  Pagination: { totalPages: { type: "number" }, currentPage: { type: "number" } },
+  Stepper: { steps: { type: "array" }, currentStep: { type: "number" } },
+  Sidebar: { items: { type: "array" }, collapsed: { type: "boolean" } },
+  DropdownMenu: { trigger: { type: "string" }, items: { type: "array" } },
+  AppBar: { title: { type: "string" }, sticky: { type: "boolean" } },
+  // D2f
+  Container: { maxWidth: { type: "string", enum: ["sm", "md", "lg", "xl", "2xl", "full"] }, padding: { type: "string" } },
+  AspectRatio: { ratio: { type: "string", enum: ["16/9", "4/3", "1/1", "21/9"] } },
+  Accordion: { items: { type: "array" }, multiple: { type: "boolean" } },
+  Popover: { trigger: { type: "string" } },
+  HoverCard: { trigger: { type: "string" } },
+  // D2g
+  Video: { src: { type: "string", required: true }, poster: { type: "string" }, controls: { type: "boolean" }, autoplay: { type: "boolean" }, loop: { type: "boolean" } },
+  Embed: { src: { type: "string", required: true }, title: { type: "string" }, height: { type: "string" } },
+  Blockquote: { text: { type: "string" }, cite: { type: "string" } },
+  Code: { code: { type: "string" }, language: { type: "string" }, showLineNumbers: { type: "boolean" } },
+  Carousel: { autoplay: { type: "boolean" }, interval: { type: "number" } },
+  Calendar: { mode: { type: "string", enum: ["single", "range"] } },
+  Timeline: { items: { type: "array" } },
+  ComponentRef: { ref: { type: "string", required: true }, overrides: { type: "object" }, styleOverrides: { type: "object" }, descendants: { type: "object" }, slotContent: { type: "object" } },
 };
 
-// Container types that require children
-const CONTAINER_TYPES = new Set(["Stack", "Grid", "Section", "ScrollArea", "Card", "Form", "Modal", "Tabs", "Nav"]);
+// Container types that accept children (soft requirement: warn but don't fail)
+const CONTAINER_TYPES = new Set([
+  "Stack", "Grid", "Section", "ScrollArea", "Card", "Form", "Modal", "Tabs", "Nav",
+  "Box", "Container", "AspectRatio", "CustomComponent",
+  "Tooltip", "Alert", "Dialog", "Drawer", "Sheet",
+  "Stepper", "Sidebar", "AppBar",
+  "Accordion", "Popover", "HoverCard",
+  "Carousel", "Timeline",
+]);
 
 function validateBuiltInNode(
   node: UnknownRecord,

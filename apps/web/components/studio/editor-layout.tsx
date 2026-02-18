@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
   type DragEndEvent,
   type DragStartEvent,
+  type Modifier,
   PointerSensor,
   useSensor,
   useSensors,
@@ -28,6 +29,24 @@ import { DSWizard } from "./ds-wizard";
 import { ThemeEditor } from "./theme-editor";
 import { A11yPanel } from "./a11y-panel";
 import { ExportModal } from "./export-modal";
+import { CanvasErrorBoundary } from "./error-boundary";
+import { WelcomeModal } from "./onboarding/welcome-modal";
+import { TooltipGuide } from "./onboarding/tooltip-guide";
+import { VersionHistory } from "./version-history";
+
+// -------------------------------------------------------------------------
+// Snap-to-grid modifier (8px grid)
+// -------------------------------------------------------------------------
+
+const GRID_SIZE = 8;
+
+const snapToGridModifier: Modifier = ({ transform }) => {
+  return {
+    ...transform,
+    x: Math.round(transform.x / GRID_SIZE) * GRID_SIZE,
+    y: Math.round(transform.y / GRID_SIZE) * GRID_SIZE,
+  };
+};
 
 // -------------------------------------------------------------------------
 // Helpers
@@ -67,12 +86,16 @@ function TopBar({
   onBack,
   onAIGenerate,
   onExport,
+  onHistory,
+  saving,
 }: {
   screenName: string;
   onSave: () => void;
   onBack: () => void;
   onAIGenerate: () => void;
   onExport: () => void;
+  onHistory: () => void;
+  saving?: boolean;
 }) {
   const dirty = useEditorStore((s) => s.dirty);
   const spec = useEditorStore((s) => s.spec);
@@ -80,6 +103,8 @@ function TopBar({
   const redo = useEditorStore((s) => s.redo);
   const activeFrames = useEditorStore((s) => s.activeFrames);
   const toggleFrame = useEditorStore((s) => s.toggleFrame);
+  const previewMode = useEditorStore((s) => s.previewMode);
+  const togglePreviewMode = useEditorStore((s) => s.togglePreviewMode);
 
   const handlePreview = () => {
     if (!spec) return;
@@ -88,7 +113,7 @@ function TopBar({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
+    <div className={`flex items-center justify-between px-4 py-2 border-b ${previewMode ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800" : "bg-background"}`}>
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
@@ -97,8 +122,11 @@ function TopBar({
           &larr; Screens
         </button>
         <span className="text-sm font-semibold">{screenName}</span>
-        {dirty && (
+        {dirty && !previewMode && (
           <span className="text-xs text-amber-500">Unsaved changes</span>
+        )}
+        {previewMode && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Preview Mode</span>
         )}
       </div>
 
@@ -125,47 +153,86 @@ function TopBar({
       </div>
 
       <div className="flex items-center gap-2">
+        {!previewMode && (
+          <>
+            <button
+              onClick={onAIGenerate}
+              className="px-3 py-1 text-xs border border-purple-400/50 text-purple-600 dark:text-purple-400 rounded hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors"
+              title="Generate UI with AI"
+            >
+              AI Generate
+            </button>
+            <button
+              onClick={undo}
+              className="px-2 py-1 text-xs border rounded hover:bg-accent transition-colors"
+              title="Undo (Ctrl+Z)"
+            >
+              Undo
+            </button>
+            <button
+              onClick={redo}
+              className="px-2 py-1 text-xs border rounded hover:bg-accent transition-colors"
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              Redo
+            </button>
+            <button
+              onClick={onHistory}
+              className="px-2 py-1 text-xs border rounded hover:bg-accent transition-colors"
+              title="Version History"
+            >
+              History
+            </button>
+          </>
+        )}
         <button
-          onClick={onAIGenerate}
-          className="px-3 py-1 text-xs border border-purple-400/50 text-purple-600 dark:text-purple-400 rounded hover:bg-purple-50 dark:hover:bg-purple-950 transition-colors"
-          title="Generate UI with AI"
+          data-guide="preview"
+          onClick={togglePreviewMode}
+          className={`px-3 py-1 text-xs rounded transition-colors ${
+            previewMode
+              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+              : "border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          }`}
+          title={`${previewMode ? "Exit" : "Enter"} Preview Mode (Cmd+P)`}
         >
-          AI Generate
+          {previewMode ? "Exit Preview" : "Preview"}
         </button>
-        <button
-          onClick={undo}
-          className="px-2 py-1 text-xs border rounded hover:bg-accent transition-colors"
-          title="Undo (Ctrl+Z)"
-        >
-          Undo
-        </button>
-        <button
-          onClick={redo}
-          className="px-2 py-1 text-xs border rounded hover:bg-accent transition-colors"
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          Redo
-        </button>
-        <button
-          onClick={handlePreview}
-          className="px-3 py-1 text-xs border rounded hover:bg-accent transition-colors"
-          title="Open compiled page in new tab"
-        >
-          Preview
-        </button>
-        <button
-          onClick={onExport}
-          className="px-3 py-1 text-xs border rounded hover:bg-accent transition-colors"
-          title="Export project"
-        >
-          Export
-        </button>
-        <button
-          onClick={onSave}
-          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Save &amp; Compile
-        </button>
+        {!previewMode && (
+          <>
+            <button
+              onClick={handlePreview}
+              className="px-3 py-1 text-xs border rounded hover:bg-accent transition-colors"
+              title="Open compiled page in new tab"
+            >
+              Open Tab
+            </button>
+            <button
+              onClick={onExport}
+              className="px-3 py-1 text-xs border rounded hover:bg-accent transition-colors"
+              title="Export project"
+            >
+              Export
+            </button>
+            <button
+              data-guide="save"
+              onClick={onSave}
+              disabled={saving}
+              className={`px-3 py-1 text-xs rounded transition-colors flex items-center gap-1.5 ${
+                saving
+                  ? "bg-blue-400 text-white cursor-wait"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {saving && (
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {saving ? "Saving..." : "Save & Compile"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -198,6 +265,8 @@ export function EditorLayout({
   const groupIntoStack = useEditorStore((s) => s.groupIntoStack);
   const setRenamingNodeId = useEditorStore((s) => s.setRenamingNodeId);
   const addCustomComponent = useEditorStore((s) => s.addCustomComponent);
+  const previewMode = useEditorStore((s) => s.previewMode);
+  const togglePreviewMode = useEditorStore((s) => s.togglePreviewMode);
 
   const [draggedType, setDraggedType] = React.useState<string | null>(null);
   const [draggedNodeId, setDraggedNodeId] = React.useState<string | null>(null);
@@ -213,7 +282,33 @@ export function EditorLayout({
   const [showThemeEditor, setShowThemeEditor] = React.useState(false);
   const [showA11y, setShowA11y] = React.useState(false);
   const [showExport, setShowExport] = React.useState(false);
+  const [showVersionHistory, setShowVersionHistory] = React.useState(false);
   const [compileError, setCompileError] = React.useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = React.useState(false);
+  const [showGuide, setShowGuide] = React.useState(false);
+
+  // Show welcome modal on first visit (checks localStorage)
+  React.useEffect(() => {
+    const hasVisited = localStorage.getItem("studio-onboarded");
+    if (!hasVisited) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const handleDismissWelcome = React.useCallback(() => {
+    localStorage.setItem("studio-onboarded", "true");
+    setShowWelcome(false);
+    // Show tooltip guide after welcome modal
+    const hasGuided = localStorage.getItem("studio-guided");
+    if (!hasGuided) {
+      setTimeout(() => setShowGuide(true), 500);
+    }
+  }, []);
+
+  const handleCompleteGuide = React.useCallback(() => {
+    localStorage.setItem("studio-guided", "true");
+    setShowGuide(false);
+  }, []);
 
   const setSpec = useEditorStore((s) => s.setSpec);
 
@@ -232,6 +327,14 @@ export function EditorLayout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ spec }),
       });
+
+      // Auto-snapshot version on save
+      fetch("/api/studio/versions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ screenName, spec }),
+      }).catch(() => {});
+
       const compileRes = await fetch("/api/studio/compile", { method: "POST" });
       const compileData = await compileRes.json();
       if (compileData.warnings && compileData.warnings.length > 0) {
@@ -248,6 +351,21 @@ export function EditorLayout({
     }
   }, [spec, screenName, markClean]);
 
+  // Auto-save: debounced 3 seconds after last change
+  const dirty = useEditorStore((s) => s.dirty);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!dirty) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSave();
+    }, 3000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [dirty, handleSave]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -261,6 +379,22 @@ export function EditorLayout({
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
+        return;
+      }
+
+      // Cmd/Ctrl+P -- toggle preview mode
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") {
+        e.preventDefault();
+        togglePreviewMode();
+        return;
+      }
+
+      // In preview mode, only Escape exits preview; block all other shortcuts
+      if (useEditorStore.getState().previewMode) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          togglePreviewMode();
+        }
         return;
       }
 
@@ -338,7 +472,7 @@ export function EditorLayout({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo, removeNode, selectNode, selectedNodeId, spec, copyNode, pasteNode, duplicateNode, handleSave, groupIntoStack, setRenamingNodeId]);
+  }, [undo, redo, removeNode, selectNode, selectedNodeId, spec, copyNode, pasteNode, duplicateNode, handleSave, groupIntoStack, setRenamingNodeId, togglePreviewMode]);
 
   // Build a new node from a palette type
   const buildNewNode = useCallback(
@@ -519,7 +653,7 @@ export function EditorLayout({
     <div
       className="flex flex-col h-screen"
       onContextMenu={(e) => {
-        // Only show context menu if right-clicking on the canvas area
+        if (previewMode) return;
         const target = e.target as HTMLElement;
         if (target.closest("[data-studio-node]")) {
           e.preventDefault();
@@ -533,26 +667,31 @@ export function EditorLayout({
         onBack={onBack}
         onAIGenerate={() => setShowAIModal(true)}
         onExport={() => setShowExport(true)}
+        onHistory={() => setShowVersionHistory(true)}
+        saving={saving}
       />
       <DndContext
         sensors={sensors}
+        modifiers={[snapToGridModifier]}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <div className="flex flex-1 overflow-hidden">
-          {/* Left sidebar -- Component palette + Layers + Fonts */}
-          <div className="w-60 border-r bg-background overflow-hidden flex-shrink-0 flex flex-col">
-            <div className="flex-1 overflow-y-auto">
-              <ComponentPalette />
-              <NodeTree />
-              <FontPicker />
-              <AssetBrowser />
+          {/* Left sidebar -- Component palette + Layers + Fonts (hidden in preview mode) */}
+          {!previewMode && (
+            <div data-guide="palette" className="w-60 border-r bg-background overflow-hidden flex-shrink-0 flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <ComponentPalette />
+                <NodeTree />
+                <FontPicker />
+                <AssetBrowser />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Centre -- Canvas */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            {compileError && (
+          <div data-guide="canvas" className="flex-1 overflow-hidden flex flex-col">
+            {compileError && !previewMode && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm bg-amber-50 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200">
                 <span className="font-medium">Compile warning:</span>
                 <span className="flex-1 truncate">{compileError}</span>
@@ -564,16 +703,21 @@ export function EditorLayout({
                 </button>
               </div>
             )}
-            <EditorCanvas
-              isDragging={!!draggedType || !!draggedNodeId || !!draggedAssetUrl || !!draggedComposite}
-              activeFrames={activeFrames}
-            />
+            <CanvasErrorBoundary>
+              <EditorCanvas
+                isDragging={!previewMode && (!!draggedType || !!draggedNodeId || !!draggedAssetUrl || !!draggedComposite)}
+                activeFrames={activeFrames}
+                previewMode={previewMode}
+              />
+            </CanvasErrorBoundary>
           </div>
 
-          {/* Right sidebar -- Property panel */}
-          <div className="w-72 border-l bg-background overflow-hidden flex-shrink-0">
-            <PropertyPanel />
-          </div>
+          {/* Right sidebar -- Property panel (hidden in preview mode) */}
+          {!previewMode && (
+            <div data-guide="properties" className="w-72 border-l bg-background overflow-hidden flex-shrink-0">
+              <PropertyPanel />
+            </div>
+          )}
         </div>
 
         {/* Drag overlay */}
@@ -702,6 +846,28 @@ export function EditorLayout({
       {/* Export modal */}
       {showExport && (
         <ExportModal onClose={() => setShowExport(false)} />
+      )}
+
+      {/* Version history panel */}
+      {showVersionHistory && (
+        <VersionHistory
+          screenName={screenName}
+          currentSpec={spec as unknown as Record<string, unknown>}
+          onRestore={(restoredSpec) => {
+            setSpec(restoredSpec as import("@/lib/studio/types").ScreenSpec, screenName);
+          }}
+          onClose={() => setShowVersionHistory(false)}
+        />
+      )}
+
+      {/* Onboarding: Welcome modal */}
+      {showWelcome && (
+        <WelcomeModal onDismiss={handleDismissWelcome} />
+      )}
+
+      {/* Onboarding: Tooltip guide */}
+      {showGuide && !previewMode && (
+        <TooltipGuide onComplete={handleCompleteGuide} />
       )}
     </div>
   );

@@ -19,6 +19,11 @@ export default function StudioEditorPage() {
 
     fetch(`/api/studio/screens/${screenName}`)
       .then(async (res) => {
+        const contentType = res.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          setError(`API returned non-JSON response (${res.status}). Make sure the Studio server is running.`);
+          return;
+        }
         if (!res.ok) {
           const data = await res.json();
           setError(data.error ?? "Failed to load screen");

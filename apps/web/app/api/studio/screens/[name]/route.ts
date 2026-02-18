@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { isSupabaseConfigured, getScreen, upsertScreen, createVersion } from "@/lib/supabase/queries";
 
 const SCREENS_DIR = path.resolve(process.cwd(), "../../spec/screens");
 
 type Params = { params: Promise<{ name: string }> };
 
 /** GET /api/studio/screens/[name] -- get a single screen spec */
-export async function GET(_request: Request, context: Params) {
+export async function GET(request: Request, context: Params) {
   try {
     const { name } = await context.params;
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
+
+    // Supabase mode
+    if (isSupabaseConfigured() && projectId) {
+      const screen = await getScreen(projectId, name);
+      if (!screen) {
+        return NextResponse.json({ error: `Screen "${name}" not found` }, { status: 404 });
+      }
+      return NextResponse.json({ name: screen.name, spec: screen.spec });
+    }
+
+    // Filesystem mode
     const filePath = path.join(SCREENS_DIR, `${name}.screen.json`);
 
     if (!fs.existsSync(filePath)) {
@@ -33,9 +47,8 @@ export async function GET(_request: Request, context: Params) {
 export async function PUT(request: Request, context: Params) {
   try {
     const { name } = await context.params;
-    const filePath = path.join(SCREENS_DIR, `${name}.screen.json`);
     const body = await request.json();
-    const { spec } = body as { spec: unknown };
+    const { spec, projectId } = body as { spec: unknown; projectId?: string };
 
     if (!spec || typeof spec !== "object") {
       return NextResponse.json(
@@ -44,6 +57,19 @@ export async function PUT(request: Request, context: Params) {
       );
     }
 
+    // Supabase mode
+    if (isSupabaseConfigured() && projectId) {
+      const screen = await upsertScreen(projectId, name, spec as Record<string, unknown>);
+      if (!screen) {
+        return NextResponse.json({ error: "Failed to save screen" }, { status: 500 });
+      }
+      // Auto-snapshot version on save
+      await createVersion(screen.id, spec as Record<string, unknown>);
+      return NextResponse.json({ name, spec });
+    }
+
+    // Filesystem mode
+    const filePath = path.join(SCREENS_DIR, `${name}.screen.json`);
     fs.mkdirSync(SCREENS_DIR, { recursive: true });
     fs.writeFileSync(
       filePath,

@@ -17,7 +17,9 @@
         "id": "heading_1",
         "type": "Heading",
         "props": {
-          "text": "Dashboard"
+          "text": "Dashboard",
+          "variant": "hero",
+          "level": 2
         }
       },
       {

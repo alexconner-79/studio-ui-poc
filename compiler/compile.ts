@@ -4,27 +4,22 @@ import * as prettier from "prettier";
 
 import { loadConfig } from "./config";
 import { discoverScreens } from "./discover";
-import { validateSpec } from "./validate";
-import type { Emitter, EmittedFile } from "./emitters/types";
-import { nextjsEmitter } from "./emitters/nextjs";
-import { vueEmitter } from "./emitters/vue";
+import {
+  compileFromMemory,
+  type CompileResult,
+  type CompileError,
+  type CompileFromMemoryInput,
+} from "./compile-memory";
+import type { EmittedFile } from "./emitters/types";
 
+// Re-export pure-function compiler for API routes and external consumers
+export { compileFromMemory } from "./compile-memory";
+export type { CompileFromMemoryInput, CompileResult, CompileError } from "./compile-memory";
 export type { EmittedFile };
 
-const EMITTERS: Record<string, Emitter> = {
-  nextjs: nextjsEmitter,
-  vue: vueEmitter,
-};
-
-function getEmitter(framework: string): Emitter {
-  const emitter = EMITTERS[framework];
-  if (!emitter) {
-    throw new Error(
-      `No emitter for framework "${framework}". Available: ${Object.keys(EMITTERS).join(", ")}`
-    );
-  }
-  return emitter;
-}
+// ---------------------------------------------------------------------------
+// Helpers (filesystem + formatting)
+// ---------------------------------------------------------------------------
 
 function ensureDirForFile(absFilePath: string) {
   const dir = path.dirname(absFilePath);
@@ -43,64 +38,30 @@ async function formatWithPrettier(contents: string, absFilePath: string) {
   });
 }
 
-export type CompileError = {
-  filePath: string;
-  message: string;
-};
-
-export type CompileResult = {
-  files: EmittedFile[];
-  errors: CompileError[];
-  summary: { succeeded: number; failed: number; skipped: number };
-};
+// ---------------------------------------------------------------------------
+// Filesystem-based compiler: reads from disk, writes to disk.
+// Used by the CLI (`ts-node compiler/compile.ts` / `pnpm compile`).
+// ---------------------------------------------------------------------------
 
 export async function compile(options?: { write?: boolean }): Promise<CompileResult> {
   const studioConfig = loadConfig();
-  const emitter = getEmitter(studioConfig.framework);
   const screens = discoverScreens();
   const shouldWrite = options?.write !== false;
 
-  const allFiles: EmittedFile[] = [];
-  const componentNames: string[] = [];
-  const errors: CompileError[] = [];
+  // Delegate to the pure-function compiler
+  const specs = screens.map(({ filePath, spec }) => ({ name: filePath, spec }));
+  const result = compileFromMemory({ specs, config: studioConfig });
+
+  // Format with prettier and optionally write to disk
+  const formattedFiles: EmittedFile[] = [];
   let skipped = 0;
 
-  // Per-screen error isolation: validate and emit each screen independently
-  for (const { filePath, spec } of screens) {
-    try {
-      validateSpec(spec);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      errors.push({ filePath, message });
-      console.error(`Validation failed for ${filePath}: ${message}`);
-      continue;
-    }
-
-    try {
-      const emitted = emitter.emitScreen(spec, studioConfig);
-      allFiles.push(...emitted.files);
-      componentNames.push(emitted.componentName);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      errors.push({ filePath, message: `Emit failed: ${message}` });
-      console.error(`Emit failed for ${filePath}: ${message}`);
-    }
-  }
-
-  // Generate barrel index for all successfully compiled screens
-  const indexFile = emitter.emitBarrelIndex(componentNames, studioConfig);
-  allFiles.push(indexFile);
-
-  // Format and optionally write (with output diffing)
-  const formattedFiles: EmittedFile[] = [];
-
-  for (const file of allFiles) {
+  for (const file of result.files) {
     const absPath = path.resolve(process.cwd(), file.path);
     const formatted = await formatWithPrettier(file.contents, absPath);
     formattedFiles.push({ path: file.path, contents: formatted });
 
     if (shouldWrite) {
-      // Output diffing: skip write if file content is identical
       if (fs.existsSync(absPath)) {
         const existing = fs.readFileSync(absPath, "utf8");
         if (existing === formatted) {
@@ -114,20 +75,22 @@ export async function compile(options?: { write?: boolean }): Promise<CompileRes
     }
   }
 
-  const summary = {
-    succeeded: componentNames.length,
-    failed: errors.length,
-    skipped,
-  };
-
-  if (errors.length > 0) {
-    console.error(`\nCompile completed with ${errors.length} error(s):`);
-    for (const err of errors) {
+  if (result.errors.length > 0) {
+    console.error(`\nCompile completed with ${result.errors.length} error(s):`);
+    for (const err of result.errors) {
       console.error(`  - ${err.filePath}: ${err.message}`);
     }
   }
 
-  return { files: formattedFiles, errors, summary };
+  return {
+    files: formattedFiles,
+    errors: result.errors,
+    summary: {
+      succeeded: result.summary.succeeded,
+      failed: result.summary.failed,
+      skipped,
+    },
+  };
 }
 
 // Allow `ts-node compiler/compile.ts`

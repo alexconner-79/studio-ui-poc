@@ -17,6 +17,9 @@ export type BuiltInNodeType =
   | "Section"
   | "ScrollArea"
   | "Spacer"
+  | "Box"
+  | "Container"
+  | "AspectRatio"
   // Content
   | "Heading"
   | "Text"
@@ -26,6 +29,7 @@ export type BuiltInNodeType =
   | "Divider"
   | "List"
   | "Icon"
+  | "SVG"
   // Components
   | "Card"
   | "Button"
@@ -33,7 +37,53 @@ export type BuiltInNodeType =
   | "Modal"
   | "Tabs"
   | "Nav"
-  | "DataTable";
+  | "DataTable"
+  | "CustomComponent"
+  // Forms
+  | "Textarea"
+  | "Select"
+  | "Checkbox"
+  | "RadioGroup"
+  | "Switch"
+  | "Slider"
+  | "Label"
+  | "FileUpload"
+  // Data Display
+  | "Avatar"
+  | "Badge"
+  | "Chip"
+  | "Tooltip"
+  | "Progress"
+  | "Skeleton"
+  | "Stat"
+  | "Rating"
+  // Feedback
+  | "Alert"
+  | "Toast"
+  | "Spinner"
+  | "Dialog"
+  | "Drawer"
+  | "Sheet"
+  // Navigation
+  | "Breadcrumb"
+  | "Pagination"
+  | "Stepper"
+  | "Sidebar"
+  | "DropdownMenu"
+  | "AppBar"
+  // Surfaces
+  | "Accordion"
+  | "Popover"
+  | "HoverCard"
+  // Media & Typography
+  | "Video"
+  | "Embed"
+  | "Blockquote"
+  | "Code"
+  | "Carousel"
+  | "Calendar"
+  | "Timeline"
+  | "ComponentRef";
 
 export type NodeProps = Record<string, unknown>;
 
@@ -78,6 +128,7 @@ export type NodeStyle = {
   fontStyle?: "normal" | "italic";
   lineHeight?: StyleValue;
   letterSpacing?: StyleValue;
+  wordSpacing?: StyleValue;
   textAlign?: "left" | "center" | "right" | "justify";
   textDecoration?: "none" | "underline" | "line-through";
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
@@ -138,6 +189,12 @@ export type NodeStyle = {
   zIndex?: number;
 };
 
+/** Per-breakpoint style overrides. Keys are breakpoint names; values override NodeStyle. */
+export type ResponsiveOverrides = {
+  tablet?: Partial<NodeStyle>;
+  mobile?: Partial<NodeStyle>;
+};
+
 export type Node = {
   id: string;
   type: string; // BuiltInNodeType or repo component name
@@ -146,6 +203,7 @@ export type Node = {
   interactions?: NodeInteractions;
   dataSource?: DataSource;
   style?: NodeStyle;
+  responsive?: ResponsiveOverrides;
 };
 
 // ---------------------------------------------------------------------------

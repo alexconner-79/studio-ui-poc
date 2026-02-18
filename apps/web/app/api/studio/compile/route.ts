@@ -1,76 +1,161 @@
 import { NextResponse } from "next/server";
-import { exec } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { compileFromMemory } from "../../../../../../compiler/compile-memory";
+import type { StudioConfig } from "../../../../../../compiler/config";
+import type { ScreenSpec } from "../../../../../../compiler/types";
+import { isSupabaseConfigured, listScreens, getProject } from "@/lib/supabase/queries";
 
 const ROOT_DIR = path.resolve(process.cwd(), "../..");
 
-function runCommand(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    exec(cmd, { cwd, timeout: 30000 }, (error, stdout, stderr) => {
-      if (error) {
-        reject(Object.assign(error, { stdout, stderr }));
-      } else {
-        resolve({ stdout, stderr });
-      }
-    });
-  });
+function loadStudioConfig(): StudioConfig {
+  const configPath = path.join(ROOT_DIR, "studio.config.json");
+  const raw = fs.readFileSync(configPath, "utf8");
+  return JSON.parse(raw) as StudioConfig;
 }
 
-/** POST /api/studio/compile -- trigger the compiler */
-export async function POST() {
+function loadScreenSpecsFromDisk(screensDir: string): { name: string; spec: ScreenSpec }[] {
+  const absDir = path.resolve(ROOT_DIR, screensDir);
+  if (!fs.existsSync(absDir)) return [];
+
+  return fs
+    .readdirSync(absDir)
+    .filter((f) => f.endsWith(".screen.json"))
+    .sort()
+    .map((f) => {
+      const raw = fs.readFileSync(path.join(absDir, f), "utf8");
+      return { name: f, spec: JSON.parse(raw) as ScreenSpec };
+    });
+}
+
+async function writeCompiledFiles(files: { path: string; contents: string }[]): Promise<{
+  written: number;
+  skipped: number;
+}> {
+  let written = 0;
+  let skipped = 0;
+
+  let prettier: typeof import("prettier") | null = null;
   try {
-    // Prefer pre-compiled JS for speed; fall back to ts-node
-    const distPath = path.join(ROOT_DIR, "dist/compiler/compile.js");
-    const cmd = fs.existsSync(distPath)
-      ? "node dist/compiler/compile.js"
-      : "npx ts-node compiler/compile.ts";
+    prettier = await import("prettier");
+  } catch {
+    // prettier not available -- write unformatted
+  }
 
-    const { stdout, stderr } = await runCommand(cmd, ROOT_DIR);
+  for (const file of files) {
+    const absPath = path.resolve(ROOT_DIR, file.path);
+    const dir = path.dirname(absPath);
+    fs.mkdirSync(dir, { recursive: true });
 
-    // Parse output for any per-screen error lines
-    const combined = (stdout || "") + "\n" + (stderr || "");
-    const errorLines = combined
-      .split("\n")
-      .filter((l) => l.includes("Validation failed") || l.includes("Emit failed"));
+    let contents = file.contents;
 
-    if (errorLines.length > 0) {
+    // Format with prettier if available
+    if (prettier) {
+      try {
+        const prettierConfig = (await prettier.resolveConfig(ROOT_DIR)) ?? {};
+        const isTsx = absPath.endsWith(".tsx");
+        const isTs = absPath.endsWith(".ts");
+        const parser = isTsx || isTs ? "typescript" : undefined;
+        contents = await prettier.format(contents, {
+          ...prettierConfig,
+          filepath: absPath,
+          ...(parser ? { parser } : {}),
+        });
+      } catch {
+        // formatting failed -- use raw output
+      }
+    }
+
+    if (fs.existsSync(absPath)) {
+      const existing = fs.readFileSync(absPath, "utf8");
+      if (existing === contents) {
+        skipped++;
+        continue;
+      }
+    }
+
+    fs.writeFileSync(absPath, contents, "utf8");
+    written++;
+  }
+
+  return { written, skipped };
+}
+
+/** POST /api/studio/compile -- in-process compiler */
+export async function POST(request: Request) {
+  try {
+    let config: StudioConfig;
+    let specs: { name: string; spec: ScreenSpec }[];
+
+    const body = await request.json().catch(() => ({}));
+    const projectId = (body as Record<string, unknown>).projectId as string | undefined;
+
+    // Supabase mode: load screens from DB
+    if (isSupabaseConfigured() && projectId) {
+      const project = await getProject(projectId);
+      config = {
+        framework: project?.framework ?? "nextjs",
+        appDir: "apps/web/app",
+        componentsDir: "apps/web/components/ui",
+        generatedDir: "apps/web/components/generated",
+        screensDir: "spec/screens",
+        schemaPath: "spec/schema/screen.schema.json",
+        importAlias: "@/",
+        ...(project?.config as Record<string, unknown> ?? {}),
+      } as StudioConfig;
+
+      const screens = await listScreens(projectId);
+      specs = screens.map((s) => ({
+        name: `${s.name}.screen.json`,
+        spec: s.spec as unknown as ScreenSpec,
+      }));
+    } else {
+      // Filesystem mode
+      config = loadStudioConfig();
+      specs = loadScreenSpecsFromDisk(config.screensDir);
+    }
+
+    if (specs.length === 0) {
       return NextResponse.json({
         ok: true,
-        warnings: errorLines,
-        message: `Compiled with ${errorLines.length} warning(s). Some screens had errors but others were compiled successfully.`,
+        message: "No screen specs found -- nothing to compile.",
       });
     }
 
-    return NextResponse.json({ ok: true });
+    const result = compileFromMemory({ specs, config });
+
+    // In filesystem mode (local dev), write files to disk
+    if (!isSupabaseConfigured() || !projectId) {
+      const { written, skipped } = await writeCompiledFiles(result.files);
+      if (result.errors.length > 0) {
+        return NextResponse.json({
+          ok: true,
+          warnings: result.errors.map((e) => `${e.filePath}: ${e.message}`),
+          message: `Compiled with ${result.errors.length} warning(s). ${result.summary.succeeded} screen(s) succeeded.`,
+          written,
+          skipped,
+        });
+      }
+      return NextResponse.json({ ok: true, compiled: result.summary.succeeded, written, skipped });
+    }
+
+    // Supabase mode: return files as JSON (caller stores or downloads)
+    if (result.errors.length > 0) {
+      return NextResponse.json({
+        ok: true,
+        warnings: result.errors.map((e) => `${e.filePath}: ${e.message}`),
+        files: result.files,
+        compiled: result.summary.succeeded,
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      compiled: result.summary.succeeded,
+      files: result.files,
+    });
   } catch (err) {
-    const stderr =
-      err && typeof err === "object" && "stderr" in err
-        ? String((err as { stderr: string }).stderr ?? "")
-        : "";
-    const stdout =
-      err && typeof err === "object" && "stdout" in err
-        ? String((err as { stdout: string }).stdout ?? "")
-        : "";
-
-    const combined = stderr + "\n" + stdout;
-    const errorLines = combined
-      .split("\n")
-      .filter(
-        (l) =>
-          l.includes("Validation failed") ||
-          l.includes("Emit failed") ||
-          l.includes("Error")
-      )
-      .slice(0, 10);
-
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json(
-      {
-        error: message,
-        details: errorLines.length > 0 ? errorLines : undefined,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

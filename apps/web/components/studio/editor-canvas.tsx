@@ -31,20 +31,24 @@ function CanvasContent({
   isDragging,
   frameId,
   isPrimary,
+  previewMode,
+  frameWidth,
 }: {
   isDragging?: boolean;
   frameId: string;
   isPrimary: boolean;
+  previewMode?: boolean;
+  frameWidth?: number;
 }) {
   const spec = useEditorStore((s) => s.spec);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const selectNode = useEditorStore((s) => s.selectNode);
 
-  // Only the primary frame registers as a droppable target
+  // Only the primary frame registers as a droppable target (and not in preview mode)
   const { setNodeRef, isOver } = useDroppable({
     id: isPrimary ? "canvas-root" : `canvas-readonly-${frameId}`,
     data: { type: "canvas", nodeId: spec?.tree.id ?? "root" },
-    disabled: !isPrimary,
+    disabled: !isPrimary || !!previewMode,
   });
 
   if (!spec) {
@@ -61,23 +65,25 @@ function CanvasContent({
     <div
       ref={setNodeRef}
       className={`min-h-full p-6 bg-white dark:bg-gray-950 ${
-        isOver && isPrimary ? "ring-2 ring-blue-400 ring-inset" : ""
+        isOver && isPrimary && !previewMode ? "ring-2 ring-blue-400 ring-inset" : ""
       }`}
-      onClick={() => selectNode(null)}
+      onClick={() => !previewMode && selectNode(null)}
     >
       {hasChildren ? (
         <RenderNode
           node={spec.tree}
-          selectedId={selectedNodeId}
-          onSelect={selectNode}
-          showDropIndicators={isDragging && isPrimary}
+          selectedId={previewMode ? null : selectedNodeId}
+          onSelect={previewMode ? undefined : selectNode}
+          showDropIndicators={!previewMode && isDragging && isPrimary}
           isRoot
+          previewMode={previewMode}
+          frameWidth={frameWidth}
         />
-      ) : isPrimary ? (
+      ) : isPrimary && !previewMode ? (
         <EmptyCanvas />
       ) : (
         <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-          No content
+          {previewMode ? "Empty screen" : "No content"}
         </div>
       )}
     </div>
@@ -91,9 +97,11 @@ function CanvasContent({
 export function EditorCanvas({
   isDragging,
   activeFrames,
+  previewMode,
 }: {
   isDragging?: boolean;
   activeFrames: BreakpointKey[];
+  previewMode?: boolean;
 }) {
   // Determine frames to show
   const frames =
@@ -120,6 +128,8 @@ export function EditorCanvas({
               isDragging={isDragging}
               frameId={bp.key}
               isPrimary={idx === 0}
+              previewMode={previewMode}
+              frameWidth={bp.width}
             />
           </DeviceFrame>
         ))}

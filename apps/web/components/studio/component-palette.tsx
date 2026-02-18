@@ -126,7 +126,7 @@ function CategorySection({
 // Palette panel
 // -------------------------------------------------------------------------
 
-const CATEGORIES = ["Layout", "Content", "Components"] as const;
+const CATEGORIES = ["Layout", "Content", "Components", "Forms", "Data Display", "Feedback", "Navigation", "Surfaces", "Media"] as const;
 
 export function ComponentPalette() {
   const schemas = Object.values(NODE_SCHEMAS);

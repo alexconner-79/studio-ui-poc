@@ -4,10 +4,10 @@ import { Angry } from "lucide-react";
 
 export function Dashboard() {
   return (
-    <div className="flex-col flex gap-[1rem] p-[2rem]">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <div className="flex-col flex gap-[1rem]"></div>
-      <div className="grid grid-cols-3 gap-[2rem]">
+    <div className="flex-col flex gap-4 p-8">
+      <h2 className="text-5xl font-bold tracking-tight">Dashboard</h2>
+      <div className="flex-col flex gap-4"></div>
+      <div className="grid grid-cols-3 gap-8">
         <Angry size={36} />
       </div>
       <h1 className="text-3xl font-bold">Xerilox</h1>

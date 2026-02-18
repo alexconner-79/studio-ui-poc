@@ -12,6 +12,9 @@ export type BuiltInNodeType =
   | "Section"
   | "ScrollArea"
   | "Spacer"
+  | "Box"
+  | "Container"
+  | "AspectRatio"
   | "Heading"
   | "Text"
   | "Image"
@@ -20,47 +23,76 @@ export type BuiltInNodeType =
   | "Divider"
   | "List"
   | "Icon"
+  | "SVG"
   | "Card"
   | "Button"
   | "Form"
   | "Modal"
   | "Tabs"
   | "Nav"
-  | "DataTable";
+  | "DataTable"
+  | "CustomComponent"
+  | "Textarea"
+  | "Select"
+  | "Checkbox"
+  | "RadioGroup"
+  | "Switch"
+  | "Slider"
+  | "Label"
+  | "FileUpload"
+  | "Avatar"
+  | "Badge"
+  | "Chip"
+  | "Tooltip"
+  | "Progress"
+  | "Skeleton"
+  | "Stat"
+  | "Rating"
+  | "Alert"
+  | "Toast"
+  | "Spinner"
+  | "Dialog"
+  | "Drawer"
+  | "Sheet"
+  | "Breadcrumb"
+  | "Pagination"
+  | "Stepper"
+  | "Sidebar"
+  | "DropdownMenu"
+  | "AppBar"
+  | "Accordion"
+  | "Popover"
+  | "HoverCard"
+  | "Video"
+  | "Embed"
+  | "Blockquote"
+  | "Code"
+  | "Carousel"
+  | "Calendar"
+  | "Timeline"
+  | "ComponentRef";
 
 export const BUILT_IN_TYPES: BuiltInNodeType[] = [
-  "Stack",
-  "Grid",
-  "Section",
-  "ScrollArea",
-  "Spacer",
-  "Heading",
-  "Text",
-  "Image",
-  "Input",
-  "Link",
-  "Divider",
-  "List",
-  "Icon",
-  "Card",
-  "Button",
-  "Form",
-  "Modal",
-  "Tabs",
-  "Nav",
-  "DataTable",
+  "Stack", "Grid", "Section", "ScrollArea", "Spacer", "Box", "Container", "AspectRatio",
+  "Heading", "Text", "Image", "Input", "Link", "Divider", "List", "Icon", "SVG",
+  "Card", "Button", "Form", "Modal", "Tabs", "Nav", "DataTable", "CustomComponent",
+  "Textarea", "Select", "Checkbox", "RadioGroup", "Switch", "Slider", "Label", "FileUpload",
+  "Avatar", "Badge", "Chip", "Tooltip", "Progress", "Skeleton", "Stat", "Rating",
+  "Alert", "Toast", "Spinner", "Dialog", "Drawer", "Sheet",
+  "Breadcrumb", "Pagination", "Stepper", "Sidebar", "DropdownMenu", "AppBar",
+  "Accordion", "Popover", "HoverCard",
+  "Video", "Embed", "Blockquote", "Code", "Carousel", "Calendar", "Timeline",
+  "ComponentRef",
 ];
 
 export const CONTAINER_TYPES = new Set<string>([
-  "Stack",
-  "Grid",
-  "Section",
-  "ScrollArea",
-  "Card",
-  "Form",
-  "Modal",
-  "Tabs",
-  "Nav",
+  "Stack", "Grid", "Section", "ScrollArea", "Card", "Form", "Modal", "Tabs", "Nav",
+  "Box", "Container", "AspectRatio", "CustomComponent",
+  "Tooltip", "Alert", "Dialog", "Drawer", "Sheet",
+  "Stepper", "Sidebar", "AppBar",
+  "Accordion", "Popover", "HoverCard",
+  "Carousel", "Timeline",
+  "ComponentRef",
 ]);
 
 export type NodeProps = Record<string, unknown>;
@@ -100,6 +132,7 @@ export type NodeStyle = {
   fontStyle?: "normal" | "italic";
   lineHeight?: StyleValue;
   letterSpacing?: StyleValue;
+  wordSpacing?: StyleValue;
   textAlign?: "left" | "center" | "right" | "justify";
   textDecoration?: "none" | "underline" | "line-through";
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
@@ -191,6 +224,12 @@ export type DesignTokens = {
 // Node
 // ---------------------------------------------------------------------------
 
+/** Per-breakpoint style overrides. Keys are breakpoint names; values override NodeStyle. */
+export type ResponsiveOverrides = {
+  tablet?: Partial<NodeStyle>;
+  mobile?: Partial<NodeStyle>;
+};
+
 export type Node = {
   id: string;
   type: string;
@@ -199,6 +238,7 @@ export type Node = {
   interactions?: NodeInteractions;
   dataSource?: DataSource;
   style?: NodeStyle;
+  responsive?: ResponsiveOverrides;
 };
 
 export type ScreenMeta = {

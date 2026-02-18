@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImportScreenModal } from "@/components/studio/import-screen-modal";
 import { ExportModal } from "@/components/studio/export-modal";
+import { ScreenListSkeleton, InlineError } from "@/components/studio/loading-skeleton";
 
 type ScreenEntry = {
   name: string;
@@ -30,14 +31,23 @@ export default function StudioScreenList() {
   const [showExport, setShowExport] = useState(false);
   const router = useRouter();
 
+  const [error, setError] = useState<string | null>(null);
+
   const loadScreens = useCallback(() => {
+    setError(null);
     fetch("/api/studio/screens")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load screens");
+        return r.json();
+      })
       .then((data) => {
         setScreens(data.screens ?? []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -114,12 +124,20 @@ export default function StudioScreenList() {
               Visual editor for screen specs
             </p>
           </div>
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            &larr; Back to app
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Admin
+            </Link>
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              &larr; Back to app
+            </Link>
+          </div>
         </div>
 
         {/* Create new screen */}
@@ -199,8 +217,10 @@ export default function StudioScreenList() {
         )}
 
         {/* Screen grid */}
-        {loading ? (
-          <div className="text-sm text-muted-foreground">Loading...</div>
+        {error ? (
+          <InlineError message={error} onRetry={loadScreens} />
+        ) : loading ? (
+          <ScreenListSkeleton />
         ) : screens.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
             <p className="text-lg mb-2">No screens yet</p>

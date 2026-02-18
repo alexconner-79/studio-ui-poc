@@ -2,7 +2,9 @@
 
 import { create } from "zustand";
 import { produce, enableMapSet } from "immer";
-import type { Node, NodeStyle, ScreenSpec, DesignTokens } from "./types";
+import type { Node, NodeStyle, ScreenSpec, DesignTokens, ResponsiveOverrides } from "./types";
+import type { ComponentDef } from "./component-system";
+import { resolveAllRefs, isComponentRef, resetToComponent } from "./component-system";
 
 // Enable Immer support for Set/Map (needed for hiddenNodeIds, lockedNodeIds)
 enableMapSet();
@@ -69,6 +71,7 @@ export function cloneWithNewIds(node: Node): Node {
   };
   if (node.interactions) clone.interactions = JSON.parse(JSON.stringify(node.interactions));
   if (node.dataSource) clone.dataSource = JSON.parse(JSON.stringify(node.dataSource));
+  if (node.responsive) clone.responsive = JSON.parse(JSON.stringify(node.responsive));
   return clone;
 }
 
@@ -98,6 +101,8 @@ type EditorState = {
 
   // Selection
   selectedNodeId: string | null;
+  /** Additional selected nodes for multi-select (Shift+click) */
+  selectedNodeIds: Set<string>;
 
   // Clipboard
   clipboard: Node | null;
@@ -127,6 +132,18 @@ type EditorState = {
   // Rename trigger (set by R shortcut, consumed by Layers panel)
   renamingNodeId: string | null;
 
+  // Preview mode (A1 -- interactive canvas)
+  previewMode: boolean;
+  /** Runtime state for interactions (tabs active index, modal open/close, visibility toggles, custom state) */
+  interactionState: Record<string, unknown>;
+
+  // Responsive editing (A2)
+  /** Which breakpoint the property panel is currently editing styles for */
+  editingBreakpoint: "base" | "tablet" | "mobile";
+
+  // Component definitions (ref/override system)
+  componentDefs: Map<string, ComponentDef>;
+
   // History (undo/redo)
   history: ScreenSpec[];
   historyIndex: number;
@@ -134,6 +151,8 @@ type EditorState = {
   // Actions
   setSpec: (spec: ScreenSpec, screenName: string) => void;
   selectNode: (id: string | null) => void;
+  toggleSelectNode: (id: string) => void;
+  clearSelection: () => void;
 
   updateNode: (nodeId: string, updates: Partial<Node>) => void;
   updateNodeProps: (nodeId: string, props: Record<string, unknown>) => void;
@@ -173,8 +192,19 @@ type EditorState = {
   // Style
   updateNodeStyle: (nodeId: string, style: Partial<NodeStyle>) => void;
 
+  // Responsive overrides
+  setEditingBreakpoint: (bp: "base" | "tablet" | "mobile") => void;
+  updateNodeResponsiveStyle: (nodeId: string, breakpoint: "tablet" | "mobile", style: Partial<NodeStyle>) => void;
+
   // Design tokens
   loadDesignTokens: () => Promise<void>;
+
+  // Preview mode
+  setPreviewMode: (mode: boolean) => void;
+  togglePreviewMode: () => void;
+  setInteractionStateValue: (key: string, value: unknown) => void;
+  getInteractionStateValue: (key: string) => unknown;
+  resetInteractionState: () => void;
 
   copyNode: () => void;
   pasteNode: () => void;
@@ -185,6 +215,15 @@ type EditorState = {
   undo: () => void;
   redo: () => void;
   markClean: () => void;
+
+  // Component system (ref/override)
+  addComponentDef: (def: ComponentDef) => void;
+  removeComponentDef: (id: string) => void;
+  updateComponentDef: (id: string, tree: Node) => void;
+  createComponentFromNode: (nodeId: string) => string | null;
+  createInstanceOfComponent: (defId: string, parentId: string, index?: number) => void;
+  resetInstanceToComponent: (nodeId: string) => void;
+  resolvedTree: () => Node | null;
 };
 
 function pushHistory(state: EditorState): void {
@@ -204,6 +243,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   screenName: null,
   dirty: false,
   selectedNodeId: null,
+  selectedNodeIds: new Set<string>(),
   clipboard: null,
   hiddenNodeIds: new Set<string>(),
   lockedNodeIds: new Set<string>(),
@@ -214,6 +254,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   activeFrames: ["desktop"],
   designTokens: null,
   renamingNodeId: null,
+  previewMode: false,
+  interactionState: {},
+  editingBreakpoint: "base",
+  componentDefs: new Map<string, ComponentDef>(),
   history: [],
   historyIndex: -1,
 
@@ -223,13 +267,34 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       screenName,
       dirty: false,
       selectedNodeId: null,
+      selectedNodeIds: new Set<string>(),
       hiddenNodeIds: new Set<string>(),
       lockedNodeIds: new Set<string>(),
       history: [JSON.parse(JSON.stringify(spec))],
       historyIndex: 0,
     }),
 
-  selectNode: (id) => set({ selectedNodeId: id }),
+  selectNode: (id) => set({ selectedNodeId: id, selectedNodeIds: new Set<string>() }),
+
+  toggleSelectNode: (id) =>
+    set((state) => {
+      const next = new Set(state.selectedNodeIds);
+      if (next.has(id)) {
+        next.delete(id);
+        // If primary selection is cleared, set to first remaining
+        const primary = state.selectedNodeId === id
+          ? (next.size > 0 ? [...next][0] : null)
+          : state.selectedNodeId;
+        return { selectedNodeIds: next, selectedNodeId: primary };
+      }
+      next.add(id);
+      // If no primary, set this one
+      const primary = state.selectedNodeId ?? id;
+      if (state.selectedNodeId) next.add(state.selectedNodeId);
+      return { selectedNodeIds: next, selectedNodeId: primary };
+    }),
+
+  clearSelection: () => set({ selectedNodeId: null, selectedNodeIds: new Set<string>() }),
 
   updateNode: (nodeId, updates) =>
     set(
@@ -488,6 +553,35 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       })
     ),
 
+  setEditingBreakpoint: (bp) => set({ editingBreakpoint: bp }),
+
+  updateNodeResponsiveStyle: (nodeId, breakpoint, style) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        if (state.lockedNodeIds.has(nodeId)) return;
+        pushHistory(state);
+        const node = findNode(state.spec.tree, nodeId);
+        if (!node) return;
+        if (!node.responsive) node.responsive = {};
+        node.responsive[breakpoint] = { ...(node.responsive[breakpoint] ?? {}), ...style };
+        // Clean up empty values
+        const s = node.responsive[breakpoint] as Record<string, unknown>;
+        for (const key of Object.keys(s)) {
+          if (s[key] === undefined || s[key] === null || s[key] === "") {
+            delete s[key];
+          }
+        }
+        if (Object.keys(node.responsive[breakpoint]!).length === 0) {
+          delete node.responsive[breakpoint];
+        }
+        if (Object.keys(node.responsive).length === 0) {
+          delete node.responsive;
+        }
+        state.dirty = true;
+      })
+    ),
+
   loadDesignTokens: async () => {
     try {
       const res = await fetch("/api/studio/tokens");
@@ -500,6 +594,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       // silently fail - tokens are optional
     }
   },
+
+  setPreviewMode: (mode) =>
+    set({ previewMode: mode, selectedNodeId: mode ? null : get().selectedNodeId }),
+
+  togglePreviewMode: () => {
+    const current = get().previewMode;
+    set({ previewMode: !current, selectedNodeId: !current ? null : get().selectedNodeId });
+  },
+
+  setInteractionStateValue: (key, value) =>
+    set((state) => ({
+      interactionState: { ...state.interactionState, [key]: value },
+    })),
+
+  getInteractionStateValue: (key) => get().interactionState[key],
+
+  resetInteractionState: () => set({ interactionState: {} }),
 
   copyNode: () => {
     const { spec, selectedNodeId } = get();
@@ -590,4 +701,100 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     ),
 
   markClean: () => set({ dirty: false }),
+
+  // Component system actions
+  addComponentDef: (def) =>
+    set((state) => {
+      const next = new Map(state.componentDefs);
+      next.set(def.id, def);
+      return { componentDefs: next };
+    }),
+
+  removeComponentDef: (id) =>
+    set((state) => {
+      const next = new Map(state.componentDefs);
+      next.delete(id);
+      return { componentDefs: next };
+    }),
+
+  updateComponentDef: (id, tree) =>
+    set((state) => {
+      const existing = state.componentDefs.get(id);
+      if (!existing) return state;
+      const next = new Map(state.componentDefs);
+      next.set(id, { ...existing, tree: JSON.parse(JSON.stringify(tree)) });
+      return { componentDefs: next };
+    }),
+
+  createComponentFromNode: (nodeId) => {
+    const { spec, componentDefs } = get();
+    if (!spec) return null;
+    const node = findNode(spec.tree, nodeId);
+    if (!node) return null;
+
+    const defId = generateId("comp");
+    const def: ComponentDef = {
+      id: defId,
+      name: node.id,
+      tree: JSON.parse(JSON.stringify(node)),
+    };
+
+    const next = new Map(componentDefs);
+    next.set(defId, def);
+
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        pushHistory(state);
+        const target = findNode(state.spec.tree, nodeId);
+        if (!target) return;
+        const refNode: Node = {
+          id: target.id,
+          type: "ComponentRef",
+          props: { ref: defId },
+        };
+        Object.assign(target, refNode);
+        delete target.children;
+        delete target.style;
+        delete target.interactions;
+        delete target.dataSource;
+        delete target.responsive;
+        state.componentDefs = next;
+        state.dirty = true;
+      })
+    );
+
+    return defId;
+  },
+
+  createInstanceOfComponent: (defId, parentId, index) => {
+    const { componentDefs } = get();
+    const def = componentDefs.get(defId);
+    if (!def) return;
+    const instanceNode: Node = {
+      id: generateId("inst"),
+      type: "ComponentRef",
+      props: { ref: defId },
+    };
+    get().addNode(parentId, instanceNode, index);
+  },
+
+  resetInstanceToComponent: (nodeId) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        const node = findNode(state.spec.tree, nodeId);
+        if (!node || !isComponentRef(node)) return;
+        pushHistory(state);
+        const reset = resetToComponent(node);
+        Object.assign(node, reset);
+        state.dirty = true;
+      })
+    ),
+
+  resolvedTree: () => {
+    const { spec, componentDefs } = get();
+    if (!spec) return null;
+    return resolveAllRefs(spec.tree, componentDefs);
+  },
 }));

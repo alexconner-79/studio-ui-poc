@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 
 export function Signup() {
   return (
-    <div className="flex-col flex gap-[1rem] p-[2rem]">
+    <div className="flex-col flex gap-4 p-8">
       <h1 className="text-3xl font-bold">Create your account</h1>
       <p className="text-sm text-muted-foreground">
         Enter your details to get started.

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
+import { parseHTML } from "@/lib/studio/html-parser";
 
-type Tab = "file" | "code" | "figma";
+type Tab = "file" | "code" | "html" | "figma";
 
 type ImportResult = {
   name: string;
@@ -17,10 +18,10 @@ type ImportSummary = {
   total: number;
 };
 
-// Tab labels -- code and figma tabs will be populated by 7.2 and 7.3
 const TAB_CONFIG: { key: Tab; label: string }[] = [
   { key: "file", label: "Spec Files" },
-  { key: "code", label: "From Code" },
+  { key: "code", label: "From TSX" },
+  { key: "html", label: "From HTML" },
   { key: "figma", label: "From Figma" },
 ];
 
@@ -46,6 +47,17 @@ export function ImportScreenModal({
   const [codePreview, setCodePreview] = useState<Record<string, unknown> | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
+
+  // -- HTML tab state --
+  const [htmlInput, setHtmlInput] = useState("");
+  const [htmlName, setHtmlName] = useState("");
+  const [htmlPreview, setHtmlPreview] = useState<Record<string, unknown> | null>(null);
+  const [htmlError, setHtmlError] = useState<string | null>(null);
+  const [htmlLoading, setHtmlLoading] = useState(false);
+  const [htmlUpdateExisting, setHtmlUpdateExisting] = useState(false);
+
+  // -- Code tab re-import --
+  const [codeUpdateExisting, setCodeUpdateExisting] = useState(false);
 
   // -- Figma tab state --
   const [figmaUrl, setFigmaUrl] = useState("");
@@ -138,10 +150,17 @@ export function ImportScreenModal({
     if (!codePreview || !codeName.trim()) return;
     setCodeLoading(true);
     try {
-      const res = await fetch("/api/studio/screens", {
-        method: "POST",
+      const method = codeUpdateExisting ? "PUT" : "POST";
+      const url = codeUpdateExisting
+        ? `/api/studio/screens/${encodeURIComponent(codeName.trim())}`
+        : "/api/studio/screens";
+      const body = codeUpdateExisting
+        ? JSON.stringify({ spec: codePreview })
+        : JSON.stringify({ name: codeName.trim(), spec: codePreview });
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: codeName.trim(), spec: codePreview }),
+        body,
       });
       if (res.ok) {
         onImported();
@@ -154,6 +173,59 @@ export function ImportScreenModal({
       setCodeError("Import failed");
     } finally {
       setCodeLoading(false);
+    }
+  };
+
+  // -- HTML tab handlers --
+  const handleHtmlParse = () => {
+    if (!htmlInput.trim()) return;
+    setHtmlLoading(true);
+    setHtmlError(null);
+    setHtmlPreview(null);
+    try {
+      const result = parseHTML(htmlInput);
+      if ("error" in result) {
+        setHtmlError(result.error);
+      } else {
+        setHtmlPreview(result.spec);
+        if (!htmlName) {
+          setHtmlName("imported");
+        }
+      }
+    } catch {
+      setHtmlError("Failed to parse HTML");
+    } finally {
+      setHtmlLoading(false);
+    }
+  };
+
+  const handleHtmlImport = async () => {
+    if (!htmlPreview || !htmlName.trim()) return;
+    setHtmlLoading(true);
+    try {
+      const method = htmlUpdateExisting ? "PUT" : "POST";
+      const url = htmlUpdateExisting
+        ? `/api/studio/screens/${encodeURIComponent(htmlName.trim())}`
+        : "/api/studio/screens";
+      const body = htmlUpdateExisting
+        ? JSON.stringify({ spec: htmlPreview })
+        : JSON.stringify({ name: htmlName.trim(), spec: htmlPreview });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+      if (res.ok) {
+        onImported();
+        onClose();
+      } else {
+        const data = await res.json();
+        setHtmlError(data.error || "Failed to save screen");
+      }
+    } catch {
+      setHtmlError("Import failed");
+    } finally {
+      setHtmlLoading(false);
     }
   };
 
@@ -361,7 +433,7 @@ export function ImportScreenModal({
           {tab === "code" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Paste a React/TSX component and we&apos;ll convert it to a Studio spec. <span className="text-amber-600">Experimental -- ~70-80% fidelity.</span>
+                Paste a React/TSX component and we&apos;ll convert it to a Studio spec. Supports shadcn, Tailwind, and HTML elements.
               </p>
               <textarea
                 value={codeInput}
@@ -386,6 +458,10 @@ export function ImportScreenModal({
                       className="mt-1 w-full px-3 py-2 text-sm border rounded bg-background"
                     />
                   </label>
+                  <label className="flex items-center gap-2 text-sm mt-2">
+                    <input type="checkbox" checked={codeUpdateExisting} onChange={(e) => setCodeUpdateExisting(e.target.checked)} />
+                    Re-import: update existing screen (overwrite)
+                  </label>
                 </div>
               )}
               <div className="flex justify-end gap-2">
@@ -402,7 +478,63 @@ export function ImportScreenModal({
                     disabled={!codeName.trim() || codeLoading}
                     className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                   >
-                    Import
+                    {codeUpdateExisting ? "Re-import (Update)" : "Import"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ============ HTML TAB ============ */}
+          {tab === "html" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Paste plain HTML and we&apos;ll convert it to a Studio spec. Supports inline styles and semantic HTML elements.
+              </p>
+              <textarea
+                value={htmlInput}
+                onChange={(e) => setHtmlInput(e.target.value)}
+                placeholder={`<div style="display: flex; flex-direction: column; gap: 16px;">\n  <h1>Hello World</h1>\n  <p>This is a paragraph.</p>\n  <button>Click me</button>\n</div>`}
+                className="w-full h-40 p-3 text-xs font-mono border rounded bg-muted/30 resize-none outline-none focus:ring-1 focus:ring-blue-400"
+              />
+              {htmlError && <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">{htmlError}</div>}
+              {htmlPreview && (
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview</div>
+                  <pre className="text-[10px] font-mono bg-muted/30 p-3 rounded max-h-32 overflow-y-auto">
+                    {JSON.stringify(htmlPreview, null, 2)}
+                  </pre>
+                  <label className="block">
+                    <span className="text-sm font-medium">Screen name</span>
+                    <input
+                      type="text"
+                      value={htmlName}
+                      onChange={(e) => setHtmlName(e.target.value)}
+                      placeholder="my-page"
+                      className="mt-1 w-full px-3 py-2 text-sm border rounded bg-background"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm mt-2">
+                    <input type="checkbox" checked={htmlUpdateExisting} onChange={(e) => setHtmlUpdateExisting(e.target.checked)} />
+                    Re-import: update existing screen (overwrite)
+                  </label>
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleHtmlParse}
+                  disabled={!htmlInput.trim() || htmlLoading}
+                  className="px-4 py-2 text-sm border rounded hover:bg-accent disabled:opacity-50"
+                >
+                  {htmlLoading ? "Parsing..." : "Parse"}
+                </button>
+                {htmlPreview && (
+                  <button
+                    onClick={handleHtmlImport}
+                    disabled={!htmlName.trim() || htmlLoading}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {htmlUpdateExisting ? "Re-import (Update)" : "Import"}
                   </button>
                 )}
               </div>

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 
 export function Home() {
   return (
-    <div className="flex-col flex gap-[0.5rem] p-[0.5rem]">
+    <div className="flex-col flex gap-2 p-2">
       <div
         className="text-center"
         style={{ fontSize: "50px", fontWeight: "100" }}
@@ -33,8 +33,8 @@ export function Home() {
         }}
       >
         <Card>
-          <div className="p-[1rem]">
-            <div className="flex-col flex gap-[0.5rem]">
+          <div className="p-4">
+            <div className="flex-col flex gap-2">
               <div style={{ fontSize: "12px" }}>
                 <p className="text-sm text-muted-foreground">
                   shadcn card component
@@ -53,8 +53,8 @@ export function Home() {
         <li>Deterministic output</li>
         <li>PR-based publishing</li>
       </ul>
-      <div className="h-[1.5rem]" />
-      <div className="grid grid-cols-2 gap-[1rem]">
+      <div className="h-6" />
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <div className="p-4">
             <p className="text-base">Feature one</p>

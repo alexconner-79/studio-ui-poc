@@ -64,6 +64,7 @@ export function resolvedStyleToCSS(
   if (style.fontStyle !== undefined) css.fontStyle = style.fontStyle;
   if (style.lineHeight !== undefined) css.lineHeight = r(style.lineHeight);
   if (style.letterSpacing !== undefined) css.letterSpacing = r(style.letterSpacing);
+  if (style.wordSpacing !== undefined) css.wordSpacing = r(style.wordSpacing);
   if (style.textAlign !== undefined) css.textAlign = style.textAlign;
   if (style.textDecoration !== undefined) css.textDecoration = style.textDecoration;
   if (style.textTransform !== undefined) css.textTransform = style.textTransform;

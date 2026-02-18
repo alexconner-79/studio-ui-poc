@@ -74,7 +74,7 @@ export function loadConfig(rootDir?: string): StudioConfig {
     }
   }
 
-  const supportedFrameworks = ["nextjs", "vue"];
+  const supportedFrameworks = ["nextjs", "vue", "svelte", "html", "expo"];
   if (!supportedFrameworks.includes(config.framework as string)) {
     throw new Error(
       `${CONFIG_FILE}: "framework" must be one of: ${supportedFrameworks.join(", ")}`

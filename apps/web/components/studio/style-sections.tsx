@@ -62,8 +62,17 @@ const CONTAINER_TYPES = new Set([
 // Main style panel
 // ---------------------------------------------------------------------------
 
+const BREAKPOINT_OPTIONS = [
+  { value: "base" as const, label: "Base", icon: "🖥" },
+  { value: "tablet" as const, label: "Tablet", icon: "📋" },
+  { value: "mobile" as const, label: "Mobile", icon: "📱" },
+];
+
 export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: string }) {
   const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
+  const updateNodeResponsiveStyle = useEditorStore((s) => s.updateNodeResponsiveStyle);
+  const editingBreakpoint = useEditorStore((s) => s.editingBreakpoint);
+  const setEditingBreakpoint = useEditorStore((s) => s.setEditingBreakpoint);
   const designTokens = useEditorStore((s) => s.designTokens);
   const loadDesignTokens = useEditorStore((s) => s.loadDesignTokens);
   const spec = useEditorStore((s) => s.spec);
@@ -77,13 +86,31 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
 
   // Get current node's style
   const node = spec ? findNodeById(spec.tree, nodeId) : null;
-  const style = node?.style ?? {};
+  const baseStyle = node?.style ?? {};
+
+  // Resolve the effective style for the current breakpoint
+  const effectiveStyle: NodeStyle = React.useMemo(() => {
+    if (editingBreakpoint === "base") return baseStyle;
+    const overrides = node?.responsive?.[editingBreakpoint] ?? {};
+    return { ...baseStyle, ...overrides };
+  }, [baseStyle, node?.responsive, editingBreakpoint]);
+
+  // Determine which properties have breakpoint-specific overrides
+  const overrideKeys = React.useMemo(() => {
+    if (editingBreakpoint === "base") return new Set<string>();
+    const overrides = node?.responsive?.[editingBreakpoint] ?? {};
+    return new Set(Object.keys(overrides));
+  }, [node?.responsive, editingBreakpoint]);
 
   const handleStyleChange = useCallback(
     (prop: string, value: StyleValue | undefined) => {
-      updateNodeStyle(nodeId, { [prop]: value } as Partial<NodeStyle>);
+      if (editingBreakpoint === "base") {
+        updateNodeStyle(nodeId, { [prop]: value } as Partial<NodeStyle>);
+      } else {
+        updateNodeResponsiveStyle(nodeId, editingBreakpoint, { [prop]: value } as Partial<NodeStyle>);
+      }
     },
-    [nodeId, updateNodeStyle]
+    [nodeId, updateNodeStyle, updateNodeResponsiveStyle, editingBreakpoint]
   );
 
   const tokens = designTokens ?? null;
@@ -92,30 +119,58 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
 
   return (
     <div className="space-y-0">
+      {/* Breakpoint selector */}
+      <div className="border-t pt-2 pb-1 px-0">
+        <div className="flex items-center gap-0.5 bg-muted/50 rounded p-0.5">
+          {BREAKPOINT_OPTIONS.map((bp) => (
+            <button
+              key={bp.value}
+              onClick={() => setEditingBreakpoint(bp.value)}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[10px] rounded transition-colors ${
+                editingBreakpoint === bp.value
+                  ? "bg-background shadow-sm font-semibold text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>{bp.icon}</span>
+              <span>{bp.label}</span>
+            </button>
+          ))}
+        </div>
+        {editingBreakpoint !== "base" && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Editing <strong>{editingBreakpoint}</strong> overrides. Unset fields inherit from base.
+            {overrideKeys.size > 0 && (
+              <span className="ml-1 text-blue-500">({overrideKeys.size} overrides)</span>
+            )}
+          </p>
+        )}
+      </div>
+
       {/* Typography - shown for text-bearing nodes */}
       {isTextNode && (
-        <TypographySection style={style} tokens={tokens} onChange={handleStyleChange} />
+        <TypographySection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
       )}
 
       {/* Size */}
-      <SizingSection style={style} tokens={tokens} onChange={handleStyleChange} />
+      <SizingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
 
       {/* Spacing */}
-      <SpacingSection style={style} tokens={tokens} onChange={handleStyleChange} />
+      <SpacingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
 
       {/* Background & Border */}
-      <AppearanceSection style={style} tokens={tokens} onChange={handleStyleChange} />
+      <AppearanceSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
 
       {/* Effects */}
-      <EffectsSection style={style} tokens={tokens} onChange={handleStyleChange} />
+      <EffectsSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
 
       {/* Layout - shown for containers */}
       {isContainer && (
-        <LayoutSection style={style} tokens={tokens} onChange={handleStyleChange} />
+        <LayoutSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
       )}
 
       {/* Position */}
-      <PositionSection style={style} tokens={tokens} onChange={handleStyleChange} />
+      <PositionSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
     </div>
   );
 }
@@ -198,6 +253,16 @@ function TypographySection({
         onChange={(v) => onChange("letterSpacing", v)}
         units={["em", "px", "rem"]}
         placeholder="0"
+      />
+
+      <NumberWithUnit
+        label="Word Spacing"
+        value={style.wordSpacing}
+        tokenCategory=""
+        tokens={tokens}
+        onChange={(v) => onChange("wordSpacing", v)}
+        units={["px", "em", "rem"]}
+        placeholder="normal"
       />
 
       <SegmentedSelect

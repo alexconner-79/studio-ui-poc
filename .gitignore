@@ -13,6 +13,7 @@ build/
 .env
 .env.*
 !.env.example
+!.env.local.example
 
 # OS
 .DS_Store
@@ -30,6 +31,9 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+
+# Local version history
+spec/.versions/
 
 # Vercel
 .vercel

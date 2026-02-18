@@ -160,6 +160,96 @@ export async function POST(request: Request) {
       });
     }
 
+    if (format === "expo") {
+      const archive = archiver("zip", { zlib: { level: 9 } });
+      const chunks: Buffer[] = [];
+      const streamPromise = new Promise<Buffer>((resolve, reject) => {
+        archive.on("data", (chunk: Buffer) => chunks.push(chunk));
+        archive.on("end", () => resolve(Buffer.concat(chunks)));
+        archive.on("error", reject);
+      });
+
+      // Include spec and tokens
+      for (const entry of ["spec", "tokens"]) {
+        const fullPath = path.resolve(ROOT_DIR, entry);
+        if (!fs.existsSync(fullPath)) continue;
+        addDirectoryToArchive(archive, fullPath, entry);
+      }
+
+      // Add generated components (from Expo emitter)
+      const genDir = path.resolve(ROOT_DIR, "apps/web/components/generated");
+      if (fs.existsSync(genDir)) {
+        addDirectoryToArchive(archive, genDir, "src/screens");
+      }
+
+      // Add Expo boilerplate files
+      const appJson = JSON.stringify({
+        expo: {
+          name: "studio-project",
+          slug: "studio-project",
+          version: "1.0.0",
+          orientation: "portrait",
+          sdkVersion: "52.0.0",
+          platforms: ["ios", "android", "web"],
+          ios: { bundleIdentifier: "com.studio.project" },
+          android: { package: "com.studio.project" },
+        },
+      }, null, 2);
+
+      const packageJson = JSON.stringify({
+        name: "studio-project",
+        version: "1.0.0",
+        main: "node_modules/expo/AppEntry.js",
+        scripts: {
+          start: "expo start",
+          android: "expo start --android",
+          ios: "expo start --ios",
+          web: "expo start --web",
+        },
+        dependencies: {
+          expo: "~52.0.0",
+          "expo-status-bar": "~2.0.0",
+          react: "18.3.1",
+          "react-native": "0.76.0",
+        },
+        devDependencies: {
+          "@types/react": "~18.3.0",
+          typescript: "~5.3.0",
+        },
+      }, null, 2);
+
+      const appTsx = `import React from "react";
+import { SafeAreaView, StatusBar } from "react-native";
+
+// Import your generated screens
+// import { Home } from "./src/screens/Home.generated";
+
+export default function App() {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="dark-content" />
+      {/* <Home /> */}
+    </SafeAreaView>
+  );
+}
+`;
+
+      archive.append(appJson, { name: "app.json" });
+      archive.append(packageJson, { name: "package.json" });
+      archive.append(appTsx, { name: "App.tsx" });
+      archive.append('{ "compilerOptions": { "strict": true, "jsx": "react-native" } }', { name: "tsconfig.json" });
+
+      await archive.finalize();
+      const buffer = await streamPromise;
+
+      return new Response(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": 'attachment; filename="studio-project-expo.zip"',
+        },
+      });
+    }
+
     if (format === "github") {
       // Return instructions and a pre-formatted push script
       const repoName = "studio-project";
@@ -183,7 +273,7 @@ gh repo create ${repoName} --public --source=. --push
     }
 
     return NextResponse.json(
-      { error: "format must be one of: zip, docker, vercel, github" },
+      { error: "format must be one of: zip, expo, docker, vercel, github" },
       { status: 400 }
     );
   } catch (err) {

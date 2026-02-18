@@ -14,10 +14,21 @@ export type PropDef = {
   options?: { label: string; value: string | number | boolean }[];
 };
 
+export type NodeCategory =
+  | "Layout"
+  | "Content"
+  | "Components"
+  | "Forms"
+  | "Data Display"
+  | "Feedback"
+  | "Navigation"
+  | "Surfaces"
+  | "Media";
+
 export type NodeSchema = {
   type: string;
   label: string;
-  category: "Layout" | "Content" | "Components";
+  category: NodeCategory;
   description: string;
   props: Record<string, PropDef>;
   acceptsChildren: boolean;
@@ -400,6 +411,622 @@ export const NODE_SCHEMAS: Record<string, NodeSchema> = {
           '{"name":"Bob","email":"bob@example.com","role":"User"}',
         ],
       },
+    },
+  },
+
+  // ── D2a: Design Freedom Nodes ─────────────────────────────────────
+
+  Box: {
+    type: "Box",
+    label: "Box",
+    category: "Layout",
+    description: "Freeform styled container (unstyled div)",
+    acceptsChildren: true,
+    props: {},
+  },
+  SVG: {
+    type: "SVG",
+    label: "SVG",
+    category: "Media",
+    description: "Inline SVG vector graphics",
+    acceptsChildren: false,
+    props: {
+      code: { type: "string", label: "SVG Code", defaultValue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>' },
+      width: { type: "number", label: "Width", defaultValue: 24 },
+      height: { type: "number", label: "Height", defaultValue: 24 },
+    },
+  },
+  CustomComponent: {
+    type: "CustomComponent",
+    label: "Custom Component",
+    category: "Components",
+    description: "Wrap any external React component",
+    acceptsChildren: true,
+    props: {
+      importPath: { type: "string", label: "Import Path", required: true, defaultValue: "@/components/ui/badge" },
+      componentName: { type: "string", label: "Component Name", required: true, defaultValue: "Badge" },
+      propValues: { type: "string", label: "Props (JSON)", defaultValue: "{}" },
+    },
+  },
+
+  // ── D2b: Forms & Input ────────────────────────────────────────────
+
+  Textarea: {
+    type: "Textarea",
+    label: "Textarea",
+    category: "Forms",
+    description: "Multi-line text input",
+    acceptsChildren: false,
+    props: {
+      placeholder: { type: "string", label: "Placeholder", defaultValue: "Enter text..." },
+      rows: { type: "number", label: "Rows", defaultValue: 4 },
+      label: { type: "string", label: "Label" },
+    },
+  },
+  Select: {
+    type: "Select",
+    label: "Select",
+    category: "Forms",
+    description: "Dropdown select input",
+    acceptsChildren: false,
+    props: {
+      placeholder: { type: "string", label: "Placeholder", defaultValue: "Choose..." },
+      options: { type: "array", label: "Options (value|label per line)", defaultValue: ["opt1|Option 1", "opt2|Option 2", "opt3|Option 3"] },
+      label: { type: "string", label: "Label" },
+    },
+  },
+  Checkbox: {
+    type: "Checkbox",
+    label: "Checkbox",
+    category: "Forms",
+    description: "Boolean checkbox input",
+    acceptsChildren: false,
+    props: {
+      label: { type: "string", label: "Label", defaultValue: "Accept terms" },
+      checked: { type: "boolean", label: "Checked", defaultValue: false },
+    },
+  },
+  RadioGroup: {
+    type: "RadioGroup",
+    label: "Radio Group",
+    category: "Forms",
+    description: "Single-select radio group",
+    acceptsChildren: false,
+    props: {
+      options: { type: "array", label: "Options (value|label per line)", defaultValue: ["a|Option A", "b|Option B", "c|Option C"] },
+      label: { type: "string", label: "Label" },
+      defaultValue: { type: "string", label: "Default Value", defaultValue: "a" },
+    },
+  },
+  Switch: {
+    type: "Switch",
+    label: "Switch",
+    category: "Forms",
+    description: "Toggle switch",
+    acceptsChildren: false,
+    props: {
+      label: { type: "string", label: "Label", defaultValue: "Enable notifications" },
+      checked: { type: "boolean", label: "Checked", defaultValue: false },
+    },
+  },
+  Slider: {
+    type: "Slider",
+    label: "Slider",
+    category: "Forms",
+    description: "Range slider input",
+    acceptsChildren: false,
+    props: {
+      min: { type: "number", label: "Min", defaultValue: 0 },
+      max: { type: "number", label: "Max", defaultValue: 100 },
+      step: { type: "number", label: "Step", defaultValue: 1 },
+      defaultValue: { type: "number", label: "Default Value", defaultValue: 50 },
+      label: { type: "string", label: "Label" },
+    },
+  },
+  Label: {
+    type: "Label",
+    label: "Label",
+    category: "Forms",
+    description: "Form field label",
+    acceptsChildren: false,
+    props: {
+      text: { type: "string", label: "Text", defaultValue: "Label" },
+      htmlFor: { type: "string", label: "For (input ID)" },
+    },
+  },
+  FileUpload: {
+    type: "FileUpload",
+    label: "File Upload",
+    category: "Forms",
+    description: "File upload drop zone",
+    acceptsChildren: false,
+    props: {
+      accept: { type: "string", label: "Accept", defaultValue: "image/*" },
+      label: { type: "string", label: "Label", defaultValue: "Drop files here or click to upload" },
+    },
+  },
+
+  // ── D2c: Data Display ─────────────────────────────────────────────
+
+  Avatar: {
+    type: "Avatar",
+    label: "Avatar",
+    category: "Data Display",
+    description: "User avatar with image or initials",
+    acceptsChildren: false,
+    props: {
+      src: { type: "string", label: "Image URL" },
+      fallback: { type: "string", label: "Fallback Initials", defaultValue: "AB" },
+      size: { type: "number", label: "Size (px)", defaultValue: 40 },
+    },
+  },
+  Badge: {
+    type: "Badge",
+    label: "Badge",
+    category: "Data Display",
+    description: "Small status badge / tag",
+    acceptsChildren: false,
+    props: {
+      text: { type: "string", label: "Text", defaultValue: "Badge" },
+      variant: {
+        type: "string",
+        label: "Variant",
+        defaultValue: "default",
+        options: [
+          { label: "Default", value: "default" },
+          { label: "Secondary", value: "secondary" },
+          { label: "Destructive", value: "destructive" },
+          { label: "Outline", value: "outline" },
+        ],
+      },
+    },
+  },
+  Chip: {
+    type: "Chip",
+    label: "Chip",
+    category: "Data Display",
+    description: "Removable tag / chip",
+    acceptsChildren: false,
+    props: {
+      text: { type: "string", label: "Text", defaultValue: "Chip" },
+      removable: { type: "boolean", label: "Removable", defaultValue: true },
+    },
+  },
+  Tooltip: {
+    type: "Tooltip",
+    label: "Tooltip",
+    category: "Data Display",
+    description: "Hover tooltip wrapper",
+    acceptsChildren: true,
+    props: {
+      content: { type: "string", label: "Tooltip Text", defaultValue: "Helpful tip" },
+      side: {
+        type: "string",
+        label: "Side",
+        defaultValue: "top",
+        options: [
+          { label: "Top", value: "top" },
+          { label: "Bottom", value: "bottom" },
+          { label: "Left", value: "left" },
+          { label: "Right", value: "right" },
+        ],
+      },
+    },
+  },
+  Progress: {
+    type: "Progress",
+    label: "Progress",
+    category: "Data Display",
+    description: "Progress bar",
+    acceptsChildren: false,
+    props: {
+      value: { type: "number", label: "Value (%)", defaultValue: 60 },
+      max: { type: "number", label: "Max", defaultValue: 100 },
+      label: { type: "string", label: "Label" },
+    },
+  },
+  Skeleton: {
+    type: "Skeleton",
+    label: "Skeleton",
+    category: "Data Display",
+    description: "Loading placeholder skeleton",
+    acceptsChildren: false,
+    props: {
+      width: { type: "string", label: "Width", defaultValue: "100%" },
+      height: { type: "string", label: "Height", defaultValue: "20px" },
+      variant: {
+        type: "string",
+        label: "Variant",
+        defaultValue: "text",
+        options: [
+          { label: "Text", value: "text" },
+          { label: "Circular", value: "circular" },
+          { label: "Rectangular", value: "rectangular" },
+        ],
+      },
+    },
+  },
+  Stat: {
+    type: "Stat",
+    label: "Stat",
+    category: "Data Display",
+    description: "Statistic with label and value",
+    acceptsChildren: false,
+    props: {
+      label: { type: "string", label: "Label", defaultValue: "Total Users" },
+      value: { type: "string", label: "Value", defaultValue: "1,234" },
+      change: { type: "string", label: "Change", defaultValue: "+12%" },
+      trend: {
+        type: "string",
+        label: "Trend",
+        defaultValue: "up",
+        options: [
+          { label: "Up", value: "up" },
+          { label: "Down", value: "down" },
+          { label: "Neutral", value: "neutral" },
+        ],
+      },
+    },
+  },
+  Rating: {
+    type: "Rating",
+    label: "Rating",
+    category: "Data Display",
+    description: "Star rating display",
+    acceptsChildren: false,
+    props: {
+      value: { type: "number", label: "Value", defaultValue: 3 },
+      max: { type: "number", label: "Max Stars", defaultValue: 5 },
+      readonly: { type: "boolean", label: "Read Only", defaultValue: true },
+    },
+  },
+
+  // ── D2d: Feedback ─────────────────────────────────────────────────
+
+  Alert: {
+    type: "Alert",
+    label: "Alert",
+    category: "Feedback",
+    description: "Alert banner with variant",
+    acceptsChildren: true,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "Heads up!" },
+      description: { type: "string", label: "Description", defaultValue: "This is an alert message." },
+      variant: {
+        type: "string",
+        label: "Variant",
+        defaultValue: "default",
+        options: [
+          { label: "Default", value: "default" },
+          { label: "Info", value: "info" },
+          { label: "Success", value: "success" },
+          { label: "Warning", value: "warning" },
+          { label: "Error", value: "error" },
+        ],
+      },
+    },
+  },
+  Toast: {
+    type: "Toast",
+    label: "Toast",
+    category: "Feedback",
+    description: "Toast notification preview",
+    acceptsChildren: false,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "Success" },
+      description: { type: "string", label: "Description", defaultValue: "Your changes have been saved." },
+      variant: {
+        type: "string",
+        label: "Variant",
+        defaultValue: "default",
+        options: [
+          { label: "Default", value: "default" },
+          { label: "Success", value: "success" },
+          { label: "Error", value: "error" },
+        ],
+      },
+    },
+  },
+  Spinner: {
+    type: "Spinner",
+    label: "Spinner",
+    category: "Feedback",
+    description: "Loading spinner",
+    acceptsChildren: false,
+    props: {
+      size: { type: "number", label: "Size (px)", defaultValue: 24 },
+      label: { type: "string", label: "Screen Reader Label", defaultValue: "Loading..." },
+    },
+  },
+  Dialog: {
+    type: "Dialog",
+    label: "Dialog",
+    category: "Feedback",
+    description: "Centered dialog overlay",
+    acceptsChildren: true,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "Confirm Action" },
+      description: { type: "string", label: "Description" },
+      open: { type: "boolean", label: "Open (preview)", defaultValue: true },
+    },
+  },
+  Drawer: {
+    type: "Drawer",
+    label: "Drawer",
+    category: "Feedback",
+    description: "Slide-out panel from edge",
+    acceptsChildren: true,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "Drawer" },
+      side: {
+        type: "string",
+        label: "Side",
+        defaultValue: "right",
+        options: [
+          { label: "Left", value: "left" },
+          { label: "Right", value: "right" },
+        ],
+      },
+      open: { type: "boolean", label: "Open (preview)", defaultValue: true },
+    },
+  },
+  Sheet: {
+    type: "Sheet",
+    label: "Sheet",
+    category: "Feedback",
+    description: "Bottom sheet overlay",
+    acceptsChildren: true,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "Sheet" },
+      open: { type: "boolean", label: "Open (preview)", defaultValue: true },
+    },
+  },
+
+  // ── D2e: Navigation ───────────────────────────────────────────────
+
+  Breadcrumb: {
+    type: "Breadcrumb",
+    label: "Breadcrumb",
+    category: "Navigation",
+    description: "Breadcrumb trail",
+    acceptsChildren: false,
+    props: {
+      items: { type: "array", label: "Items (label|href per line)", defaultValue: ["Home|/", "Products|/products", "Detail"] },
+      separator: { type: "string", label: "Separator", defaultValue: "/" },
+    },
+  },
+  Pagination: {
+    type: "Pagination",
+    label: "Pagination",
+    category: "Navigation",
+    description: "Page number navigation",
+    acceptsChildren: false,
+    props: {
+      totalPages: { type: "number", label: "Total Pages", defaultValue: 10 },
+      currentPage: { type: "number", label: "Current Page", defaultValue: 1 },
+    },
+  },
+  Stepper: {
+    type: "Stepper",
+    label: "Stepper",
+    category: "Navigation",
+    description: "Multi-step progress indicator",
+    acceptsChildren: true,
+    props: {
+      steps: { type: "array", label: "Step Labels", defaultValue: ["Account", "Profile", "Review"] },
+      currentStep: { type: "number", label: "Current Step", defaultValue: 1 },
+    },
+  },
+  Sidebar: {
+    type: "Sidebar",
+    label: "Sidebar",
+    category: "Navigation",
+    description: "Side navigation panel",
+    acceptsChildren: true,
+    props: {
+      items: { type: "array", label: "Items (label|href per line)", defaultValue: ["Dashboard|/dashboard", "Settings|/settings", "Profile|/profile"] },
+      collapsed: { type: "boolean", label: "Collapsed", defaultValue: false },
+    },
+  },
+  DropdownMenu: {
+    type: "DropdownMenu",
+    label: "Dropdown Menu",
+    category: "Navigation",
+    description: "Dropdown action menu",
+    acceptsChildren: false,
+    props: {
+      trigger: { type: "string", label: "Trigger Label", defaultValue: "Actions" },
+      items: { type: "array", label: "Items (label|action per line)", defaultValue: ["Edit|edit", "Duplicate|duplicate", "Delete|delete"] },
+    },
+  },
+  AppBar: {
+    type: "AppBar",
+    label: "App Bar",
+    category: "Navigation",
+    description: "Top application bar / header",
+    acceptsChildren: true,
+    props: {
+      title: { type: "string", label: "Title", defaultValue: "My App" },
+      sticky: { type: "boolean", label: "Sticky", defaultValue: true },
+    },
+  },
+
+  // ── D2f: Surfaces & Containers ────────────────────────────────────
+
+  Container: {
+    type: "Container",
+    label: "Container",
+    category: "Layout",
+    description: "Max-width centered container",
+    acceptsChildren: true,
+    props: {
+      maxWidth: {
+        type: "string",
+        label: "Max Width",
+        defaultValue: "lg",
+        options: [
+          { label: "SM (640px)", value: "sm" },
+          { label: "MD (768px)", value: "md" },
+          { label: "LG (1024px)", value: "lg" },
+          { label: "XL (1280px)", value: "xl" },
+          { label: "2XL (1536px)", value: "2xl" },
+          { label: "Full", value: "full" },
+        ],
+      },
+      padding: { type: "string", label: "Padding", options: TOKEN_OPTIONS },
+    },
+  },
+  AspectRatio: {
+    type: "AspectRatio",
+    label: "Aspect Ratio",
+    category: "Layout",
+    description: "Fixed aspect ratio container",
+    acceptsChildren: true,
+    props: {
+      ratio: {
+        type: "string",
+        label: "Ratio",
+        defaultValue: "16/9",
+        options: [
+          { label: "16:9", value: "16/9" },
+          { label: "4:3", value: "4/3" },
+          { label: "1:1", value: "1/1" },
+          { label: "21:9", value: "21/9" },
+        ],
+      },
+    },
+  },
+  Accordion: {
+    type: "Accordion",
+    label: "Accordion",
+    category: "Surfaces",
+    description: "Collapsible content sections",
+    acceptsChildren: true,
+    props: {
+      items: { type: "array", label: "Items (title|content per line)", defaultValue: ["Section 1|Content for section one", "Section 2|Content for section two", "Section 3|Content for section three"] },
+      multiple: { type: "boolean", label: "Multiple Open", defaultValue: false },
+    },
+  },
+  Popover: {
+    type: "Popover",
+    label: "Popover",
+    category: "Surfaces",
+    description: "Click-triggered floating panel",
+    acceptsChildren: true,
+    props: {
+      trigger: { type: "string", label: "Trigger Label", defaultValue: "Open" },
+    },
+  },
+  HoverCard: {
+    type: "HoverCard",
+    label: "Hover Card",
+    category: "Surfaces",
+    description: "Hover-triggered information card",
+    acceptsChildren: true,
+    props: {
+      trigger: { type: "string", label: "Trigger Text", defaultValue: "Hover me" },
+    },
+  },
+
+  // ── D2g: Media & Typography ───────────────────────────────────────
+
+  Video: {
+    type: "Video",
+    label: "Video",
+    category: "Media",
+    description: "Video player element",
+    acceptsChildren: false,
+    props: {
+      src: { type: "string", label: "Source URL", required: true },
+      poster: { type: "string", label: "Poster Image" },
+      controls: { type: "boolean", label: "Show Controls", defaultValue: true },
+      autoplay: { type: "boolean", label: "Autoplay", defaultValue: false },
+      loop: { type: "boolean", label: "Loop", defaultValue: false },
+    },
+  },
+  Embed: {
+    type: "Embed",
+    label: "Embed",
+    category: "Media",
+    description: "Embedded iframe content",
+    acceptsChildren: false,
+    props: {
+      src: { type: "string", label: "URL", required: true, defaultValue: "https://example.com" },
+      title: { type: "string", label: "Title", defaultValue: "Embedded content" },
+      height: { type: "string", label: "Height", defaultValue: "400px" },
+    },
+  },
+  Blockquote: {
+    type: "Blockquote",
+    label: "Blockquote",
+    category: "Media",
+    description: "Block quotation",
+    acceptsChildren: false,
+    props: {
+      text: { type: "string", label: "Quote Text", defaultValue: "The best way to predict the future is to invent it." },
+      cite: { type: "string", label: "Citation", defaultValue: "Alan Kay" },
+    },
+  },
+  Code: {
+    type: "Code",
+    label: "Code",
+    category: "Media",
+    description: "Code block with syntax highlighting",
+    acceptsChildren: false,
+    props: {
+      code: { type: "string", label: "Code", defaultValue: "const hello = 'world';" },
+      language: { type: "string", label: "Language", defaultValue: "typescript" },
+      showLineNumbers: { type: "boolean", label: "Line Numbers", defaultValue: false },
+    },
+  },
+  Carousel: {
+    type: "Carousel",
+    label: "Carousel",
+    category: "Media",
+    description: "Scrollable content carousel",
+    acceptsChildren: true,
+    props: {
+      autoplay: { type: "boolean", label: "Autoplay", defaultValue: false },
+      interval: { type: "number", label: "Interval (ms)", defaultValue: 3000 },
+    },
+  },
+  Calendar: {
+    type: "Calendar",
+    label: "Calendar",
+    category: "Media",
+    description: "Date calendar display",
+    acceptsChildren: false,
+    props: {
+      mode: {
+        type: "string",
+        label: "Mode",
+        defaultValue: "single",
+        options: [
+          { label: "Single", value: "single" },
+          { label: "Range", value: "range" },
+        ],
+      },
+    },
+  },
+  Timeline: {
+    type: "Timeline",
+    label: "Timeline",
+    category: "Media",
+    description: "Vertical timeline of events",
+    acceptsChildren: true,
+    props: {
+      items: { type: "array", label: "Items (title|description per line)", defaultValue: ["Step 1|First event happened", "Step 2|Second event happened", "Step 3|Third event happened"] },
+    },
+  },
+
+  ComponentRef: {
+    type: "ComponentRef",
+    label: "Component Instance",
+    category: "Components",
+    description: "An instance of a reusable component definition with optional overrides",
+    acceptsChildren: false,
+    props: {
+      ref: { type: "string", label: "Component ID", required: true },
     },
   },
 };

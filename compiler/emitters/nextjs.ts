@@ -138,20 +138,62 @@ function emitStyleAttr(style: NodeStyle | undefined): { classes: string[]; style
 }
 
 /**
+ * Emit responsive style classes with Tailwind breakpoint prefixes.
+ * Uses `sm:` for mobile overrides (>= 640px inverts to mobile-first),
+ * and `md:` for tablet overrides (>= 768px).
+ * In practice we emit the mobile overrides as unprefixed (mobile-first default)
+ * and the desktop base with `md:` or `lg:` prefixes. But since our base is desktop-first
+ * in the spec, we use a simpler approach: base classes are unprefixed,
+ * tablet overrides get `md:` prefix (768-1279px), mobile overrides get `sm:` prefix (640-767px).
+ *
+ * Tailwind is mobile-first, but our spec is desktop-first. To bridge this:
+ * - Base styles: emit unprefixed (apply at all sizes)
+ * - Tablet overrides: emit with `max-md:` (or we use `md:` override approach)
+ * - Mobile overrides: emit with `max-sm:`
+ *
+ * For simplicity in V1: responsive class-mapped properties get Tailwind prefixes.
+ * Non-class properties go into inline styles (no responsive support yet -- documented as limitation).
+ */
+function emitResponsiveClasses(
+  responsive: import("../types").ResponsiveOverrides | undefined,
+): string[] {
+  if (!responsive) return [];
+  const classes: string[] = [];
+
+  const emitPrefixed = (prefix: string, style: Partial<NodeStyle>) => {
+    for (const [key, rawValue] of Object.entries(style)) {
+      if (rawValue === undefined || rawValue === null) continue;
+      const twMap = TAILWIND_MAP[key];
+      if (twMap && typeof rawValue === "string" && twMap[rawValue]) {
+        classes.push(`${prefix}${twMap[rawValue]}`);
+      }
+    }
+  };
+
+  if (responsive.tablet) emitPrefixed("max-lg:", responsive.tablet);
+  if (responsive.mobile) emitPrefixed("max-md:", responsive.mobile);
+
+  return classes;
+}
+
+/**
  * Merge style attributes into existing className and style strings for JSX emission.
  */
 function mergeStyleIntoJSX(
   existingClassName: string,
   existingStyleAttr: string,
-  nodeStyle: NodeStyle | undefined
+  nodeStyle: NodeStyle | undefined,
+  responsive?: import("../types").ResponsiveOverrides
 ): { className: string; styleAttr: string } {
   const { classes, styleObj } = emitStyleAttr(nodeStyle);
+  const responsiveClasses = emitResponsiveClasses(responsive);
 
   let className = existingClassName;
-  if (classes.length > 0) {
+  const allClasses = [...classes, ...responsiveClasses];
+  if (allClasses.length > 0) {
     className = className
-      ? `${className} ${classes.join(" ")}`
-      : classes.join(" ");
+      ? `${className} ${allClasses.join(" ")}`
+      : allClasses.join(" ");
   }
 
   let styleAttr = existingStyleAttr;
@@ -245,6 +287,19 @@ function buildImportLines(imports: Set<string>, config: StudioConfig): string {
         existing.push(iconName);
       }
       bySource.set("lucide-react", existing);
+      continue;
+    }
+
+    // CustomComponent imports: "__custom:Name:path"
+    if (key.startsWith("__custom:")) {
+      const parts = key.slice(9).split(":");
+      const compName = parts[0];
+      const importSource = parts.slice(1).join(":");
+      if (compName && importSource) {
+        const existing = bySource.get(importSource) ?? [];
+        if (!existing.includes(compName)) existing.push(compName);
+        bySource.set(importSource, existing);
+      }
       continue;
     }
 
@@ -385,15 +440,17 @@ function emitNode(node: Node): EmitResult {
 
   // Compute style overlay (applied after the main JSX is generated)
   const nodeStyleResult = emitStyleAttr(node.style);
-  const hasStyleOverlay = nodeStyleResult.classes.length > 0 || Object.keys(nodeStyleResult.styleObj).length > 0;
+  const responsiveClasses = emitResponsiveClasses(node.responsive);
+  const allClasses = [...nodeStyleResult.classes, ...responsiveClasses];
+  const hasStyleOverlay = allClasses.length > 0 || Object.keys(nodeStyleResult.styleObj).length > 0;
 
   const result = emitNodeInner(node, props, type);
 
   // If the node has a style overlay, wrap it in a <div> with the style
   if (hasStyleOverlay) {
     const styleParts: string[] = [];
-    if (nodeStyleResult.classes.length > 0) {
-      styleParts.push(`className="${nodeStyleResult.classes.join(" ")}"`);
+    if (allClasses.length > 0) {
+      styleParts.push(`className="${allClasses.join(" ")}"`);
     }
     if (Object.keys(nodeStyleResult.styleObj).length > 0) {
       const entries = Object.entries(nodeStyleResult.styleObj)
@@ -742,6 +799,415 @@ ${rowJsx}
 </div>`,
         imports: new Set(),
       };
+    }
+
+    // ── D2a: Design Freedom Nodes ──────────────────────────────────
+
+    case "Box": {
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx ? `\n${indentLines(children.jsx, 2)}\n` : "";
+      return { jsx: `<div>${body}</div>`, imports: children.imports };
+    }
+
+    case "SVG": {
+      const svgCode = typeof props.code === "string" ? props.code : "";
+      const svgW = typeof props.width === "number" ? props.width : 24;
+      const svgH = typeof props.height === "number" ? props.height : 24;
+      return {
+        jsx: `<div style={{ width: ${svgW}, height: ${svgH} }} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(svgCode)} }} />`,
+        imports: new Set(),
+      };
+    }
+
+    case "CustomComponent": {
+      const importPath = typeof props.importPath === "string" ? props.importPath : "";
+      const compName = typeof props.componentName === "string" ? props.componentName : "Component";
+      let propStr = "";
+      if (typeof props.propValues === "string" && props.propValues !== "{}") {
+        try {
+          const pv = JSON.parse(props.propValues) as Record<string, unknown>;
+          propStr = Object.entries(pv).map(([k, v]) => typeof v === "string" ? `${k}="${escapeText(v)}"` : `${k}={${JSON.stringify(v)}}`).join(" ");
+          if (propStr) propStr = " " + propStr;
+        } catch { /* ignore parse errors */ }
+      }
+      const children = emitChildren(node.children ?? []);
+      const imports = new Set(children.imports);
+      imports.add(`__custom:${compName}:${importPath}`);
+      if (children.jsx) {
+        return { jsx: `<${compName}${propStr}>\n${indentLines(children.jsx, 2)}\n</${compName}>`, imports };
+      }
+      return { jsx: `<${compName}${propStr} />`, imports };
+    }
+
+    // ── D2b: Forms & Input ────────────────────────────────────────
+
+    case "Textarea": {
+      const attrs: string[] = [];
+      if (typeof props.placeholder === "string") attrs.push(`placeholder="${escapeText(props.placeholder)}"`);
+      if (typeof props.rows === "number") attrs.push(`rows={${props.rows}}`);
+      const attrStr = attrs.length > 0 ? " " + attrs.join(" ") : "";
+      const label = typeof props.label === "string" ? props.label : undefined;
+      const el = `<textarea className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground"${attrStr} />`;
+      if (label) {
+        return { jsx: `<div className="space-y-1.5">\n  <label className="text-sm font-medium">${escapeText(label)}</label>\n  ${el}\n</div>`, imports: new Set() };
+      }
+      return { jsx: el, imports: new Set() };
+    }
+
+    case "Select": {
+      const selOpts = Array.isArray(props.options) ? props.options : [];
+      const selPlaceholder = typeof props.placeholder === "string" ? props.placeholder : "Choose...";
+      const label = typeof props.label === "string" ? props.label : undefined;
+      const options = selOpts.map((opt) => {
+        const s = String(opt);
+        const [val, lab] = s.includes("|") ? s.split("|") : [s, s];
+        return `  <option value="${escapeText(val)}">${escapeText(lab)}</option>`;
+      }).join("\n");
+      const el = `<select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">\n  <option value="" disabled>${escapeText(selPlaceholder)}</option>\n${options}\n</select>`;
+      if (label) {
+        return { jsx: `<div className="space-y-1.5">\n  <label className="text-sm font-medium">${escapeText(label)}</label>\n  ${el}\n</div>`, imports: new Set() };
+      }
+      return { jsx: el, imports: new Set() };
+    }
+
+    case "Checkbox": {
+      const cbLabel = typeof props.label === "string" ? escapeText(props.label) : "Checkbox";
+      return { jsx: `<label className="flex items-center gap-2 text-sm cursor-pointer">\n  <input type="checkbox"${props.checked ? " defaultChecked" : ""} className="h-4 w-4 rounded border-gray-300" />\n  ${cbLabel}\n</label>`, imports: new Set() };
+    }
+
+    case "RadioGroup": {
+      const rgOpts = Array.isArray(props.options) ? props.options : [];
+      const rgDefault = typeof props.defaultValue === "string" ? props.defaultValue : "";
+      const rgLabel = typeof props.label === "string" ? props.label : undefined;
+      const radios = rgOpts.map((opt) => {
+        const s = String(opt);
+        const [val, lab] = s.includes("|") ? s.split("|") : [s, s];
+        return `  <label className="flex items-center gap-2 text-sm cursor-pointer">\n    <input type="radio" name="${node.id}" value="${escapeText(val)}"${val === rgDefault ? " defaultChecked" : ""} className="h-4 w-4" />\n    ${escapeText(lab)}\n  </label>`;
+      }).join("\n");
+      const legend = rgLabel ? `  <legend className="text-sm font-medium mb-1">${escapeText(rgLabel)}</legend>\n` : "";
+      return { jsx: `<fieldset className="space-y-2">\n${legend}${radios}\n</fieldset>`, imports: new Set() };
+    }
+
+    case "Switch": {
+      const swLabel = typeof props.label === "string" ? escapeText(props.label) : "Toggle";
+      const swChecked = props.checked === true;
+      return {
+        jsx: `<label className="flex items-center gap-3 text-sm cursor-pointer">\n  <div className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${swChecked ? "bg-blue-600" : "bg-gray-300"}">\n    <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform ${swChecked ? "translate-x-4" : "translate-x-0.5"}" />\n  </div>\n  ${swLabel}\n</label>`,
+        imports: new Set(),
+      };
+    }
+
+    case "Slider": {
+      const slMin = typeof props.min === "number" ? props.min : 0;
+      const slMax = typeof props.max === "number" ? props.max : 100;
+      const slStep = typeof props.step === "number" ? props.step : 1;
+      const slDefault = typeof props.defaultValue === "number" ? props.defaultValue : 50;
+      const slLabel = typeof props.label === "string" ? props.label : undefined;
+      const el = `<input type="range" min={${slMin}} max={${slMax}} step={${slStep}} defaultValue={${slDefault}} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />`;
+      if (slLabel) {
+        return { jsx: `<div className="space-y-1.5">\n  <div className="flex justify-between text-sm">\n    <label className="font-medium">${escapeText(slLabel)}</label>\n    <span className="text-muted-foreground">${slDefault}</span>\n  </div>\n  ${el}\n</div>`, imports: new Set() };
+      }
+      return { jsx: el, imports: new Set() };
+    }
+
+    case "Label": {
+      const lbText = typeof props.text === "string" ? escapeText(props.text) : "Label";
+      return { jsx: `<label className="text-sm font-medium leading-none">${lbText}</label>`, imports: new Set() };
+    }
+
+    case "FileUpload": {
+      const fuLabel = typeof props.label === "string" ? escapeText(props.label) : "Drop files here or click to upload";
+      const fuAccept = typeof props.accept === "string" ? props.accept : "image/*";
+      return {
+        jsx: `<label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">\n  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>\n  <span className="text-sm text-muted-foreground">${fuLabel}</span>\n  <input type="file" accept="${escapeText(fuAccept)}" className="sr-only" />\n</label>`,
+        imports: new Set(),
+      };
+    }
+
+    // ── D2c: Data Display ─────────────────────────────────────────
+
+    case "Avatar": {
+      const avSrc = typeof props.src === "string" ? props.src : "";
+      const avFallback = typeof props.fallback === "string" ? escapeText(props.fallback) : "AB";
+      const avSize = typeof props.size === "number" ? props.size : 40;
+      if (avSrc) {
+        return { jsx: `<img src="${escapeText(avSrc)}" alt="${avFallback}" style={{ width: ${avSize}, height: ${avSize} }} className="rounded-full object-cover" />`, imports: new Set() };
+      }
+      return { jsx: `<div style={{ width: ${avSize}, height: ${avSize} }} className="rounded-full bg-muted flex items-center justify-center text-xs font-medium">${avFallback}</div>`, imports: new Set() };
+    }
+
+    case "Badge": {
+      const bdText = typeof props.text === "string" ? escapeText(props.text) : "Badge";
+      const bdVariant = typeof props.variant === "string" ? props.variant : "default";
+      const bdColors: Record<string, string> = { default: "bg-zinc-900 text-white", secondary: "bg-zinc-100 text-zinc-900", destructive: "bg-red-500 text-white", outline: "border border-zinc-200 text-zinc-900" };
+      return { jsx: `<span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${bdColors[bdVariant] || bdColors.default}">${bdText}</span>`, imports: new Set() };
+    }
+
+    case "Chip": {
+      const chText = typeof props.text === "string" ? escapeText(props.text) : "Chip";
+      const chRemovable = props.removable !== false;
+      return { jsx: `<span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">${chText}${chRemovable ? '<button className="ml-0.5 rounded-full text-zinc-400 hover:text-zinc-600" type="button">&times;</button>' : ""}</span>`, imports: new Set() };
+    }
+
+    case "Tooltip": {
+      const ttContent = typeof props.content === "string" ? escapeText(props.content) : "Tooltip";
+      const children = emitChildren(node.children ?? []);
+      const trigger = children.jsx || '<span className="underline decoration-dotted cursor-help text-sm">Hover target</span>';
+      return { jsx: `<div className="group relative inline-block">\n  ${trigger}\n  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-zinc-900 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">${ttContent}</div>\n</div>`, imports: children.imports };
+    }
+
+    case "Progress": {
+      const prValue = typeof props.value === "number" ? props.value : 60;
+      const prMax = typeof props.max === "number" ? props.max : 100;
+      const prLabel = typeof props.label === "string" ? props.label : undefined;
+      const prPct = Math.min(100, Math.max(0, (prValue / prMax) * 100));
+      const labelLine = prLabel ? `<div className="flex justify-between text-sm"><span className="font-medium">${escapeText(prLabel)}</span><span className="text-muted-foreground">${Math.round(prPct)}%</span></div>\n  ` : "";
+      return { jsx: `<div className="space-y-1">\n  ${labelLine}<div className="h-2 w-full rounded-full bg-zinc-200 overflow-hidden">\n    <div className="h-full rounded-full bg-blue-600" style={{ width: "${prPct}%" }} />\n  </div>\n</div>`, imports: new Set() };
+    }
+
+    case "Skeleton": {
+      const skW = typeof props.width === "string" ? props.width : "100%";
+      const skH = typeof props.height === "string" ? props.height : "20px";
+      const skVariant = typeof props.variant === "string" ? props.variant : "text";
+      const skR = skVariant === "circular" ? "rounded-full" : skVariant === "text" ? "rounded" : "rounded-md";
+      return { jsx: `<div className="animate-pulse bg-zinc-200 ${skR}" style={{ width: "${skW}", height: "${skH}" }} />`, imports: new Set() };
+    }
+
+    case "Stat": {
+      const stLabel = typeof props.label === "string" ? escapeText(props.label) : "Stat";
+      const stValue = typeof props.value === "string" ? escapeText(props.value) : "0";
+      const stChange = typeof props.change === "string" ? escapeText(props.change) : "";
+      const stTrend = typeof props.trend === "string" ? props.trend : "neutral";
+      const tc = stTrend === "up" ? "text-green-600" : stTrend === "down" ? "text-red-600" : "text-zinc-500";
+      return { jsx: `<div className="space-y-1">\n  <p className="text-sm text-muted-foreground">${stLabel}</p>\n  <div className="flex items-baseline gap-2">\n    <p className="text-2xl font-bold">${stValue}</p>${stChange ? `\n    <span className="text-xs font-medium ${tc}">${stChange}</span>` : ""}\n  </div>\n</div>`, imports: new Set() };
+    }
+
+    case "Rating": {
+      const rtValue = typeof props.value === "number" ? props.value : 3;
+      const rtMax = typeof props.max === "number" ? props.max : 5;
+      const stars = Array.from({ length: rtMax }).map((_, i) =>
+        `<svg key={${i}} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${i < rtValue ? 'currentColor' : 'none'}" stroke="currentColor" strokeWidth="2" className="${i < rtValue ? 'text-yellow-500' : 'text-zinc-300'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>`
+      ).join("\n  ");
+      return { jsx: `<div className="flex gap-0.5">\n  ${stars}\n</div>`, imports: new Set() };
+    }
+
+    // ── D2d: Feedback ──────────────────────────────────────────────
+
+    case "Alert": {
+      const alTitle = typeof props.title === "string" ? escapeText(props.title) : "Alert";
+      const alDesc = typeof props.description === "string" ? escapeText(props.description) : "";
+      const alVariant = typeof props.variant === "string" ? props.variant : "default";
+      const alC: Record<string, string> = { default: "border-zinc-200 bg-zinc-50", info: "border-blue-200 bg-blue-50 text-blue-900", success: "border-green-200 bg-green-50 text-green-900", warning: "border-amber-200 bg-amber-50 text-amber-900", error: "border-red-200 bg-red-50 text-red-900" };
+      const children = emitChildren(node.children ?? []);
+      const childBody = children.jsx ? `\n  <div className="mt-2">\n${indentLines(children.jsx, 4)}\n  </div>` : "";
+      return { jsx: `<div className="rounded-lg border p-4 ${alC[alVariant] || alC.default}" role="alert">\n  <div className="font-semibold text-sm">${alTitle}</div>${alDesc ? `\n  <p className="text-sm mt-1 opacity-80">${alDesc}</p>` : ""}${childBody}\n</div>`, imports: children.imports };
+    }
+
+    case "Toast": {
+      const toTitle = typeof props.title === "string" ? escapeText(props.title) : "Toast";
+      const toDesc = typeof props.description === "string" ? escapeText(props.description) : "";
+      const toVariant = typeof props.variant === "string" ? props.variant : "default";
+      const toB = toVariant === "error" ? "border-red-300" : toVariant === "success" ? "border-green-300" : "border-zinc-200";
+      return { jsx: `<div className="rounded-lg border ${toB} bg-white p-4 shadow-lg max-w-sm">\n  <div className="font-semibold text-sm">${toTitle}</div>${toDesc ? `\n  <p className="text-sm text-muted-foreground mt-0.5">${toDesc}</p>` : ""}\n</div>`, imports: new Set() };
+    }
+
+    case "Spinner": {
+      const spSize = typeof props.size === "number" ? props.size : 24;
+      return { jsx: `<div className="flex items-center gap-2" role="status">\n  <svg className="animate-spin" style={{ width: ${spSize}, height: ${spSize} }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">\n    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />\n    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />\n  </svg>\n</div>`, imports: new Set() };
+    }
+
+    case "Dialog": {
+      const dlTitle = typeof props.title === "string" ? escapeText(props.title) : "Dialog";
+      const dlDesc = typeof props.description === "string" ? escapeText(props.description) : "";
+      const children = emitChildren(node.children ?? []);
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 4)}` : "";
+      return { jsx: `<div className="border rounded-lg shadow-lg bg-background max-w-md mx-auto">\n  <div className="p-6 space-y-2">\n    <h3 className="text-lg font-semibold">${dlTitle}</h3>${dlDesc ? `\n    <p className="text-sm text-muted-foreground">${dlDesc}</p>` : ""}\n  </div>\n  <div className="px-6 pb-4">${childBody}\n  </div>\n</div>`, imports: children.imports };
+    }
+
+    case "Drawer": {
+      const drTitle = typeof props.title === "string" ? escapeText(props.title) : "Drawer";
+      const drSide = typeof props.side === "string" ? props.side : "right";
+      const children = emitChildren(node.children ?? []);
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 4)}` : "";
+      return { jsx: `<div className="border rounded-lg shadow-lg bg-background w-80 ${drSide === "left" ? "mr-auto" : "ml-auto"}">\n  <div className="flex items-center justify-between px-4 py-3 border-b">\n    <span className="font-semibold text-sm">${drTitle}</span>\n  </div>\n  <div className="p-4">${childBody}\n  </div>\n</div>`, imports: children.imports };
+    }
+
+    case "Sheet": {
+      const shTitle = typeof props.title === "string" ? escapeText(props.title) : "Sheet";
+      const children = emitChildren(node.children ?? []);
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 4)}` : "";
+      return { jsx: `<div className="border-t rounded-t-xl shadow-lg bg-background mx-auto max-w-lg w-full">\n  <div className="flex justify-center pt-2 pb-1"><div className="w-10 h-1 rounded-full bg-zinc-300" /></div>\n  <div className="px-4 py-3 border-b"><span className="font-semibold text-sm">${shTitle}</span></div>\n  <div className="p-4">${childBody}\n  </div>\n</div>`, imports: children.imports };
+    }
+
+    // ── D2e: Navigation ─────────────────────────────────────────────
+
+    case "Breadcrumb": {
+      const bcItems = Array.isArray(props.items) ? props.items : [];
+      const bcSep = typeof props.separator === "string" ? props.separator : "/";
+      const items = bcItems.map((item, i) => {
+        const s = String(item);
+        const [label, href] = s.includes("|") ? s.split("|") : [s, ""];
+        const isLast = i === bcItems.length - 1;
+        const sep = i > 0 ? `<span className="text-muted-foreground mx-1">${escapeText(bcSep)}</span>` : "";
+        if (isLast || !href) return `${sep}<span className="${isLast ? "font-medium" : "text-muted-foreground"}">${escapeText(label)}</span>`;
+        return `${sep}<Link href="${href}" className="text-muted-foreground hover:text-foreground transition-colors">${escapeText(label)}</Link>`;
+      }).join("\n  ");
+      return { jsx: `<nav className="flex items-center gap-1 text-sm">\n  ${items}\n</nav>`, imports: new Set(["Link"]) };
+    }
+
+    case "Pagination": {
+      const pgTotal = typeof props.totalPages === "number" ? props.totalPages : 10;
+      const pgCurrent = typeof props.currentPage === "number" ? props.currentPage : 1;
+      const pgMax = Math.min(pgTotal, 7);
+      const buttons = Array.from({ length: pgMax }).map((_, i) => {
+        const p = i + 1;
+        return `  <button className="${p === pgCurrent ? "h-8 w-8 rounded bg-zinc-900 text-white text-sm" : "h-8 w-8 rounded border text-sm hover:bg-muted"}">${p}</button>`;
+      }).join("\n");
+      return { jsx: `<nav className="flex items-center gap-1">\n  <button className="h-8 w-8 rounded border text-sm"${pgCurrent <= 1 ? " disabled" : ""}>&lsaquo;</button>\n${buttons}${pgTotal > 7 ? '\n  <span className="px-1 text-muted-foreground">...</span>' : ""}\n  <button className="h-8 w-8 rounded border text-sm"${pgCurrent >= pgTotal ? " disabled" : ""}>&rsaquo;</button>\n</nav>`, imports: new Set() };
+    }
+
+    case "Stepper": {
+      const stSteps = Array.isArray(props.steps) ? props.steps.map(String) : ["Step 1", "Step 2"];
+      const stCurrent = typeof props.currentStep === "number" ? props.currentStep : 1;
+      const children = emitChildren(node.children ?? []);
+      const steps = stSteps.map((step, i) => {
+        const connector = i > 0 ? `<div className="flex-1 h-0.5 ${i < stCurrent ? "bg-blue-600" : "bg-zinc-200"}" />\n    ` : "";
+        const cls = i < stCurrent ? "bg-blue-600 text-white" : i === stCurrent ? "border-2 border-blue-600 text-blue-600" : "border border-zinc-300 text-zinc-400";
+        return `${connector}<div className="flex items-center gap-2">\n      <div className="h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium ${cls}">${i + 1}</div>\n      <span className="text-sm">${escapeText(step)}</span>\n    </div>`;
+      }).join("\n    ");
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 2)}` : "";
+      return { jsx: `<div>\n  <div className="flex items-center gap-2 mb-4">\n    ${steps}\n  </div>${childBody}\n</div>`, imports: children.imports };
+    }
+
+    case "Sidebar": {
+      const sbItems = Array.isArray(props.items) ? props.items : [];
+      const sbCollapsed = props.collapsed === true;
+      const children = emitChildren(node.children ?? []);
+      const items = sbItems.map((item, i) => {
+        const s = String(item);
+        const [label, href] = s.includes("|") ? s.split("|") : [s, "#"];
+        return `  <Link href="${href}" className="flex items-center gap-2 px-3 py-2 text-sm rounded-md mx-1 hover:bg-accent transition-colors${i === 0 ? " bg-accent font-medium" : " text-muted-foreground"}">${sbCollapsed ? "" : escapeText(label)}</Link>`;
+      }).join("\n");
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 2)}` : "";
+      return { jsx: `<aside className="${sbCollapsed ? "w-14" : "w-56"} border-r bg-muted/30 py-2 flex flex-col gap-0.5 min-h-[200px]">\n${items}${childBody}\n</aside>`, imports: new Set(["Link", ...Array.from(children.imports)]) };
+    }
+
+    case "DropdownMenu": {
+      const dmTrigger = typeof props.trigger === "string" ? escapeText(props.trigger) : "Actions";
+      const dmItems = Array.isArray(props.items) ? props.items : [];
+      const items = dmItems.map((item) => {
+        const s = String(item);
+        const [label] = s.includes("|") ? s.split("|") : [s];
+        return `    <div className="px-3 py-1.5 text-sm hover:bg-muted cursor-pointer">${escapeText(label)}</div>`;
+      }).join("\n");
+      return { jsx: `<div className="relative inline-block">\n  <button className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-muted">\n    ${dmTrigger}\n    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>\n  </button>\n  <div className="mt-1 w-40 rounded-md border bg-background shadow-lg py-1">\n${items}\n  </div>\n</div>`, imports: new Set() };
+    }
+
+    case "AppBar": {
+      const abTitle = typeof props.title === "string" ? escapeText(props.title) : "App";
+      const abSticky = props.sticky !== false;
+      const children = emitChildren(node.children ?? []);
+      const childBody = children.jsx ? `\n${indentLines(children.jsx, 6)}\n    ` : "";
+      return { jsx: `<header className="flex items-center justify-between px-4 h-14 border-b bg-background${abSticky ? " sticky top-0 z-40" : ""}">\n  <span className="font-semibold">${abTitle}</span>\n  <div className="flex items-center gap-2">${childBody}</div>\n</header>`, imports: children.imports };
+    }
+
+    // ── D2f: Surfaces & Containers ──────────────────────────────────
+
+    case "Container": {
+      const ctMaxWidth = typeof props.maxWidth === "string" ? props.maxWidth : "lg";
+      const ctPadding = props.padding ? ` p-${resolveSize(props.padding)}` : " px-4";
+      const MW: Record<string, string> = { sm: "max-w-screen-sm", md: "max-w-screen-md", lg: "max-w-screen-lg", xl: "max-w-screen-xl", "2xl": "max-w-screen-2xl", full: "max-w-full" };
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx ? `\n${indentLines(children.jsx, 2)}\n` : "";
+      return { jsx: `<div className="mx-auto ${MW[ctMaxWidth] || "max-w-screen-lg"}${ctPadding}">${body}</div>`, imports: children.imports };
+    }
+
+    case "AspectRatio": {
+      const arRatio = typeof props.ratio === "string" ? props.ratio : "16/9";
+      const [w, h] = arRatio.split("/").map(Number);
+      const pp = w && h ? (h / w) * 100 : 56.25;
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx ? `\n${indentLines(children.jsx, 4)}\n  ` : "";
+      return { jsx: `<div className="relative w-full overflow-hidden" style={{ paddingTop: "${pp}%" }}>\n  <div className="absolute inset-0">${body}</div>\n</div>`, imports: children.imports };
+    }
+
+    case "Accordion": {
+      const acItems = Array.isArray(props.items) ? props.items : [];
+      const children = emitChildren(node.children ?? []);
+      const items = acItems.map((item, i) => {
+        const s = String(item);
+        const [title, body] = s.includes("|") ? s.split("|") : [s, ""];
+        return `  <details className="group"${i === 0 ? " open" : ""}>\n    <summary className="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-medium hover:bg-muted/50">\n      ${escapeText(title)}\n    </summary>\n    <div className="px-4 pb-3 text-sm text-muted-foreground">${escapeText(body)}</div>\n  </details>`;
+      }).join("\n");
+      const childBody = children.jsx ? `\n  <div className="p-4">\n${indentLines(children.jsx, 4)}\n  </div>` : "";
+      return { jsx: `<div className="divide-y border rounded-lg">\n${items}${childBody}\n</div>`, imports: children.imports };
+    }
+
+    case "Popover": {
+      const poTrigger = typeof props.trigger === "string" ? escapeText(props.trigger) : "Open";
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx || '<p className="text-sm text-muted-foreground">Popover content</p>';
+      return { jsx: `<div className="relative inline-block">\n  <button className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">${poTrigger}</button>\n  <div className="mt-1 rounded-md border bg-background shadow-lg p-4 w-64">\n${indentLines(body, 4)}\n  </div>\n</div>`, imports: children.imports };
+    }
+
+    case "HoverCard": {
+      const hcTrigger = typeof props.trigger === "string" ? escapeText(props.trigger) : "Hover me";
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx || '<p className="text-sm text-muted-foreground">Hover card content</p>';
+      return { jsx: `<div className="relative inline-block group">\n  <span className="underline decoration-dotted cursor-help text-sm">${hcTrigger}</span>\n  <div className="hidden group-hover:block absolute top-full left-0 mt-1 rounded-md border bg-background shadow-lg p-4 w-64 z-50">\n${indentLines(body, 4)}\n  </div>\n</div>`, imports: children.imports };
+    }
+
+    // ── D2g: Media & Typography ─────────────────────────────────────
+
+    case "Video": {
+      const viSrc = typeof props.src === "string" ? props.src : "";
+      const viPoster = typeof props.poster === "string" ? props.poster : "";
+      const viControls = props.controls !== false;
+      if (!viSrc) return { jsx: `<div className="flex items-center justify-center h-48 bg-muted border border-dashed rounded-lg text-sm text-muted-foreground">Video (set src)</div>`, imports: new Set() };
+      const attrs = [`src="${escapeText(viSrc)}"`, viPoster ? `poster="${escapeText(viPoster)}"` : "", viControls ? "controls" : ""].filter(Boolean).join(" ");
+      return { jsx: `<video ${attrs} className="w-full rounded-lg" />`, imports: new Set() };
+    }
+
+    case "Embed": {
+      const emSrc = typeof props.src === "string" ? props.src : "";
+      const emTitle = typeof props.title === "string" ? escapeText(props.title) : "Embedded content";
+      const emHeight = typeof props.height === "string" ? props.height : "400px";
+      if (!emSrc) return { jsx: `<div className="flex items-center justify-center bg-muted border border-dashed rounded-lg text-sm text-muted-foreground" style={{ height: "${emHeight}" }}>Embed (set URL)</div>`, imports: new Set() };
+      return { jsx: `<iframe src="${escapeText(emSrc)}" title="${emTitle}" style={{ height: "${emHeight}" }} className="w-full border rounded-lg" />`, imports: new Set() };
+    }
+
+    case "Blockquote": {
+      const bqText = typeof props.text === "string" ? escapeText(props.text) : "";
+      const bqCite = typeof props.cite === "string" ? escapeText(props.cite) : "";
+      return { jsx: `<blockquote className="border-l-4 border-zinc-300 pl-4 py-2 italic text-zinc-600">\n  <p>${bqText}</p>${bqCite ? `\n  <footer className="mt-1 text-sm not-italic text-muted-foreground">&mdash; ${bqCite}</footer>` : ""}\n</blockquote>`, imports: new Set() };
+    }
+
+    case "Code": {
+      const cdCode = typeof props.code === "string" ? escapeText(props.code) : "";
+      const cdLang = typeof props.language === "string" ? props.language : "";
+      return { jsx: `<div className="rounded-lg bg-zinc-950 text-zinc-100 overflow-hidden">${cdLang ? `\n  <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider text-zinc-400 border-b border-zinc-800">${escapeText(cdLang)}</div>` : ""}\n  <pre className="p-4 text-sm overflow-x-auto"><code>${cdCode}</code></pre>\n</div>`, imports: new Set() };
+    }
+
+    case "Carousel": {
+      const children = emitChildren(node.children ?? []);
+      const body = children.jsx ? `\n${indentLines(children.jsx, 4)}\n  ` : "\n    {/* Carousel slides */}\n  ";
+      return { jsx: `<div className="relative overflow-hidden rounded-lg">\n  <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-2">${body}</div>\n</div>`, imports: children.imports };
+    }
+
+    case "Calendar": {
+      return { jsx: `<div className="border rounded-lg p-3 w-64">\n  <div className="flex items-center justify-between mb-2">\n    <button className="h-7 w-7 rounded hover:bg-muted text-sm">&lsaquo;</button>\n    <span className="text-sm font-medium">February 2026</span>\n    <button className="h-7 w-7 rounded hover:bg-muted text-sm">&rsaquo;</button>\n  </div>\n  <div className="grid grid-cols-7 text-center text-xs text-muted-foreground mb-1">\n    {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => <div key={d} className="py-1">{d}</div>)}\n  </div>\n  <div className="grid grid-cols-7 text-center text-sm">\n    {Array.from({length:28}).map((_,i) => <button key={i} className="h-8 w-8 rounded-full text-xs hover:bg-muted">{i+1}</button>)}\n  </div>\n</div>`, imports: new Set() };
+    }
+
+    case "Timeline": {
+      const tlItems = Array.isArray(props.items) ? props.items : [];
+      const children = emitChildren(node.children ?? []);
+      const items = tlItems.map((item) => {
+        const s = String(item);
+        const [title, desc] = s.includes("|") ? s.split("|") : [s, ""];
+        return `  <div className="relative pb-4 last:pb-0">\n    <div className="absolute -left-3.5 top-1 h-3 w-3 rounded-full border-2 border-blue-600 bg-background" />\n    <div className="text-sm font-medium">${escapeText(title)}</div>${desc ? `\n    <div className="text-sm text-muted-foreground mt-0.5">${escapeText(desc)}</div>` : ""}\n  </div>`;
+      }).join("\n");
+      const childBody = children.jsx ? `\n  <div className="mt-2">\n${indentLines(children.jsx, 4)}\n  </div>` : "";
+      return { jsx: `<div className="relative pl-6">\n  <div className="absolute left-2.5 top-0 bottom-0 w-px bg-zinc-200" />\n${items}${childBody}\n</div>`, imports: children.imports };
     }
 
     // -- Repo component (fallback) ------------------------------------------
