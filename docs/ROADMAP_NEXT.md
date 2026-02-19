@@ -383,6 +383,18 @@ npx create-studio-app my-project
 - [ ] Component-level snapshot tests
 - [ ] Accessibility test generation (axe-core)
 
+### 12.5 Enhanced Figma Import
+
+Current Figma parser (`figma-parser.ts`) captures ~20% of a frame's visual content (basic structure only). Enhance to achieve 60-70% visual fidelity for well-structured Figma files:
+
+- [ ] **Colors and backgrounds** -- extract fill colors, gradients, map to style properties
+- [ ] **Typography styles** -- font family, weight, size, color, line height from Figma text nodes
+- [ ] **Borders and effects** -- border radius, border color/width, shadows, opacity
+- [ ] **Image downloads** -- use Figma Images API to download image fills as assets
+- [ ] **Absolute positioning** -- map non-auto-layout frames to positioned containers
+- [ ] **Component name heuristics** -- better mapping of Figma component names to Studio node types (Button, Card, Input, Nav, etc.)
+- [ ] **Nested structure fidelity** -- preserve deeper nesting instead of flattening
+
 ---
 
 ## Summary
@@ -396,4 +408,4 @@ npx create-studio-app my-project
 | **9** | Launch Readiness | **Complete** | 63+ node types, Multi-framework, Real-time collab, Component system, Bidi sync |
 | **10** | AI & Automation | **Planned** | AI layout, AI code review, Auto-responsive |
 | **11** | Ecosystem | **Planned** | Plugin marketplace, API access, Enterprise, Desktop app, Live sync |
-| **12** | Advanced Design | **Planned** | Animations, Multi-brand theming, Variants, Design-to-test |
+| **12** | Advanced Design | **Planned** | Animations, Multi-brand theming, Variants, Design-to-test, Enhanced Figma import |
