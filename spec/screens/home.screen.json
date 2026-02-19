@@ -52,6 +52,22 @@
         }
       },
       {
+        "id": "switch_mlthxrdv_3",
+        "type": "Switch",
+        "props": {
+          "label": "Enable notifications",
+          "checked": false
+        }
+      },
+      {
+        "id": "checkbox_mlthx76w_1",
+        "type": "Checkbox",
+        "props": {
+          "label": "Accept terms",
+          "checked": false
+        }
+      },
+      {
         "id": "card_1",
         "type": "Card",
         "children": [
@@ -169,6 +185,14 @@
             ]
           }
         ]
+      },
+      {
+        "id": "switch_mlthxps0_2",
+        "type": "Switch",
+        "props": {
+          "label": "Enable notifications",
+          "checked": false
+        }
       }
     ]
   }

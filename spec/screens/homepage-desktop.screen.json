@@ -1,0 +1,1353 @@
+{
+  "version": 1,
+  "route": "/homepage-desktop",
+  "meta": {
+    "layout": "default"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Section",
+    "children": [
+      {
+        "id": "section_18",
+        "type": "Section",
+        "children": [
+          {
+            "id": "section_6",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_1",
+                "type": "Divider"
+              },
+              {
+                "id": "image_2",
+                "type": "Image",
+                "props": {
+                  "src": "",
+                  "alt": "ChatGPT Image Jun 10, 2025, 01_36_31 PM 1"
+                }
+              },
+              {
+                "id": "divider_3",
+                "type": "Divider"
+              },
+              {
+                "id": "divider_4",
+                "type": "Divider"
+              },
+              {
+                "id": "image_5",
+                "type": "Image",
+                "props": {
+                  "src": "",
+                  "alt": "Background"
+                }
+              }
+            ]
+          },
+          {
+            "id": "stack_17",
+            "type": "Stack",
+            "props": {
+              "direction": "column",
+              "gap": "4"
+            },
+            "children": [
+              {
+                "id": "stack_9",
+                "type": "Stack",
+                "props": {
+                  "direction": "column",
+                  "gap": "4"
+                },
+                "children": [
+                  {
+                    "id": "heading_7",
+                    "type": "Heading",
+                    "props": {
+                      "text": "Simple To Use.",
+                      "level": 1
+                    }
+                  },
+                  {
+                    "id": "heading_8",
+                    "type": "Heading",
+                    "props": {
+                      "text": "Built for Builders.",
+                      "level": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "text_10",
+                "type": "Text",
+                "props": {
+                  "text": "STU is the all-in-one platform that takes your construction business from tender to project closure – streamlining site work, admin, HR,  and finance in one place."
+                }
+              },
+              {
+                "id": "button_16",
+                "type": "Button",
+                "props": {
+                  "label": "Book a Demo"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "stack_46",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "8"
+        },
+        "children": [
+          {
+            "id": "stack_45",
+            "type": "Stack",
+            "props": {
+              "direction": "row",
+              "gap": "8"
+            },
+            "children": [
+              {
+                "id": "image_19",
+                "type": "Image",
+                "props": {
+                  "src": "",
+                  "alt": "hutchinson-logo 1"
+                }
+              },
+              {
+                "id": "section_25",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "section_24",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_23",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_20",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_21",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_22",
+                            "type": "Divider"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "divider_26",
+                "type": "Divider"
+              },
+              {
+                "id": "section_43",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "divider_27",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_28",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_29",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_30",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_31",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_32",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_33",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_34",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_35",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_36",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_37",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_38",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_39",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_40",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_41",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_42",
+                    "type": "Divider"
+                  }
+                ]
+              },
+              {
+                "id": "image_44",
+                "type": "Image",
+                "props": {
+                  "src": "",
+                  "alt": "Wates-logo-FULL-COLOUR-300x82 1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_47",
+        "type": "Divider"
+      },
+      {
+        "id": "stack_50",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "4"
+        },
+        "children": [
+          {
+            "id": "heading_48",
+            "type": "Heading",
+            "props": {
+              "text": "One Platform. Every Part of the Job.",
+              "level": 1
+            }
+          },
+          {
+            "id": "text_49",
+            "type": "Text",
+            "props": {
+              "text": "From site to office, STU connects your teams, tasks, and tools in one simple system.  No more switching between spreadsheets, apps, or paper trails."
+            }
+          }
+        ]
+      },
+      {
+        "id": "stack_59",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "6"
+        },
+        "children": [
+          {
+            "id": "heading_51",
+            "type": "Heading",
+            "props": {
+              "text": "Built by Builders.  for builders.",
+              "level": 1
+            }
+          },
+          {
+            "id": "text_52",
+            "type": "Text",
+            "props": {
+              "text": "We’ve lived the chaos of scattered systems, endless forms,  and chasing updates across teams. \n\nSTU is designed with the day-to-day of a real construction business in mind — not as a “nice-to-have”,  but as a must-have."
+            }
+          },
+          {
+            "id": "button_58",
+            "type": "Button",
+            "props": {
+              "label": "Learn more"
+            }
+          }
+        ]
+      },
+      {
+        "id": "button_65",
+        "type": "Button",
+        "props": {
+          "label": "Book a demo"
+        }
+      },
+      {
+        "id": "section_69",
+        "type": "Section",
+        "children": [
+          {
+            "id": "divider_66",
+            "type": "Divider"
+          },
+          {
+            "id": "divider_67",
+            "type": "Divider"
+          },
+          {
+            "id": "divider_68",
+            "type": "Divider"
+          }
+        ]
+      },
+      {
+        "id": "image_70",
+        "type": "Image",
+        "props": {
+          "src": "",
+          "alt": "Home 1"
+        }
+      },
+      {
+        "id": "stack_93",
+        "type": "Stack",
+        "props": {
+          "direction": "row",
+          "gap": "8"
+        },
+        "children": [
+          {
+            "id": "stack_86",
+            "type": "Stack",
+            "props": {
+              "direction": "row",
+              "gap": "8"
+            },
+            "children": [
+              {
+                "id": "section_79",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "divider_71",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "section_78",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "divider_72",
+                        "type": "Divider"
+                      },
+                      {
+                        "id": "divider_73",
+                        "type": "Divider"
+                      },
+                      {
+                        "id": "divider_74",
+                        "type": "Divider"
+                      },
+                      {
+                        "id": "divider_75",
+                        "type": "Divider"
+                      },
+                      {
+                        "id": "divider_76",
+                        "type": "Divider"
+                      },
+                      {
+                        "id": "divider_77",
+                        "type": "Divider"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "stack_85",
+                "type": "Stack",
+                "props": {
+                  "direction": "row",
+                  "gap": "8"
+                },
+                "children": [
+                  {
+                    "id": "text_80",
+                    "type": "Text",
+                    "props": {
+                      "text": "Why STU?"
+                    }
+                  },
+                  {
+                    "id": "text_81",
+                    "type": "Text",
+                    "props": {
+                      "text": "Features"
+                    }
+                  },
+                  {
+                    "id": "text_82",
+                    "type": "Text",
+                    "props": {
+                      "text": "About Us"
+                    }
+                  },
+                  {
+                    "id": "text_83",
+                    "type": "Text",
+                    "props": {
+                      "text": "Pricing"
+                    }
+                  },
+                  {
+                    "id": "text_84",
+                    "type": "Text",
+                    "props": {
+                      "text": "Contact"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "button_92",
+            "type": "Button",
+            "props": {
+              "label": "Book a Demo"
+            }
+          }
+        ]
+      },
+      {
+        "id": "stack_136",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "6"
+        },
+        "children": [
+          {
+            "id": "section_112",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_94",
+                "type": "Divider"
+              },
+              {
+                "id": "section_111",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "divider_95",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_96",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_97",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_98",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_99",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_100",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_101",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_102",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_103",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_104",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_105",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_106",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_107",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_108",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_109",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_110",
+                    "type": "Divider"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "stack_135",
+            "type": "Stack",
+            "props": {
+              "direction": "column",
+              "gap": "4"
+            },
+            "children": [
+              {
+                "id": "heading_113",
+                "type": "Heading",
+                "props": {
+                  "text": "Out on Site",
+                  "level": 3
+                }
+              },
+              {
+                "id": "stack_134",
+                "type": "Stack",
+                "props": {
+                  "direction": "column",
+                  "gap": "3"
+                },
+                "children": [
+                  {
+                    "id": "stack_118",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_116",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_114",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_115",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_117",
+                        "type": "Text",
+                        "props": {
+                          "text": "Log timesheets in seconds"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_123",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_121",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_119",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_120",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_122",
+                        "type": "Text",
+                        "props": {
+                          "text": "Complete vehicle checks and inspections"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_128",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_126",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_124",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_125",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_127",
+                        "type": "Text",
+                        "props": {
+                          "text": "Report and escalate issues"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_133",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_131",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_129",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_130",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_132",
+                        "type": "Text",
+                        "props": {
+                          "text": "Track daily tasks"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "stack_171",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "6"
+        },
+        "children": [
+          {
+            "id": "section_152",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_137",
+                "type": "Divider"
+              },
+              {
+                "id": "section_151",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "divider_138",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_139",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_140",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_141",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_142",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_143",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_144",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_145",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_146",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_147",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_148",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_149",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_150",
+                    "type": "Divider"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "stack_170",
+            "type": "Stack",
+            "props": {
+              "direction": "column",
+              "gap": "4"
+            },
+            "children": [
+              {
+                "id": "heading_153",
+                "type": "Heading",
+                "props": {
+                  "text": "In the Office",
+                  "level": 3
+                }
+              },
+              {
+                "id": "stack_169",
+                "type": "Stack",
+                "props": {
+                  "direction": "column",
+                  "gap": "3"
+                },
+                "children": [
+                  {
+                    "id": "stack_158",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_156",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_154",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_155",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_157",
+                        "type": "Text",
+                        "props": {
+                          "text": "Manage projects, HR, and finance"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_163",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_161",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_159",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_160",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_162",
+                        "type": "Text",
+                        "props": {
+                          "text": "Automate workflows and approvals"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_168",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_166",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_164",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_165",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_167",
+                        "type": "Text",
+                        "props": {
+                          "text": "Track equipment hire, training, and holidays"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "stack_195",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "6"
+        },
+        "children": [
+          {
+            "id": "section_176",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_172",
+                "type": "Divider"
+              },
+              {
+                "id": "section_175",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "divider_173",
+                    "type": "Divider"
+                  },
+                  {
+                    "id": "divider_174",
+                    "type": "Divider"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "stack_194",
+            "type": "Stack",
+            "props": {
+              "direction": "column",
+              "gap": "4"
+            },
+            "children": [
+              {
+                "id": "heading_177",
+                "type": "Heading",
+                "props": {
+                  "text": "For the Whole Team",
+                  "level": 3
+                }
+              },
+              {
+                "id": "stack_193",
+                "type": "Stack",
+                "props": {
+                  "direction": "column",
+                  "gap": "3"
+                },
+                "children": [
+                  {
+                    "id": "stack_182",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_180",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_178",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_179",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_181",
+                        "type": "Text",
+                        "props": {
+                          "text": "Role-based access across web and mobile"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_187",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_185",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_183",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_184",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_186",
+                        "type": "Text",
+                        "props": {
+                          "text": "Built-in tools like Xertilox integration"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "stack_192",
+                    "type": "Stack",
+                    "props": {
+                      "direction": "row",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "id": "section_190",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_188",
+                            "type": "Divider"
+                          },
+                          {
+                            "id": "divider_189",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "text_191",
+                        "type": "Text",
+                        "props": {
+                          "text": "Simple, reliable, and ready to use"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_196",
+        "type": "Divider"
+      },
+      {
+        "id": "stack_199",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "4"
+        },
+        "children": [
+          {
+            "id": "heading_197",
+            "type": "Heading",
+            "props": {
+              "text": "STU in Action.",
+              "level": 1
+            }
+          },
+          {
+            "id": "text_198",
+            "type": "Text",
+            "props": {
+              "text": "Take a closer look at how STU streamlines everyday tasks"
+            }
+          }
+        ]
+      },
+      {
+        "id": "image_200",
+        "type": "Image",
+        "props": {
+          "src": "",
+          "alt": "SAAS mobile app for construction workers in the UK\n"
+        }
+      },
+      {
+        "id": "section_208",
+        "type": "Section",
+        "children": [
+          {
+            "id": "section_207",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_201",
+                "type": "Divider"
+              },
+              {
+                "id": "divider_202",
+                "type": "Divider"
+              },
+              {
+                "id": "divider_203",
+                "type": "Divider"
+              },
+              {
+                "id": "image_204",
+                "type": "Image",
+                "props": {
+                  "src": "",
+                  "alt": "Dashboard 1"
+                }
+              },
+              {
+                "id": "heading_205",
+                "type": "Heading",
+                "props": {
+                  "text": "MEET STU.",
+                  "level": 1
+                }
+              },
+              {
+                "id": "heading_206",
+                "type": "Heading",
+                "props": {
+                  "text": "Built for Builders.",
+                  "level": 4
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_209",
+        "type": "Divider"
+      },
+      {
+        "id": "button_215",
+        "type": "Button",
+        "props": {
+          "label": "Book a demo"
+        }
+      },
+      {
+        "id": "button_221",
+        "type": "Button",
+        "props": {
+          "label": "Book a demo"
+        }
+      },
+      {
+        "id": "stack_224",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "4"
+        },
+        "children": [
+          {
+            "id": "heading_222",
+            "type": "Heading",
+            "props": {
+              "text": "Real Results.",
+              "level": 1
+            }
+          },
+          {
+            "id": "text_223",
+            "type": "Text",
+            "props": {
+              "text": "STU is built to make your day-to-day easier — and it shows."
+            }
+          }
+        ]
+      },
+      {
+        "id": "stack_227",
+        "type": "Stack",
+        "props": {
+          "direction": "column",
+          "gap": "4"
+        },
+        "children": [
+          {
+            "id": "heading_225",
+            "type": "Heading",
+            "props": {
+              "text": "Get Started with STU.",
+              "level": 1
+            }
+          },
+          {
+            "id": "text_226",
+            "type": "Text",
+            "props": {
+              "text": "Simplify your business. Reduce admin. Keep every project moving."
+            }
+          }
+        ]
+      },
+      {
+        "id": "stack_246",
+        "type": "Stack",
+        "props": {
+          "direction": "row",
+          "gap": "8"
+        },
+        "children": [
+          {
+            "id": "section_233",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_228",
+                "type": "Divider"
+              },
+              {
+                "id": "section_231",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "heading_229",
+                    "type": "Heading",
+                    "props": {
+                      "text": "50",
+                      "level": 1
+                    }
+                  },
+                  {
+                    "id": "heading_230",
+                    "type": "Heading",
+                    "props": {
+                      "text": "%",
+                      "level": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "heading_232",
+                "type": "Heading",
+                "props": {
+                  "text": "less admin time per site",
+                  "level": 4
+                }
+              }
+            ]
+          },
+          {
+            "id": "section_239",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_234",
+                "type": "Divider"
+              },
+              {
+                "id": "section_237",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "heading_235",
+                    "type": "Heading",
+                    "props": {
+                      "text": "10",
+                      "level": 1
+                    }
+                  },
+                  {
+                    "id": "heading_236",
+                    "type": "Heading",
+                    "props": {
+                      "text": "x",
+                      "level": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "heading_238",
+                "type": "Heading",
+                "props": {
+                  "text": "faster issue resolution",
+                  "level": 4
+                }
+              }
+            ]
+          },
+          {
+            "id": "section_245",
+            "type": "Section",
+            "children": [
+              {
+                "id": "divider_240",
+                "type": "Divider"
+              },
+              {
+                "id": "section_243",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "heading_241",
+                    "type": "Heading",
+                    "props": {
+                      "text": "99",
+                      "level": 1
+                    }
+                  },
+                  {
+                    "id": "heading_242",
+                    "type": "Heading",
+                    "props": {
+                      "text": "%",
+                      "level": 1
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "heading_244",
+                "type": "Heading",
+                "props": {
+                  "text": "Timesheet accuracy",
+                  "level": 4
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "divider_247",
+        "type": "Divider"
+      },
+      {
+        "id": "text_248",
+        "type": "Text",
+        "props": {
+          "text": "© 2026 Simple To Use Ltd. All rights reserved."
+        }
+      },
+      {
+        "id": "text_249",
+        "type": "Text",
+        "props": {
+          "text": "Cookies policy"
+        }
+      },
+      {
+        "id": "text_250",
+        "type": "Text",
+        "props": {
+          "text": "Privacy policy"
+        }
+      }
+    ]
+  }
+}

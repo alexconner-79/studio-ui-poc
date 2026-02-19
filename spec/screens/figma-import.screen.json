@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "route": "/figma-import",
+  "meta": {
+    "layout": "default"
+  },
+  "tree": {
+    "id": "root",
+    "type": "Stack",
+    "props": {
+      "direction": "column",
+      "gap": "6"
+    },
+    "children": [
+      {
+        "id": "section_37",
+        "type": "Section",
+        "children": [
+          {
+            "id": "heading_1",
+            "type": "Heading",
+            "props": {
+              "text": "Website",
+              "level": 1
+            }
+          },
+          {
+            "id": "section_36",
+            "type": "Section",
+            "children": [
+              {
+                "id": "section_34",
+                "type": "Section",
+                "children": [
+                  {
+                    "id": "section_5",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_3",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_2",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_4",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_9",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_7",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_6",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_8",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_13",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_11",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_10",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_12",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_17",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_15",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_14",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_16",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_21",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_19",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_18",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_20",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_25",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_23",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_22",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_24",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_29",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_27",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_26",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_28",
+                        "type": "Divider"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "section_33",
+                    "type": "Section",
+                    "children": [
+                      {
+                        "id": "section_31",
+                        "type": "Section",
+                        "children": [
+                          {
+                            "id": "divider_30",
+                            "type": "Divider"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "divider_32",
+                        "type": "Divider"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "divider_35",
+                "type": "Divider"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
