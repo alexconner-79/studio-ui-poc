@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 
 export function FigmaImport() {
   return (
-    <div className="flex-col flex gap-4">
+    <div className="flex-col flex gap-[1rem]">
       <section className="w-full">
         <h1 className="text-3xl font-bold">Website</h1>
         <section className="w-full">

@@ -14,8 +14,8 @@ export function HomepageDesktop() {
           <Separator />
           <img src="" alt="Background" />
         </section>
-        <div className="flex-col flex gap-4">
-          <div className="flex-col flex gap-4">
+        <div className="flex-col flex gap-[1rem]">
+          <div className="flex-col flex gap-[1rem]">
             <h1 className="text-3xl font-bold">Simple To Use.</h1>
             <h1 className="text-3xl font-bold">Built for Builders.</h1>
           </div>
@@ -27,8 +27,8 @@ export function HomepageDesktop() {
           <Button>Book a Demo</Button>
         </div>
       </section>
-      <div className="flex-col flex gap-4">
-        <div className="flex-row flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
+        <div className="flex-row flex gap-[1rem]">
           <img src="" alt="hutchinson-logo 1" />
           <section className="w-full">
             <section className="w-full">
@@ -62,7 +62,7 @@ export function HomepageDesktop() {
         </div>
       </div>
       <Separator />
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <h1 className="text-3xl font-bold">
           One Platform. Every Part of the Job.
         </h1>
@@ -72,7 +72,7 @@ export function HomepageDesktop() {
           trails.
         </p>
       </div>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <h1 className="text-3xl font-bold">
           Built by Builders.  for builders.
         </h1>
@@ -91,8 +91,8 @@ export function HomepageDesktop() {
         <Separator />
       </section>
       <img src="" alt="Home 1" />
-      <div className="flex-row flex gap-4">
-        <div className="flex-row flex gap-4">
+      <div className="flex-row flex gap-[1rem]">
+        <div className="flex-row flex gap-[1rem]">
           <section className="w-full">
             <Separator />
             <section className="w-full">
@@ -104,7 +104,7 @@ export function HomepageDesktop() {
               <Separator />
             </section>
           </section>
-          <div className="flex-row flex gap-4">
+          <div className="flex-row flex gap-[1rem]">
             <p>Why STU?</p>
             <p>Features</p>
             <p>About Us</p>
@@ -114,7 +114,7 @@ export function HomepageDesktop() {
         </div>
         <Button>Book a Demo</Button>
       </div>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <section className="w-full">
           <Separator />
           <section className="w-full">
@@ -136,31 +136,31 @@ export function HomepageDesktop() {
             <Separator />
           </section>
         </section>
-        <div className="flex-col flex gap-4">
+        <div className="flex-col flex gap-[1rem]">
           <h3 className="text-xl font-semibold">Out on Site</h3>
-          <div className="flex-col flex gap-4">
-            <div className="flex-row flex gap-4">
+          <div className="flex-col flex gap-[1rem]">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Log timesheets in seconds</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Complete vehicle checks and inspections</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Report and escalate issues</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
@@ -170,7 +170,7 @@ export function HomepageDesktop() {
           </div>
         </div>
       </div>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <section className="w-full">
           <Separator />
           <section className="w-full">
@@ -189,24 +189,24 @@ export function HomepageDesktop() {
             <Separator />
           </section>
         </section>
-        <div className="flex-col flex gap-4">
+        <div className="flex-col flex gap-[1rem]">
           <h3 className="text-xl font-semibold">In the Office</h3>
-          <div className="flex-col flex gap-4">
-            <div className="flex-row flex gap-4">
+          <div className="flex-col flex gap-[1rem]">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Manage projects, HR, and finance</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Automate workflows and approvals</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
@@ -216,7 +216,7 @@ export function HomepageDesktop() {
           </div>
         </div>
       </div>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <section className="w-full">
           <Separator />
           <section className="w-full">
@@ -224,24 +224,24 @@ export function HomepageDesktop() {
             <Separator />
           </section>
         </section>
-        <div className="flex-col flex gap-4">
+        <div className="flex-col flex gap-[1rem]">
           <h3 className="text-xl font-semibold">For the Whole Team</h3>
-          <div className="flex-col flex gap-4">
-            <div className="flex-row flex gap-4">
+          <div className="flex-col flex gap-[1rem]">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Role-based access across web and mobile</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
               </section>
               <p>Built-in tools like Xertilox integration</p>
             </div>
-            <div className="flex-row flex gap-4">
+            <div className="flex-row flex gap-[1rem]">
               <section className="w-full">
                 <Separator />
                 <Separator />
@@ -252,7 +252,7 @@ export function HomepageDesktop() {
         </div>
       </div>
       <Separator />
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <h1 className="text-3xl font-bold">STU in Action.</h1>
         <p>Take a closer look at how STU streamlines everyday tasks</p>
       </div>
@@ -274,15 +274,15 @@ export function HomepageDesktop() {
       <Separator />
       <Button>Book a demo</Button>
       <Button>Book a demo</Button>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <h1 className="text-3xl font-bold">Real Results.</h1>
         <p>STU is built to make your day-to-day easier — and it shows.</p>
       </div>
-      <div className="flex-col flex gap-4">
+      <div className="flex-col flex gap-[1rem]">
         <h1 className="text-3xl font-bold">Get Started with STU.</h1>
         <p>Simplify your business. Reduce admin. Keep every project moving.</p>
       </div>
-      <div className="flex-row flex gap-4">
+      <div className="flex-row flex gap-[1rem]">
         <section className="w-full">
           <Separator />
           <section className="w-full">

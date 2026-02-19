@@ -2,11 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 
 export function Home() {
   return (
-    <div className="flex-col flex gap-2 p-2">
+    <div className="flex-col flex gap-[0.5rem] p-[0.5rem]">
       <div
         className="text-center"
         style={{ fontSize: "50px", fontWeight: "100" }}
@@ -24,16 +26,8 @@ export function Home() {
           alt="screenshot-2026-01-21-at-20.07.55.png"
         />
       </div>
-      <label className="flex items-center gap-3 text-sm cursor-pointer">
-        <div className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-300">
-          <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform translate-x-0.5" />
-        </div>
-        Enable notifications
-      </label>
-      <label className="flex items-center gap-2 text-sm cursor-pointer">
-        <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-        Accept terms
-      </label>
+      <Switch label="Enable notifications" checked={false} />
+      <Checkbox label="Accept terms" checked={false} />
       <div
         style={{
           paddingTop: "12",
@@ -43,8 +37,8 @@ export function Home() {
         }}
       >
         <Card>
-          <div className="p-4">
-            <div className="flex-col flex gap-2">
+          <div className="p-[1rem]">
+            <div className="flex-col flex gap-[0.5rem]">
               <div style={{ fontSize: "12px" }}>
                 <p className="text-sm text-muted-foreground">
                   shadcn card component
@@ -63,8 +57,8 @@ export function Home() {
         <li>Deterministic output</li>
         <li>PR-based publishing</li>
       </ul>
-      <div className="h-6" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="h-[1.5rem]" />
+      <div className="grid grid-cols-2 gap-[1rem]">
         <Card>
           <div className="p-4">
             <p className="text-base">Feature one</p>
@@ -76,12 +70,7 @@ export function Home() {
           </div>
         </Card>
       </div>
-      <label className="flex items-center gap-3 text-sm cursor-pointer">
-        <div className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-300">
-          <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform translate-x-0.5" />
-        </div>
-        Enable notifications
-      </label>
+      <Switch label="Enable notifications" checked={false} />
     </div>
   );
 }
