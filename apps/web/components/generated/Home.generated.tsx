@@ -2,9 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 
 export function Home() {
   return (
@@ -26,8 +24,16 @@ export function Home() {
           alt="screenshot-2026-01-21-at-20.07.55.png"
         />
       </div>
-      <Switch label="Enable notifications" checked={false} />
-      <Checkbox label="Accept terms" checked={false} />
+      <label className="flex items-center gap-3 text-sm cursor-pointer">
+        <div className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-300">
+          <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform translate-x-0.5" />
+        </div>
+        Enable notifications
+      </label>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+        Accept terms
+      </label>
       <div
         style={{
           paddingTop: "12",
@@ -70,7 +76,12 @@ export function Home() {
           </div>
         </Card>
       </div>
-      <Switch label="Enable notifications" checked={false} />
+      <label className="flex items-center gap-3 text-sm cursor-pointer">
+        <div className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-gray-300">
+          <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform translate-x-0.5" />
+        </div>
+        Enable notifications
+      </label>
     </div>
   );
 }
