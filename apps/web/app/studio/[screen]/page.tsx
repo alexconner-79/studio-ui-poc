@@ -1,23 +1,29 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEditorStore } from "@/lib/studio/store";
 import { EditorLayout } from "@/components/studio/editor-layout";
 
-export default function StudioEditorPage() {
+function StudioEditorContent() {
   const params = useParams<{ screen: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const setSpec = useEditorStore((s) => s.setSpec);
   const spec = useEditorStore((s) => s.spec);
   const [error, setError] = useState<string | null>(null);
 
   const screenName = params.screen;
+  const projectId = searchParams.get("project");
 
   useEffect(() => {
     if (!screenName) return;
 
-    fetch(`/api/studio/screens/${screenName}`)
+    const url = projectId
+      ? `/api/studio/screens/${screenName}?projectId=${projectId}`
+      : `/api/studio/screens/${screenName}`;
+
+    fetch(url)
       .then(async (res) => {
         const contentType = res.headers.get("content-type") ?? "";
         if (!contentType.includes("application/json")) {
@@ -35,14 +41,16 @@ export default function StudioEditorPage() {
       .catch((err) => {
         setError(err.message ?? "Failed to load screen");
       });
-  }, [screenName, setSpec]);
+  }, [screenName, projectId, setSpec]);
+
+  const backUrl = projectId ? `/studio?project=${projectId}` : "/studio";
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
         <p className="text-destructive">{error}</p>
         <button
-          onClick={() => router.push("/studio")}
+          onClick={() => router.push(backUrl)}
           className="text-sm text-blue-600 hover:underline"
         >
           Back to screen list
@@ -62,7 +70,16 @@ export default function StudioEditorPage() {
   return (
     <EditorLayout
       screenName={screenName}
-      onBack={() => router.push("/studio")}
+      projectId={projectId}
+      onBack={() => router.push(backUrl)}
     />
+  );
+}
+
+export default function StudioEditorPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>}>
+      <StudioEditorContent />
+    </Suspense>
   );
 }

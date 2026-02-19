@@ -160,9 +160,9 @@ export async function createProject(input: {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) throw new Error("Not authenticated – no user session found");
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("projects")
     .insert({
       owner_id: user.id,
@@ -173,6 +173,8 @@ export async function createProject(input: {
     })
     .select()
     .single();
+
+  if (error) throw new Error(`Supabase insert failed: ${error.message}`);
   return data as Project | null;
 }
 

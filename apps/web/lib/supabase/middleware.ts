@@ -52,5 +52,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Authenticated user hitting root -- redirect to studio
+  if (user && pathname === "/") {
+    return NextResponse.redirect(new URL("/studio", request.url));
+  }
+
   return supabaseResponse;
 }

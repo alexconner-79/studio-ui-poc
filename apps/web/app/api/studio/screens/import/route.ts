@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import JSZip from "jszip";
+import { isSupabaseConfigured, upsertScreen } from "@/lib/supabase/queries";
 
 const ROOT_DIR = path.resolve(process.cwd(), "../..");
 const SCREENS_DIR = path.resolve(ROOT_DIR, "spec/screens");
@@ -24,7 +25,7 @@ function basicValidate(spec: unknown): string | null {
   return null;
 }
 
-async function processFile(
+async function processFileFilesystem(
   fileName: string,
   content: string,
   overwrite: boolean
@@ -60,10 +61,47 @@ async function processFile(
   return { name: safeName, status: "imported" };
 }
 
+async function processFileSupabase(
+  fileName: string,
+  content: string,
+  projectId: string
+): Promise<ImportResult> {
+  const name = fileName.replace(/\.screen\.json$/, "").replace(/\.json$/, "");
+  const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeName) {
+    return { name: fileName, status: "error", error: "Invalid file name" };
+  }
+
+  let spec: unknown;
+  try {
+    spec = JSON.parse(content);
+  } catch {
+    return { name: safeName, status: "error", error: "Invalid JSON" };
+  }
+
+  const validationError = basicValidate(spec);
+  if (validationError) {
+    return { name: safeName, status: "error", error: validationError };
+  }
+
+  try {
+    const screen = await upsertScreen(projectId, safeName, spec as Record<string, unknown>);
+    if (!screen) {
+      return { name: safeName, status: "error", error: "Failed to save to database" };
+    }
+    return { name: safeName, status: "imported" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Database error";
+    return { name: safeName, status: "error", error: msg };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const overwrite = formData.get("overwrite") === "true";
+    const projectId = formData.get("projectId") as string | null;
+    const useSupabase = isSupabaseConfigured() && !!projectId;
     const results: ImportResult[] = [];
 
     const entries = formData.getAll("files");
@@ -83,7 +121,9 @@ export async function POST(request: Request) {
           if (!relativePath.endsWith(".json")) return;
           filePromises.push(
             file.async("string").then((content) =>
-              processFile(path.basename(relativePath), content, overwrite)
+              useSupabase
+                ? processFileSupabase(path.basename(relativePath), content, projectId!)
+                : processFileFilesystem(path.basename(relativePath), content, overwrite)
             )
           );
         });
@@ -92,7 +132,9 @@ export async function POST(request: Request) {
         results.push(...zipResults);
       } else if (ext === ".json") {
         const content = await entry.text();
-        const result = await processFile(entry.name, content, overwrite);
+        const result = useSupabase
+          ? await processFileSupabase(entry.name, content, projectId!)
+          : await processFileFilesystem(entry.name, content, overwrite);
         results.push(result);
       } else {
         results.push({

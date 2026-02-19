@@ -28,9 +28,11 @@ const TAB_CONFIG: { key: Tab; label: string }[] = [
 export function ImportScreenModal({
   onClose,
   onImported,
+  projectId,
 }: {
   onClose: () => void;
   onImported: () => void;
+  projectId?: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("file");
   const [files, setFiles] = useState<File[]>([]);
@@ -100,6 +102,7 @@ export function ImportScreenModal({
       const formData = new FormData();
       files.forEach((f) => formData.append("files", f));
       if (overwrite) formData.append("overwrite", "true");
+      if (projectId) formData.append("projectId", projectId);
 
       const res = await fetch("/api/studio/screens/import", {
         method: "POST",
@@ -155,8 +158,8 @@ export function ImportScreenModal({
         ? `/api/studio/screens/${encodeURIComponent(codeName.trim())}`
         : "/api/studio/screens";
       const body = codeUpdateExisting
-        ? JSON.stringify({ spec: codePreview })
-        : JSON.stringify({ name: codeName.trim(), spec: codePreview });
+        ? JSON.stringify({ spec: codePreview, ...(projectId ? { projectId } : {}) })
+        : JSON.stringify({ name: codeName.trim(), spec: codePreview, ...(projectId ? { projectId } : {}) });
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -208,8 +211,8 @@ export function ImportScreenModal({
         ? `/api/studio/screens/${encodeURIComponent(htmlName.trim())}`
         : "/api/studio/screens";
       const body = htmlUpdateExisting
-        ? JSON.stringify({ spec: htmlPreview })
-        : JSON.stringify({ name: htmlName.trim(), spec: htmlPreview });
+        ? JSON.stringify({ spec: htmlPreview, ...(projectId ? { projectId } : {}) })
+        : JSON.stringify({ name: htmlName.trim(), spec: htmlPreview, ...(projectId ? { projectId } : {}) });
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -293,7 +296,7 @@ export function ImportScreenModal({
       const res = await fetch("/api/studio/screens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: figmaName.trim(), spec: figmaPreview }),
+        body: JSON.stringify({ name: figmaName.trim(), spec: figmaPreview, ...(projectId ? { projectId } : {}) }),
       });
       if (res.ok) {
         onImported();

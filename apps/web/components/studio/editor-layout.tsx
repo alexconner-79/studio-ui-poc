@@ -244,9 +244,11 @@ function TopBar({
 
 export function EditorLayout({
   screenName,
+  projectId,
   onBack,
 }: {
   screenName: string;
+  projectId?: string | null;
   onBack: () => void;
 }) {
   const addNode = useEditorStore((s) => s.addNode);
@@ -325,7 +327,7 @@ export function EditorLayout({
       await fetch(`/api/studio/screens/${screenName}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spec }),
+        body: JSON.stringify({ spec, ...(projectId ? { projectId } : {}) }),
       });
 
       // Auto-snapshot version on save
@@ -349,7 +351,7 @@ export function EditorLayout({
     } finally {
       setSaving(false);
     }
-  }, [spec, screenName, markClean]);
+  }, [spec, screenName, projectId, markClean]);
 
   // Auto-save: debounced 3 seconds after last change
   const dirty = useEditorStore((s) => s.dirty);
@@ -817,7 +819,9 @@ export function EditorLayout({
               if (targetId) addNode(targetId, newNode);
             },
             navigateToScreen: (screen: string) => {
-              window.location.href = `/studio/${screen}`;
+              window.location.href = projectId
+                ? `/studio/${screen}?project=${projectId}`
+                : `/studio/${screen}`;
             },
           }}
         />

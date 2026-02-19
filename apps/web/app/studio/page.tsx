@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ImportScreenModal } from "@/components/studio/import-screen-modal";
 import { ExportModal } from "@/components/studio/export-modal";
 import { ScreenListSkeleton, InlineError } from "@/components/studio/loading-skeleton";
+import { createClient } from "@/lib/supabase/client";
 
 type ScreenEntry = {
   name: string;
@@ -20,7 +21,188 @@ type PageTemplate = {
   spec: Record<string, unknown>;
 };
 
-export default function StudioScreenList() {
+type Project = {
+  id: string;
+  name: string;
+  slug: string;
+  framework: string;
+  created_at: string;
+  updated_at: string;
+};
+
+const isSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+export default function StudioPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <StudioContent />
+    </Suspense>
+  );
+}
+
+function StudioContent() {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("project");
+
+  if (isSupabase && !projectId) {
+    return <ProjectListView />;
+  }
+
+  return <ScreenListView projectId={projectId} />;
+}
+
+// ---------------------------------------------------------------------------
+// Project List View (Supabase mode, no project selected)
+// ---------------------------------------------------------------------------
+
+function ProjectListView() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const router = useRouter();
+
+  const loadProjects = useCallback(() => {
+    setError(null);
+    fetch("/api/studio/projects")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load projects");
+        return r.json();
+      })
+      .then((data) => {
+        setProjects(data.projects ?? []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/studio/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/studio?project=${data.project.id}`);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create project");
+      }
+    } finally {
+      setCreating(false);
+      setNewName("");
+    }
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto py-12 px-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Studio</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Select a project or create a new one
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Admin
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-8">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New project name (e.g. My App)"
+            className="flex-1 px-3 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreate();
+            }}
+          />
+          <button
+            onClick={handleCreate}
+            disabled={creating || !newName.trim()}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {creating ? "Creating..." : "Create Project"}
+          </button>
+        </div>
+
+        {error ? (
+          <InlineError message={error} onRetry={loadProjects} />
+        ) : loading ? (
+          <ScreenListSkeleton />
+        ) : projects.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+            <p className="text-lg mb-2">No projects yet</p>
+            <p className="text-sm">Create your first project above to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((project) => (
+              <Link
+                key={project.id}
+                href={`/studio?project=${project.id}`}
+                className="group block p-5 border rounded-lg hover:border-blue-500 hover:shadow-md transition-all"
+              >
+                <div className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
+                  {project.name}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {project.slug}
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-xs px-2 py-0.5 bg-accent rounded-full">
+                    {project.framework}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Updated {new Date(project.updated_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Screen List View (project selected or filesystem mode)
+// ---------------------------------------------------------------------------
+
+function ScreenListView({ projectId }: { projectId: string | null }) {
   const [screens, setScreens] = useState<ScreenEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
@@ -29,13 +211,19 @@ export default function StudioScreenList() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [projectName, setProjectName] = useState<string | null>(null);
   const router = useRouter();
-
   const [error, setError] = useState<string | null>(null);
+
+  const screenLink = (name: string) =>
+    projectId ? `/studio/${name}?project=${projectId}` : `/studio/${name}`;
 
   const loadScreens = useCallback(() => {
     setError(null);
-    fetch("/api/studio/screens")
+    const url = projectId
+      ? `/api/studio/screens?projectId=${projectId}`
+      : "/api/studio/screens";
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error("Failed to load screens");
         return r.json();
@@ -48,7 +236,7 @@ export default function StudioScreenList() {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     loadScreens();
@@ -58,13 +246,22 @@ export default function StudioScreenList() {
         if (data.templates) setTemplates(data.templates);
       })
       .catch(() => {});
-  }, [loadScreens]);
+
+    if (projectId) {
+      fetch(`/api/studio/projects`)
+        .then((r) => r.json())
+        .then((data) => {
+          const p = (data.projects ?? []).find((p: Project) => p.id === projectId);
+          if (p) setProjectName(p.name);
+        })
+        .catch(() => {});
+    }
+  }, [loadScreens, projectId]);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      // Sanitize: lowercase, replace spaces/underscores with hyphens, strip invalid chars
       const safeName = newName
         .trim()
         .toLowerCase()
@@ -75,14 +272,16 @@ export default function StudioScreenList() {
         alert("Invalid screen name. Use letters, numbers, and hyphens.");
         return;
       }
+      const body: Record<string, unknown> = { name: safeName };
+      if (projectId) body.projectId = projectId;
       const res = await fetch("/api/studio/screens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: safeName }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
-        router.push(`/studio/${data.name}`);
+        router.push(screenLink(data.name));
       } else {
         const err = await res.json();
         alert(err.error || "Failed to create screen");
@@ -97,14 +296,16 @@ export default function StudioScreenList() {
     if (!name || !name.trim()) return;
     setCreating(true);
     try {
+      const body: Record<string, unknown> = { name: name.trim(), spec: template.spec };
+      if (projectId) body.projectId = projectId;
       const res = await fetch("/api/studio/screens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), spec: template.spec }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
-        router.push(`/studio/${data.name}`);
+        router.push(screenLink(data.name));
       } else {
         const err = await res.json();
         alert(err.error || "Failed to create screen");
@@ -114,29 +315,54 @@ export default function StudioScreenList() {
     }
   };
 
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto py-12 px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold">Studio</h1>
+            <h1 className="text-2xl font-bold">
+              {projectName ? projectName : "Studio"}
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Visual editor for screen specs
+              {projectName ? "Screens in this project" : "Visual editor for screen specs"}
             </p>
           </div>
           <div className="flex items-center gap-4">
+            {isSupabase && projectId && (
+              <Link
+                href="/studio"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                &larr; Projects
+              </Link>
+            )}
             <Link
               href="/admin"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Admin
             </Link>
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              &larr; Back to app
-            </Link>
+            {isSupabase ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                href="/"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                &larr; Back to app
+              </Link>
+            )}
           </div>
         </div>
 
@@ -233,7 +459,7 @@ export default function StudioScreenList() {
             {screens.map((screen) => (
               <Link
                 key={screen.name}
-                href={`/studio/${screen.name}`}
+                href={screenLink(screen.name)}
                 className="group block p-4 border rounded-lg hover:border-blue-500 hover:shadow-md transition-all"
               >
                 <div className="font-medium group-hover:text-blue-600 transition-colors">
@@ -262,15 +488,14 @@ export default function StudioScreenList() {
         )}
       </div>
 
-      {/* Import modal */}
       {showImport && (
         <ImportScreenModal
           onClose={() => setShowImport(false)}
           onImported={loadScreens}
+          projectId={projectId}
         />
       )}
 
-      {/* Export modal */}
       {showExport && (
         <ExportModal onClose={() => setShowExport(false)} />
       )}
