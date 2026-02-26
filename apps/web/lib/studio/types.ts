@@ -70,7 +70,13 @@ export type BuiltInNodeType =
   | "Carousel"
   | "Calendar"
   | "Timeline"
-  | "ComponentRef";
+  | "ComponentRef"
+  // Shapes (v0.8.5)
+  | "Rectangle"
+  | "Ellipse"
+  | "Line"
+  | "Frame"
+  | "DSComponent";
 
 export const BUILT_IN_TYPES: BuiltInNodeType[] = [
   "Stack", "Grid", "Section", "ScrollArea", "Spacer", "Box", "Container", "AspectRatio",
@@ -83,6 +89,7 @@ export const BUILT_IN_TYPES: BuiltInNodeType[] = [
   "Accordion", "Popover", "HoverCard",
   "Video", "Embed", "Blockquote", "Code", "Carousel", "Calendar", "Timeline",
   "ComponentRef",
+  "Rectangle", "Ellipse", "Line", "Frame",
 ];
 
 export const CONTAINER_TYPES = new Set<string>([
@@ -93,6 +100,7 @@ export const CONTAINER_TYPES = new Set<string>([
   "Accordion", "Popover", "HoverCard",
   "Carousel", "Timeline",
   "ComponentRef",
+  "Frame", "Rectangle",
 ]);
 
 export type NodeProps = Record<string, unknown>;
@@ -174,15 +182,28 @@ export type NodeStyle = {
   opacity?: number;
   boxShadow?: StyleValue;
 
-  // Layout (flex child / container)
+  // Layout (flex container)
+  flexDirection?: "row" | "column";
   overflow?: "visible" | "hidden" | "auto" | "scroll";
   justifyContent?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around";
   alignItems?: "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
   flexWrap?: "nowrap" | "wrap";
   gap?: StyleValue;
+
+  // Layout (flex child)
   flexGrow?: number;
   flexShrink?: number;
   alignSelf?: "auto" | "flex-start" | "center" | "flex-end" | "stretch";
+
+  // Sizing modes (override raw width/height)
+  widthMode?: "fixed" | "fill" | "hug";
+  heightMode?: "fixed" | "fill" | "hug";
+
+  // Edge constraints (active when inside a Frame with autoLayout OFF)
+  constraints?: {
+    horizontal?: "left" | "right" | "left-right" | "center" | "scale";
+    vertical?: "top" | "bottom" | "top-bottom" | "center" | "scale";
+  };
 
   // Position
   position?: "static" | "relative" | "absolute" | "fixed" | "sticky";
@@ -204,6 +225,14 @@ export type TokenValue = {
 
 export type TokenGroup = Record<string, TokenValue>;
 
+export type TextStyleDef = {
+  fontFamily?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+};
+
 export type DesignTokens = {
   spacing?: TokenGroup;
   size?: TokenGroup;
@@ -217,6 +246,8 @@ export type DesignTokens = {
   };
   borderRadius?: TokenGroup;
   shadow?: TokenGroup;
+  /** Named text style presets (e.g. H1, H2, Body, Caption) */
+  textStyles?: Record<string, TextStyleDef>;
   raw: Record<string, unknown>;
 };
 
@@ -233,18 +264,67 @@ export type ResponsiveOverrides = {
 export type Node = {
   id: string;
   type: string;
+  /** User-facing layer label. Falls back to `type` when absent. */
+  name?: string;
   props?: NodeProps;
   children?: Node[];
   interactions?: NodeInteractions;
   dataSource?: DataSource;
   style?: NodeStyle;
   responsive?: ResponsiveOverrides;
+  /** When false the compiler skips this node and its subtree. Absent = true. */
+  compile?: boolean;
 };
 
 export type ScreenMeta = {
   layout?: string;
   auth?: string;
 };
+
+// ---------------------------------------------------------------------------
+// Brownfield codebase import types (0.10.5)
+// ---------------------------------------------------------------------------
+
+export interface BrownfieldSourceConfig {
+  type: "local" | "npm" | "github";
+  path?: string;
+  packageName?: string;
+  packageVersion?: string;
+  owner?: string;
+  repo?: string;
+  branch?: string;
+  scannedAt: string;
+}
+
+export interface ScannedProp {
+  name: string;
+  type: string;
+  required: boolean;
+  defaultValue?: string;
+}
+
+export interface ScannedComponent {
+  name: string;
+  importPath: string;
+  props: ScannedProp[];
+  variants: string[];
+  needsManualMapping: boolean;
+}
+
+export interface TokenDiff {
+  key: string;
+  category: string;
+  status: "added" | "changed" | "removed";
+  oldValue?: string;
+  newValue?: string;
+}
+
+export interface ScanResult {
+  components: ScannedComponent[];
+  tokens: Record<string, unknown>;
+  warnings: string[];
+  sourceConfig: BrownfieldSourceConfig;
+}
 
 export type ScreenSpec = {
   version: number;

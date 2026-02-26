@@ -1,0 +1,2252 @@
+{
+  "id": "ant-design",
+  "name": "Ant Design 5",
+  "description": "Ant Design 5 design tokens — enterprise-grade UI system by Alibaba",
+  "platform": "web",
+  "preview": [
+    "#1677ff",
+    "#f0f0f0",
+    "#ff4d4f"
+  ],
+  "tokens": {
+    "color": {
+      "primary": {
+        "value": "#1677ff",
+        "description": "Primary blue"
+      },
+      "primary-hover": {
+        "value": "#4096ff",
+        "description": "Primary hover"
+      },
+      "primary-active": {
+        "value": "#0958d9",
+        "description": "Primary active/pressed"
+      },
+      "primary-bg": {
+        "value": "#e6f4ff",
+        "description": "Primary light background"
+      },
+      "success": {
+        "value": "#52c41a",
+        "description": "Success green"
+      },
+      "warning": {
+        "value": "#faad14",
+        "description": "Warning yellow"
+      },
+      "error": {
+        "value": "#ff4d4f",
+        "description": "Error red"
+      },
+      "info": {
+        "value": "#1677ff",
+        "description": "Info blue"
+      },
+      "text-primary": {
+        "value": "rgba(0,0,0,0.88)",
+        "description": "Primary text"
+      },
+      "text-secondary": {
+        "value": "rgba(0,0,0,0.65)",
+        "description": "Secondary text"
+      },
+      "text-tertiary": {
+        "value": "rgba(0,0,0,0.45)",
+        "description": "Tertiary/disabled text"
+      },
+      "text-quaternary": {
+        "value": "rgba(0,0,0,0.25)",
+        "description": "Placeholder text"
+      },
+      "bg-layout": {
+        "value": "#f5f5f5",
+        "description": "Layout background"
+      },
+      "bg-container": {
+        "value": "#ffffff",
+        "description": "Container background"
+      },
+      "bg-elevated": {
+        "value": "#ffffff",
+        "description": "Elevated container"
+      },
+      "border": {
+        "value": "#d9d9d9",
+        "description": "Default border"
+      },
+      "border-secondary": {
+        "value": "#f0f0f0",
+        "description": "Secondary border"
+      }
+    },
+    "spacing": {
+      "xxs": {
+        "value": "4px"
+      },
+      "xs": {
+        "value": "8px"
+      },
+      "sm": {
+        "value": "12px"
+      },
+      "md": {
+        "value": "16px"
+      },
+      "lg": {
+        "value": "24px"
+      },
+      "xl": {
+        "value": "32px"
+      },
+      "xxl": {
+        "value": "48px"
+      }
+    },
+    "radius": {
+      "xs": {
+        "value": "2px"
+      },
+      "sm": {
+        "value": "4px"
+      },
+      "md": {
+        "value": "6px"
+      },
+      "lg": {
+        "value": "8px"
+      },
+      "xl": {
+        "value": "12px"
+      },
+      "outer": {
+        "value": "8px",
+        "description": "Outer radius for nested components"
+      },
+      "full": {
+        "value": "9999px"
+      }
+    },
+    "typography": {
+      "font-family": {
+        "value": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+      },
+      "font-code": {
+        "value": "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace"
+      },
+      "font-size-sm": {
+        "value": "12px"
+      },
+      "font-size-base": {
+        "value": "14px"
+      },
+      "font-size-lg": {
+        "value": "16px"
+      },
+      "font-size-xl": {
+        "value": "20px"
+      },
+      "font-size-heading-1": {
+        "value": "38px"
+      },
+      "font-size-heading-2": {
+        "value": "30px"
+      },
+      "font-size-heading-3": {
+        "value": "24px"
+      },
+      "font-size-heading-4": {
+        "value": "20px"
+      },
+      "font-size-heading-5": {
+        "value": "16px"
+      },
+      "line-height-base": {
+        "value": "1.5714"
+      }
+    },
+    "shadow": {
+      "1": {
+        "value": "0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02), 0 2px 4px 0 rgba(0,0,0,0.02)"
+      },
+      "2": {
+        "value": "0 6px 16px 0 rgba(0,0,0,0.08), 0 3px 6px -4px rgba(0,0,0,0.12), 0 9px 28px 8px rgba(0,0,0,0.05)"
+      },
+      "3": {
+        "value": "0 1px 2px -2px rgba(0,0,0,0.16), 0 3px 6px 0 rgba(0,0,0,0.12), 0 5px 12px 4px rgba(0,0,0,0.09)"
+      }
+    },
+    "textStyles": {
+      "H1": {
+        "fontSize": "38px",
+        "fontWeight": "600",
+        "lineHeight": "1.23"
+      },
+      "H2": {
+        "fontSize": "30px",
+        "fontWeight": "600",
+        "lineHeight": "1.27"
+      },
+      "H3": {
+        "fontSize": "24px",
+        "fontWeight": "600",
+        "lineHeight": "1.33"
+      },
+      "H4": {
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "1.4"
+      },
+      "H5": {
+        "fontSize": "16px",
+        "fontWeight": "600",
+        "lineHeight": "1.5"
+      },
+      "Body": {
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.5714"
+      },
+      "Body Small": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.6667"
+      },
+      "Caption": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.6667"
+      }
+    }
+  },
+  "components": {
+    "Button": {
+      "name": "Button",
+      "description": "Trigger actions",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "primary",
+            "default",
+            "dashed",
+            "link",
+            "text"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "shape",
+          "options": [
+            "default",
+            "circle",
+            "round"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "danger",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string",
+          "default": "Button"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "icon",
+          "type": "icon"
+        },
+        {
+          "name": "href",
+          "type": "string"
+        },
+        {
+          "name": "block",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Input": {
+      "name": "Input",
+      "description": "Text input",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        },
+        {
+          "name": "variant",
+          "options": [
+            "outlined",
+            "borderless",
+            "filled"
+          ],
+          "default": "outlined"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "allowClear",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "prefix",
+          "type": "node"
+        },
+        {
+          "name": "suffix",
+          "type": "node"
+        },
+        {
+          "name": "maxLength",
+          "type": "number"
+        }
+      ]
+    },
+    "InputNumber": {
+      "name": "InputNumber",
+      "description": "Numeric input",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "min",
+          "type": "number"
+        },
+        {
+          "name": "max",
+          "type": "number"
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "TextArea": {
+      "name": "TextArea",
+      "description": "Multi-line input",
+      "variants": [
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "rows",
+          "type": "number",
+          "default": 3
+        },
+        {
+          "name": "autoSize",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "maxLength",
+          "type": "number"
+        },
+        {
+          "name": "showCount",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Select": {
+      "name": "Select",
+      "description": "Dropdown",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        },
+        {
+          "name": "mode",
+          "options": [
+            "",
+            "multiple",
+            "tags"
+          ],
+          "default": ""
+        },
+        {
+          "name": "variant",
+          "options": [
+            "outlined",
+            "borderless",
+            "filled"
+          ],
+          "default": "outlined"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "default": "Please select"
+        },
+        {
+          "name": "options",
+          "type": "node"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "allowClear",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "showSearch",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Checkbox": {
+      "name": "Checkbox",
+      "description": "Boolean checkbox",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "indeterminate",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "children",
+          "type": "string"
+        }
+      ]
+    },
+    "Radio": {
+      "name": "Radio",
+      "description": "Radio button",
+      "variants": [
+        {
+          "name": "buttonStyle",
+          "options": [
+            "outline",
+            "solid"
+          ],
+          "default": "outline"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "checked",
+          "type": "boolean"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "children",
+          "type": "string"
+        }
+      ]
+    },
+    "Switch": {
+      "name": "Switch",
+      "description": "Toggle switch",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "small"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "checkedChildren",
+          "type": "string"
+        },
+        {
+          "name": "unCheckedChildren",
+          "type": "string"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Slider": {
+      "name": "Slider",
+      "description": "Range slider",
+      "variants": [
+        {
+          "name": "range",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        },
+        {
+          "name": "vertical",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "default": 100
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "marks",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Rate": {
+      "name": "Rate",
+      "description": "Star rating",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "count",
+          "type": "number",
+          "default": 5
+        },
+        {
+          "name": "allowHalf",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "TimePicker": {
+      "name": "TimePicker",
+      "description": "Time input",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "default": "HH:mm:ss"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "DatePicker": {
+      "name": "DatePicker",
+      "description": "Date input",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "picker",
+          "options": [
+            "date",
+            "week",
+            "month",
+            "quarter",
+            "year"
+          ],
+          "default": "date"
+        },
+        {
+          "name": "status",
+          "options": [
+            "",
+            "error",
+            "warning"
+          ],
+          "default": ""
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "default": "YYYY-MM-DD"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "showToday",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "Upload": {
+      "name": "Upload",
+      "description": "File upload",
+      "variants": [
+        {
+          "name": "listType",
+          "options": [
+            "text",
+            "picture",
+            "picture-card",
+            "dragger"
+          ],
+          "default": "text"
+        },
+        {
+          "name": "multiple",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "action",
+          "type": "string"
+        },
+        {
+          "name": "accept",
+          "type": "string"
+        },
+        {
+          "name": "maxCount",
+          "type": "number"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "AutoComplete": {
+      "name": "AutoComplete",
+      "description": "Input with suggestions",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "options",
+          "type": "node"
+        },
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ]
+    },
+    "Cascader": {
+      "name": "Cascader",
+      "description": "Multi-level select",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "options",
+          "type": "node"
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "default": "Please select"
+        },
+        {
+          "name": "multiple",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "showSearch",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Transfer": {
+      "name": "Transfer",
+      "description": "Dual-panel transfer",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "dataSource",
+          "type": "node"
+        },
+        {
+          "name": "targetKeys",
+          "type": "node"
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        },
+        {
+          "name": "showSearch",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Alert": {
+      "name": "Alert",
+      "description": "Alert banner",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "success",
+            "info",
+            "warning",
+            "error"
+          ],
+          "default": "info"
+        },
+        {
+          "name": "banner",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "closable",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Message": {
+      "name": "Message",
+      "description": "Lightweight message",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "success",
+            "error",
+            "info",
+            "warning",
+            "loading"
+          ],
+          "default": "info"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 3
+        }
+      ]
+    },
+    "Notification": {
+      "name": "Notification",
+      "description": "Corner notification",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "success",
+            "error",
+            "info",
+            "warning"
+          ],
+          "default": "info"
+        },
+        {
+          "name": "placement",
+          "options": [
+            "topLeft",
+            "topRight",
+            "bottomLeft",
+            "bottomRight"
+          ],
+          "default": "topRight"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 4.5
+        }
+      ]
+    },
+    "Modal": {
+      "name": "Modal",
+      "description": "Modal dialog",
+      "variants": [
+        {
+          "name": "centered",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "onOk",
+          "type": "function"
+        },
+        {
+          "name": "onCancel",
+          "type": "function"
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "default": 520
+        }
+      ]
+    },
+    "Drawer": {
+      "name": "Drawer",
+      "description": "Slide-in panel",
+      "variants": [
+        {
+          "name": "placement",
+          "options": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ],
+          "default": "right"
+        },
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "large"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "onClose",
+          "type": "function"
+        }
+      ]
+    },
+    "Tooltip": {
+      "name": "Tooltip",
+      "description": "Hover tooltip",
+      "variants": [
+        {
+          "name": "placement",
+          "options": [
+            "top",
+            "topLeft",
+            "topRight",
+            "bottom",
+            "bottomLeft",
+            "bottomRight",
+            "left",
+            "right"
+          ],
+          "default": "top"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Popover": {
+      "name": "Popover",
+      "description": "Click popup",
+      "variants": [
+        {
+          "name": "placement",
+          "options": [
+            "top",
+            "topLeft",
+            "topRight",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "top"
+        },
+        {
+          "name": "trigger",
+          "options": [
+            "hover",
+            "click",
+            "focus"
+          ],
+          "default": "click"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "content",
+          "type": "node"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Popconfirm": {
+      "name": "Popconfirm",
+      "description": "Inline confirmation",
+      "variants": [
+        {
+          "name": "placement",
+          "options": [
+            "top",
+            "topLeft",
+            "topRight",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "top"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "onConfirm",
+          "type": "function"
+        },
+        {
+          "name": "onCancel",
+          "type": "function"
+        }
+      ]
+    },
+    "Spin": {
+      "name": "Spin",
+      "description": "Loading spinner",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "default",
+            "large"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "spinning",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "tip",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Progress": {
+      "name": "Progress",
+      "description": "Progress indicator",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "line",
+            "circle",
+            "dashboard"
+          ],
+          "default": "line"
+        },
+        {
+          "name": "status",
+          "options": [
+            "normal",
+            "active",
+            "exception",
+            "success"
+          ],
+          "default": "normal"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "percent",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "showInfo",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "Skeleton": {
+      "name": "Skeleton",
+      "description": "Loading placeholder",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "active",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "paragraph",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "rows",
+          "type": "number",
+          "default": 3
+        }
+      ]
+    },
+    "Result": {
+      "name": "Result",
+      "description": "Operation result",
+      "variants": [
+        {
+          "name": "status",
+          "options": [
+            "success",
+            "error",
+            "info",
+            "warning",
+            "404",
+            "403",
+            "500"
+          ],
+          "default": "info"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "subTitle",
+          "type": "string"
+        },
+        {
+          "name": "extra",
+          "type": "node"
+        }
+      ]
+    },
+    "Empty": {
+      "name": "Empty",
+      "description": "Empty state",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "image",
+          "type": "node"
+        }
+      ]
+    },
+    "Menu": {
+      "name": "Menu",
+      "description": "Navigation menu",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "vertical",
+            "horizontal",
+            "inline"
+          ],
+          "default": "vertical"
+        },
+        {
+          "name": "theme",
+          "options": [
+            "light",
+            "dark"
+          ],
+          "default": "light"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "collapsed",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "onSelect",
+          "type": "function"
+        }
+      ]
+    },
+    "Tabs": {
+      "name": "Tabs",
+      "description": "Tab switcher",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "line",
+            "card",
+            "editable-card"
+          ],
+          "default": "line"
+        },
+        {
+          "name": "tabPosition",
+          "options": [
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "top"
+        },
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "activeKey",
+          "type": "string"
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Breadcrumb": {
+      "name": "Breadcrumb",
+      "description": "Navigation trail",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "separator",
+          "type": "string",
+          "default": "/"
+        }
+      ]
+    },
+    "Pagination": {
+      "name": "Pagination",
+      "description": "Page navigation",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "small"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "current",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "total",
+          "type": "number"
+        },
+        {
+          "name": "pageSize",
+          "type": "number",
+          "default": 10
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        },
+        {
+          "name": "showTotal",
+          "type": "function"
+        }
+      ]
+    },
+    "Steps": {
+      "name": "Steps",
+      "description": "Multi-step indicator",
+      "variants": [
+        {
+          "name": "direction",
+          "options": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal"
+        },
+        {
+          "name": "type",
+          "options": [
+            "default",
+            "navigation",
+            "inline",
+            "dot"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "small"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "current",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Dropdown": {
+      "name": "Dropdown",
+      "description": "Dropdown menu",
+      "variants": [
+        {
+          "name": "trigger",
+          "options": [
+            "hover",
+            "click",
+            "contextMenu"
+          ],
+          "default": "hover"
+        },
+        {
+          "name": "placement",
+          "options": [
+            "bottom",
+            "bottomLeft",
+            "bottomRight",
+            "top",
+            "topLeft",
+            "topRight"
+          ],
+          "default": "bottomLeft"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "menu",
+          "type": "node"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Table": {
+      "name": "Table",
+      "description": "Data table",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "middle",
+            "small"
+          ],
+          "default": "middle"
+        },
+        {
+          "name": "bordered",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "columns",
+          "type": "node"
+        },
+        {
+          "name": "dataSource",
+          "type": "node"
+        },
+        {
+          "name": "rowKey",
+          "type": "string",
+          "default": "key"
+        },
+        {
+          "name": "pagination",
+          "type": "node"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "List": {
+      "name": "List",
+      "description": "Styled list",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "default",
+            "small"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "bordered",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "dataSource",
+          "type": "node"
+        },
+        {
+          "name": "renderItem",
+          "type": "function"
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Card": {
+      "name": "Card",
+      "description": "Content card",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "small"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "bordered",
+          "options": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        },
+        {
+          "name": "hoverable",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default",
+        "hover"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "extra",
+          "type": "node"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "actions",
+          "type": "node"
+        },
+        {
+          "name": "cover",
+          "type": "node"
+        }
+      ]
+    },
+    "Descriptions": {
+      "name": "Descriptions",
+      "description": "Key-value list",
+      "variants": [
+        {
+          "name": "layout",
+          "options": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal"
+        },
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "middle",
+            "small"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "bordered",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "extra",
+          "type": "node"
+        }
+      ]
+    },
+    "Statistic": {
+      "name": "Statistic",
+      "description": "Highlight stat",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "precision",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "prefix",
+          "type": "node"
+        },
+        {
+          "name": "suffix",
+          "type": "string"
+        }
+      ]
+    },
+    "Timeline": {
+      "name": "Timeline",
+      "description": "Event timeline",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "left",
+            "alternate",
+            "right"
+          ],
+          "default": "left"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        }
+      ]
+    },
+    "Tag": {
+      "name": "Tag",
+      "description": "Category label",
+      "variants": [
+        {
+          "name": "color",
+          "options": [
+            "default",
+            "success",
+            "processing",
+            "error",
+            "warning"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string"
+        },
+        {
+          "name": "closable",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "icon",
+          "type": "icon"
+        }
+      ]
+    },
+    "Badge": {
+      "name": "Badge",
+      "description": "Status badge",
+      "variants": [
+        {
+          "name": "status",
+          "options": [
+            "success",
+            "processing",
+            "error",
+            "default",
+            "warning"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "dot",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "default": 99
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Avatar": {
+      "name": "Avatar",
+      "description": "User avatar",
+      "variants": [
+        {
+          "name": "shape",
+          "options": [
+            "circle",
+            "square"
+          ],
+          "default": "circle"
+        },
+        {
+          "name": "size",
+          "options": [
+            "large",
+            "default",
+            "small"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "src",
+          "type": "string"
+        },
+        {
+          "name": "alt",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "icon"
+        },
+        {
+          "name": "children",
+          "type": "string",
+          "description": "Initials"
+        }
+      ]
+    },
+    "Image": {
+      "name": "Image",
+      "description": "Enhanced image",
+      "variants": [
+        {
+          "name": "preview",
+          "options": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "src",
+          "type": "string"
+        },
+        {
+          "name": "alt",
+          "type": "string"
+        },
+        {
+          "name": "width",
+          "type": "number"
+        },
+        {
+          "name": "height",
+          "type": "number"
+        }
+      ]
+    },
+    "Collapse": {
+      "name": "Collapse",
+      "description": "Accordion",
+      "variants": [
+        {
+          "name": "accordion",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        },
+        {
+          "name": "ghost",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "activeKey",
+          "type": "node"
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Divider": {
+      "name": "Divider",
+      "description": "Visual separator",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal"
+        },
+        {
+          "name": "orientation",
+          "options": [
+            "left",
+            "center",
+            "right"
+          ],
+          "default": "center"
+        },
+        {
+          "name": "dashed",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string",
+          "description": "Optional label"
+        }
+      ]
+    }
+  }
+}

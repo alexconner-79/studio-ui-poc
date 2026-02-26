@@ -1,25 +1,46 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { icons } from "lucide-react";
-
-// Build a sorted list of all icon names once
-const ALL_ICON_NAMES = Object.keys(icons).sort();
 
 // -------------------------------------------------------------------------
-// Icon grid item
+// Lazy icon module -- loaded on first open to avoid ~1500 icons at startup
+// -------------------------------------------------------------------------
+
+type LucideIconType = React.ComponentType<{ size?: number }>;
+type LucideModule = Record<string, LucideIconType>;
+
+let cachedModule: LucideModule | null = null;
+let cachedNames: string[] | null = null;
+
+async function getLucideModule(): Promise<LucideModule> {
+  if (!cachedModule) {
+    cachedModule = (await import("lucide-react")) as unknown as LucideModule;
+    // Only include proper PascalCase icon component names (e.g. "ArrowLeft").
+    // Utility exports like createLucideIcon, toCamelCase, etc. start with lowercase
+    // and would crash when React tries to render them as components.
+    cachedNames = Object.keys(cachedModule)
+      .filter((k) => typeof cachedModule![k] === "function" && /^[A-Z][A-Za-z0-9]+$/.test(k))
+      .sort();
+  }
+  return cachedModule;
+}
+
+// -------------------------------------------------------------------------
+// Icon grid item -- renders via the already-loaded module cache
 // -------------------------------------------------------------------------
 
 function IconGridItem({
   name,
+  mod,
   selected,
   onSelect,
 }: {
   name: string;
+  mod: LucideModule;
   selected: boolean;
   onSelect: (name: string) => void;
 }) {
-  const LucideIcon = icons[name as keyof typeof icons];
+  const LucideIcon = mod[name];
   if (!LucideIcon) return null;
 
   return (
@@ -53,7 +74,18 @@ export function IconPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [iconMod, setIconMod] = useState<LucideModule | null>(cachedModule);
+  const [allNames, setAllNames] = useState<string[]>(cachedNames ?? []);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Load the icon module when the picker is first opened
+  useEffect(() => {
+    if (!open || cachedModule) return;
+    getLucideModule().then((mod) => {
+      setIconMod(mod);
+      setAllNames(cachedNames ?? []);
+    });
+  }, [open]);
 
   // Close on click outside
   useEffect(() => {
@@ -71,12 +103,12 @@ export function IconPicker({
   }, [open]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return ALL_ICON_NAMES.slice(0, 60);
+    if (!search.trim()) return allNames.slice(0, 60);
     const q = search.toLowerCase();
-    return ALL_ICON_NAMES.filter((name) =>
+    return allNames.filter((name) =>
       name.toLowerCase().includes(q)
     ).slice(0, 60);
-  }, [search]);
+  }, [search, allNames]);
 
   const handleSelect = useCallback(
     (name: string) => {
@@ -87,8 +119,8 @@ export function IconPicker({
     [onChange]
   );
 
-  // Render current icon preview
-  const CurrentIcon = value ? icons[value as keyof typeof icons] : null;
+  // Render current icon preview using the cached module if available
+  const CurrentIcon = value && iconMod ? iconMod[value] : null;
 
   return (
     <div className="space-y-1" ref={containerRef}>
@@ -118,25 +150,32 @@ export function IconPicker({
             className="w-full px-2 py-1 text-xs border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
             autoFocus
           />
-          <div className="grid grid-cols-5 gap-1 max-h-48 overflow-y-auto">
-            {filtered.map((name) => (
-              <IconGridItem
-                key={name}
-                name={name}
-                selected={name === value}
-                onSelect={handleSelect}
-              />
-            ))}
-          </div>
-          {filtered.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-2">
-              No icons found
-            </p>
-          )}
-          {search.trim() === "" && (
-            <p className="text-[10px] text-muted-foreground text-center">
-              Showing top 60 of {ALL_ICON_NAMES.length} icons. Type to search.
-            </p>
+          {!iconMod ? (
+            <p className="text-xs text-muted-foreground text-center py-4">Loading icons…</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-5 gap-1 max-h-48 overflow-y-auto">
+                {filtered.map((name) => (
+                  <IconGridItem
+                    key={name}
+                    name={name}
+                    mod={iconMod}
+                    selected={name === value}
+                    onSelect={handleSelect}
+                  />
+                ))}
+              </div>
+              {filtered.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  No icons found
+                </p>
+              )}
+              {search.trim() === "" && allNames.length > 60 && (
+                <p className="text-[10px] text-muted-foreground text-center">
+                  Showing top 60 of {allNames.length} icons. Type to search.
+                </p>
+              )}
+            </>
           )}
         </div>
       )}

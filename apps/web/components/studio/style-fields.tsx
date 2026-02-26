@@ -278,17 +278,40 @@ type SpacingEditorProps = {
 
 const SIDES = ["Top", "Right", "Bottom", "Left"] as const;
 
+const SPACING_PRESETS = [
+  { label: "0", value: "0" },
+  { label: "xs", value: "0.25rem" },
+  { label: "sm", value: "0.5rem" },
+  { label: "md", value: "1rem" },
+  { label: "lg", value: "1.5rem" },
+  { label: "xl", value: "2rem" },
+] as const;
+
 export function SpacingEditor({ label, property, style, tokens, onChange }: SpacingEditorProps) {
   const [linked, setLinked] = useState(false);
   const prefix = property;
 
+  const normalizeSpacingValue = (value: StyleValue | undefined): StyleValue | undefined => {
+    if (typeof value === "string" && /^-?[\d.]+$/.test(value)) {
+      return `${value}px`;
+    }
+    return value;
+  };
+
   const handleChange = (side: string, value: StyleValue | undefined) => {
+    const normalised = normalizeSpacingValue(value);
     if (linked) {
       for (const s of SIDES) {
-        onChange(`${prefix}${s}`, value);
+        onChange(`${prefix}${s}`, normalised);
       }
     } else {
-      onChange(`${prefix}${side}`, value);
+      onChange(`${prefix}${side}`, normalised);
+    }
+  };
+
+  const applyPreset = (value: string) => {
+    for (const s of SIDES) {
+      onChange(`${prefix}${s}`, value === "0" ? undefined : value);
     }
   };
 
@@ -303,8 +326,20 @@ export function SpacingEditor({ label, property, style, tokens, onChange }: Spac
           onClick={() => setLinked(!linked)}
           title={linked ? "Unlink sides" : "Link all sides"}
         >
-          {linked ? "Linked" : "Link"}
+          {linked ? "🔗 Linked" : "Link"}
         </button>
+      </div>
+      <div className="flex gap-1 mb-0.5">
+        {SPACING_PRESETS.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => applyPreset(p.value)}
+            className="flex-1 h-5 text-[9px] rounded border border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 text-muted-foreground hover:text-foreground transition-colors bg-zinc-100 dark:bg-zinc-800"
+            title={`Set all ${label.toLowerCase()} to ${p.value}`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
       <div className="grid grid-cols-4 gap-1">
         {SIDES.map((side) => {

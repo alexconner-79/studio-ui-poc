@@ -1,0 +1,163 @@
+/* ═══════════════════════════════════════════════════════════════
+   Studio UI Design Tokens
+   Single source of truth for the product's own interface chrome.
+   All studio components reference these -- no raw hex values.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Colors ── */
+  --s-accent:      #6c47ff;
+  --s-accent-soft: rgba(108, 71, 255, 0.08);
+  --s-accent-mid:  rgba(108, 71, 255, 0.15);
+  --s-accent-hover: #5a38e0;
+
+  --s-bg-base:   #ffffff;
+  --s-bg-panel:  #ffffff;
+  --s-bg-subtle: #f7f7f8;
+  --s-bg-hover:  #f0f0f2;
+  --s-bg-active: #ebebed;
+
+  --s-canvas-bg:  #f3f3f5;
+  --s-dot-color:  rgba(0, 0, 0, 0.12);
+
+  --s-border:      #e8e8eb;
+  --s-border-dark: #d4d4d8;
+
+  --s-text-pri: #111118;
+  --s-text-sec: #71717a;
+  --s-text-ter: #a1a1aa;
+
+  --s-danger:      #ef4444;
+  --s-danger-soft: rgba(239, 68, 68, 0.08);
+  --s-success:     #22c55e;
+  --s-warning:     #f59e0b;
+
+  /* ── Spacing scale ── */
+  --s-0:  0px;
+  --s-px: 1px;
+  --s-0_5: 2px;
+  --s-1:  4px;
+  --s-1_5: 6px;
+  --s-2:  8px;
+  --s-2_5: 10px;
+  --s-3:  12px;
+  --s-3_5: 14px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+
+  /* ── Dimensions ── */
+  --s-topbar-h:    42px;
+  --s-panel-w:     232px;
+  --s-toolbar-btn: 28px;
+  --s-ruler:       18px;
+
+  /* ── Typography ── */
+  --s-font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --s-font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+
+  --s-text-ruler: 8px;
+  --s-text-micro: 9px;
+  --s-text-2xs:   9.5px;
+  --s-text-xs:    10px;
+  --s-text-sm:    11.5px;
+  --s-text-base:  12px;
+  --s-text-md:    12.5px;
+  --s-text-lg:    13px;
+
+  --s-weight-regular:  400;
+  --s-weight-medium:   500;
+  --s-weight-semibold: 600;
+  --s-weight-bold:     700;
+
+  --s-tracking-tight:  -0.01em;
+  --s-tracking-normal: 0;
+  --s-tracking-wide:   0.07em;
+
+  --s-leading-tight: 1.2;
+  --s-leading-normal: 1.5;
+
+  /* ── Radii ── */
+  --s-r-sm: 3px;
+  --s-r-md: 5px;
+  --s-r-lg: 7px;
+  --s-r-xl: 10px;
+  --s-r-full: 9999px;
+
+  /* ── Shadows ── */
+  --s-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --s-shadow-md:  0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --s-shadow-lg:  0 2px 8px rgba(0, 0, 0, 0.1);
+  --s-shadow-xl:  0 4px 24px rgba(0, 0, 0, 0.12);
+
+  /* ── Transitions ── */
+  --s-t-fast:   0.08s ease;
+  --s-t-normal: 0.1s ease;
+  --s-t-slow:   0.15s ease;
+
+  /* ── shadcn overrides ── */
+  --primary: #6c47ff;
+  --primary-foreground: #ffffff;
+  --ring: rgba(108, 71, 255, 0.5);
+  --border: #e8e8eb;
+  --input: #e8e8eb;
+  --accent: #f0f0f2;
+  --accent-foreground: #111118;
+  --muted: #f7f7f8;
+  --muted-foreground: #71717a;
+  --background: #ffffff;
+  --foreground: #111118;
+}
+
+.dark {
+  --s-accent:      #8b6fff;
+  --s-accent-soft: rgba(139, 111, 255, 0.12);
+  --s-accent-mid:  rgba(139, 111, 255, 0.2);
+  --s-accent-hover: #9d85ff;
+
+  --s-bg-base:   #111118;
+  --s-bg-panel:  #18181b;
+  --s-bg-subtle: #1e1e24;
+  --s-bg-hover:  #27272a;
+  --s-bg-active: #303036;
+
+  --s-canvas-bg:  #1a1a20;
+  --s-dot-color:  rgba(255, 255, 255, 0.06);
+
+  --s-border:      #27272a;
+  --s-border-dark: #3f3f46;
+
+  --s-text-pri: #fafafa;
+  --s-text-sec: #a1a1aa;
+  --s-text-ter: #71717a;
+
+  --primary: #8b6fff;
+  --primary-foreground: #ffffff;
+  --ring: rgba(139, 111, 255, 0.5);
+  --border: #27272a;
+  --input: #27272a;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --muted: #1e1e24;
+  --muted-foreground: #a1a1aa;
+  --background: #111118;
+  --foreground: #fafafa;
+}
+
+/* ── Base resets for studio pages ── */
+.studio-shell {
+  font-family: var(--s-font);
+  font-size: var(--s-text-base);
+  color: var(--s-text-pri);
+  line-height: var(--s-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.studio-shell *,
+.studio-shell *::before,
+.studio-shell *::after {
+  box-sizing: border-box;
+}

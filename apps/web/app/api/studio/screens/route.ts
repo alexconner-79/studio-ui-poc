@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { isSupabaseConfigured, listScreens, upsertScreen, getProjectBySlug } from "@/lib/supabase/queries";
-
-const SCREENS_DIR = path.resolve(process.cwd(), "../../spec/screens");
+import { SCREENS_DIR } from "@/lib/studio/config-paths";
 
 /** GET /api/studio/screens -- list all screen specs */
 export async function GET(request: Request) {

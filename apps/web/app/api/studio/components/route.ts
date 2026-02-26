@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { isSupabaseConfigured, listComponents, upsertComponent, deleteComponent } from "@/lib/supabase/queries";
-
-const ROOT_DIR = path.resolve(process.cwd(), "../..");
-const COMPONENTS_DIR = path.resolve(ROOT_DIR, "spec/components");
+import { COMPONENTS_DIR } from "@/lib/studio/config-paths";
 
 /** GET -- list all custom composite components */
 export async function GET(request: Request) {

@@ -43,7 +43,7 @@ function StudioEditorContent() {
       });
   }, [screenName, projectId, setSpec]);
 
-  const backUrl = projectId ? `/studio?project=${projectId}` : "/studio";
+  const backUrl = "/studio";
 
   if (error) {
     return (

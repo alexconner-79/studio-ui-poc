@@ -1,0 +1,1156 @@
+{
+  "id": "ios-hig",
+  "name": "iOS Human Interface",
+  "description": "Apple Human Interface Guidelines — semantic system colours and spacing scale for iOS React Native apps",
+  "platform": "native",
+  "preview": [
+    "#007aff",
+    "#34c759",
+    "#ff3b30"
+  ],
+  "tokens": {
+    "color": {
+      "blue": {
+        "value": "#007aff",
+        "description": "System Blue — links, interactive"
+      },
+      "green": {
+        "value": "#34c759",
+        "description": "System Green — success, confirm"
+      },
+      "red": {
+        "value": "#ff3b30",
+        "description": "System Red — destructive, error"
+      },
+      "orange": {
+        "value": "#ff9500",
+        "description": "System Orange — warnings"
+      },
+      "yellow": {
+        "value": "#ffcc00",
+        "description": "System Yellow"
+      },
+      "pink": {
+        "value": "#ff2d55",
+        "description": "System Pink"
+      },
+      "purple": {
+        "value": "#af52de",
+        "description": "System Purple"
+      },
+      "teal": {
+        "value": "#5ac8fa",
+        "description": "System Teal"
+      },
+      "indigo": {
+        "value": "#5856d6",
+        "description": "System Indigo"
+      },
+      "gray": {
+        "value": "#8e8e93",
+        "description": "System Gray"
+      },
+      "gray2": {
+        "value": "#aeaeb2"
+      },
+      "gray3": {
+        "value": "#c7c7cc"
+      },
+      "gray4": {
+        "value": "#d1d1d6"
+      },
+      "gray5": {
+        "value": "#e5e5ea"
+      },
+      "gray6": {
+        "value": "#f2f2f7"
+      },
+      "label": {
+        "value": "#000000",
+        "description": "Primary label"
+      },
+      "secondary-label": {
+        "value": "rgba(60,60,67,0.60)"
+      },
+      "tertiary-label": {
+        "value": "rgba(60,60,67,0.30)"
+      },
+      "placeholder-text": {
+        "value": "rgba(60,60,67,0.30)"
+      },
+      "separator": {
+        "value": "rgba(60,60,67,0.29)"
+      },
+      "background": {
+        "value": "#ffffff",
+        "description": "Primary background"
+      },
+      "secondary-background": {
+        "value": "#f2f2f7"
+      },
+      "tertiary-background": {
+        "value": "#ffffff"
+      },
+      "grouped-background": {
+        "value": "#f2f2f7"
+      }
+    },
+    "spacing": {
+      "1": {
+        "value": 4
+      },
+      "2": {
+        "value": 8
+      },
+      "3": {
+        "value": 12
+      },
+      "4": {
+        "value": 16
+      },
+      "5": {
+        "value": 20
+      },
+      "6": {
+        "value": 24
+      },
+      "8": {
+        "value": 32
+      },
+      "10": {
+        "value": 40
+      },
+      "12": {
+        "value": 48
+      },
+      "safe-area-top": {
+        "value": 44,
+        "description": "Status bar height (non-notch)"
+      },
+      "safe-area-bottom": {
+        "value": 34,
+        "description": "Home indicator height"
+      }
+    },
+    "radius": {
+      "sm": {
+        "value": 6
+      },
+      "md": {
+        "value": 10
+      },
+      "lg": {
+        "value": 13
+      },
+      "xl": {
+        "value": 16
+      },
+      "modal": {
+        "value": 20,
+        "description": "Modal card corner radius"
+      },
+      "full": {
+        "value": 999
+      }
+    },
+    "typography": {
+      "font-system": {
+        "value": "SF Pro Display"
+      },
+      "font-mono": {
+        "value": "SF Mono"
+      },
+      "large-title": {
+        "value": 34
+      },
+      "title-1": {
+        "value": 28
+      },
+      "title-2": {
+        "value": 22
+      },
+      "title-3": {
+        "value": 20
+      },
+      "headline": {
+        "value": 17
+      },
+      "body": {
+        "value": 17
+      },
+      "callout": {
+        "value": 16
+      },
+      "subheadline": {
+        "value": 15
+      },
+      "footnote": {
+        "value": 13
+      },
+      "caption-1": {
+        "value": 12
+      },
+      "caption-2": {
+        "value": 11
+      }
+    },
+    "textStyles": {
+      "Large Title": {
+        "fontSize": "34px",
+        "fontWeight": "700",
+        "lineHeight": "1.18"
+      },
+      "Title1": {
+        "fontSize": "28px",
+        "fontWeight": "700",
+        "lineHeight": "1.21"
+      },
+      "Title2": {
+        "fontSize": "22px",
+        "fontWeight": "700",
+        "lineHeight": "1.27"
+      },
+      "Title3": {
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "1.3"
+      },
+      "Headline": {
+        "fontSize": "17px",
+        "fontWeight": "600",
+        "lineHeight": "1.41"
+      },
+      "Body": {
+        "fontSize": "17px",
+        "fontWeight": "400",
+        "lineHeight": "1.41"
+      },
+      "Callout": {
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "1.38"
+      },
+      "Subheadline": {
+        "fontSize": "15px",
+        "fontWeight": "400",
+        "lineHeight": "1.33"
+      },
+      "Footnote": {
+        "fontSize": "13px",
+        "fontWeight": "400",
+        "lineHeight": "1.46"
+      },
+      "Caption1": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.33"
+      },
+      "Caption2": {
+        "fontSize": "11px",
+        "fontWeight": "400",
+        "lineHeight": "1.18"
+      }
+    }
+  },
+  "components": {
+    "Button": {
+      "name": "Button",
+      "description": "iOS button",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "filled",
+            "tinted",
+            "outlined",
+            "plain"
+          ],
+          "default": "filled"
+        },
+        {
+          "name": "size",
+          "options": [
+            "mini",
+            "small",
+            "medium",
+            "large"
+          ],
+          "default": "medium"
+        },
+        {
+          "name": "role",
+          "options": [
+            "normal",
+            "destructive",
+            "cancel"
+          ],
+          "default": "normal"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": "Button"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "systemIcon",
+          "type": "string"
+        }
+      ]
+    },
+    "TextField": {
+      "name": "TextField",
+      "description": "iOS text input",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "rounded",
+            "bezel"
+          ],
+          "default": "rounded"
+        },
+        {
+          "name": "clearButtonMode",
+          "options": [
+            "never",
+            "whileEditing",
+            "unlessEditing",
+            "always"
+          ],
+          "default": "whileEditing"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "keyboardType",
+          "type": "string",
+          "default": "default"
+        },
+        {
+          "name": "secureTextEntry",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Toggle": {
+      "name": "Toggle",
+      "description": "iOS system switch",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "onValueChange",
+          "type": "function"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "trackColor",
+          "type": "node"
+        }
+      ]
+    },
+    "Slider": {
+      "name": "Slider",
+      "description": "iOS slider",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "minimumValue",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "maximumValue",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "default": 0
+        }
+      ]
+    },
+    "Picker": {
+      "name": "Picker",
+      "description": "iOS wheel picker",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "dropdown",
+            "dialog",
+            "spinner"
+          ],
+          "default": "spinner"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "selectedValue",
+          "type": "string"
+        },
+        {
+          "name": "onValueChange",
+          "type": "function"
+        },
+        {
+          "name": "items",
+          "type": "node"
+        }
+      ]
+    },
+    "DateTimePicker": {
+      "name": "DateTimePicker",
+      "description": "iOS date/time picker",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "date",
+            "time",
+            "datetime",
+            "countdown"
+          ],
+          "default": "date"
+        },
+        {
+          "name": "display",
+          "options": [
+            "default",
+            "spinner",
+            "calendar",
+            "clock"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        },
+        {
+          "name": "minimumDate",
+          "type": "string"
+        },
+        {
+          "name": "maximumDate",
+          "type": "string"
+        }
+      ]
+    },
+    "Alert": {
+      "name": "Alert",
+      "description": "iOS alert",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "alert",
+            "prompt"
+          ],
+          "default": "alert"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "buttons",
+          "type": "node"
+        }
+      ]
+    },
+    "ActionSheet": {
+      "name": "ActionSheet",
+      "description": "iOS action sheet",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "options",
+          "type": "node"
+        },
+        {
+          "name": "cancelButtonIndex",
+          "type": "number"
+        },
+        {
+          "name": "destructiveButtonIndex",
+          "type": "number"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        }
+      ]
+    },
+    "ActivityIndicator": {
+      "name": "ActivityIndicator",
+      "description": "iOS spinner",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "large"
+          ],
+          "default": "small"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "animating",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "color",
+          "type": "string"
+        }
+      ]
+    },
+    "ProgressView": {
+      "name": "ProgressView",
+      "description": "iOS linear progress",
+      "variants": [
+        {
+          "name": "progressViewStyle",
+          "options": [
+            "default",
+            "bar"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "progress",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "progressTintColor",
+          "type": "string"
+        }
+      ]
+    },
+    "Toast": {
+      "name": "Toast",
+      "description": "Brief notification",
+      "variants": [
+        {
+          "name": "position",
+          "options": [
+            "top",
+            "bottom",
+            "center"
+          ],
+          "default": "bottom"
+        },
+        {
+          "name": "type",
+          "options": [
+            "default",
+            "success",
+            "error",
+            "warning"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 2000
+        }
+      ]
+    },
+    "Modal": {
+      "name": "Modal",
+      "description": "Native modal sheet",
+      "variants": [
+        {
+          "name": "presentationStyle",
+          "options": [
+            "fullScreen",
+            "pageSheet",
+            "formSheet",
+            "overFullScreen"
+          ],
+          "default": "pageSheet"
+        },
+        {
+          "name": "animationType",
+          "options": [
+            "none",
+            "slide",
+            "fade"
+          ],
+          "default": "slide"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "visible",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "onRequestClose",
+          "type": "function"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "BottomSheet": {
+      "name": "BottomSheet",
+      "description": "Bottom sheet",
+      "variants": [
+        {
+          "name": "snapPoints",
+          "options": [
+            "25%",
+            "50%",
+            "75%",
+            "90%"
+          ],
+          "default": "50%"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "index",
+          "type": "number",
+          "default": -1
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "enablePanDownToClose",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "NavigationBar": {
+      "name": "NavigationBar",
+      "description": "iOS nav bar",
+      "variants": [
+        {
+          "name": "style",
+          "options": [
+            "default",
+            "large"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "rightItems",
+          "type": "node"
+        },
+        {
+          "name": "leftItems",
+          "type": "node"
+        }
+      ]
+    },
+    "TabBar": {
+      "name": "TabBar",
+      "description": "iOS bottom tabs",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "tabs",
+          "type": "node"
+        },
+        {
+          "name": "selectedIndex",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "onTabPress",
+          "type": "function"
+        }
+      ]
+    },
+    "NavigationStack": {
+      "name": "NavigationStack",
+      "description": "Stack navigation",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "initialRouteName",
+          "type": "string"
+        },
+        {
+          "name": "screens",
+          "type": "node"
+        },
+        {
+          "name": "screenOptions",
+          "type": "node"
+        }
+      ]
+    },
+    "FlatList": {
+      "name": "FlatList",
+      "description": "Virtualised list",
+      "variants": [
+        {
+          "name": "horizontal",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        },
+        {
+          "name": "numColumns",
+          "options": [
+            "1",
+            "2",
+            "3"
+          ],
+          "default": "1"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "data",
+          "type": "node"
+        },
+        {
+          "name": "renderItem",
+          "type": "function"
+        },
+        {
+          "name": "keyExtractor",
+          "type": "function"
+        },
+        {
+          "name": "onEndReached",
+          "type": "function"
+        },
+        {
+          "name": "refreshing",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "SectionList": {
+      "name": "SectionList",
+      "description": "Grouped list",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "sections",
+          "type": "node"
+        },
+        {
+          "name": "renderItem",
+          "type": "function"
+        },
+        {
+          "name": "renderSectionHeader",
+          "type": "function"
+        }
+      ]
+    },
+    "Card": {
+      "name": "Card",
+      "description": "Content card",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "elevated",
+            "outlined",
+            "filled"
+          ],
+          "default": "elevated"
+        }
+      ],
+      "states": [
+        "default",
+        "pressed"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        }
+      ]
+    },
+    "Tag": {
+      "name": "Tag",
+      "description": "Status label",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "filled",
+            "outlined",
+            "tinted"
+          ],
+          "default": "filled"
+        },
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "md"
+          ],
+          "default": "md"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        }
+      ]
+    },
+    "Badge": {
+      "name": "Badge",
+      "description": "Notification badge",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "medium",
+            "large"
+          ],
+          "default": "medium"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "count",
+          "type": "number"
+        },
+        {
+          "name": "dot",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "visible",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "Avatar": {
+      "name": "Avatar",
+      "description": "User avatar",
+      "variants": [
+        {
+          "name": "shape",
+          "options": [
+            "circle",
+            "rounded"
+          ],
+          "default": "circle"
+        },
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
+          ],
+          "default": "md"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "source",
+          "type": "string"
+        },
+        {
+          "name": "initials",
+          "type": "string"
+        }
+      ]
+    },
+    "SafeAreaView": {
+      "name": "SafeAreaView",
+      "description": "Safe area container",
+      "variants": [
+        {
+          "name": "edges",
+          "options": [
+            "all",
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "all"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Divider": {
+      "name": "Divider",
+      "description": "Horizontal separator",
+      "variants": [
+        {
+          "name": "orientation",
+          "options": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "thickness",
+          "type": "number",
+          "default": 1
+        }
+      ]
+    },
+    "KeyboardAvoidingView": {
+      "name": "KeyboardAvoidingView",
+      "description": "Keyboard layout adjuster",
+      "variants": [
+        {
+          "name": "behavior",
+          "options": [
+            "height",
+            "position",
+            "padding"
+          ],
+          "default": "padding"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "Icon": {
+      "name": "Icon",
+      "description": "SF Symbol / icon",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
+          ],
+          "default": "md"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "weight",
+          "type": {
+            "default": "regular"
+          }
+        }
+      ]
+    }
+  }
+}

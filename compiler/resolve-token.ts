@@ -21,8 +21,12 @@ export function resolveStyleValue(
   return value;
 }
 
-function lookupToken(path: string, tokens: DesignTokens | null): string | undefined {
-  if (!tokens) return undefined;
+function lookupToken(
+  path: string,
+  tokens: DesignTokens | null,
+  depth = 0
+): string | undefined {
+  if (!tokens || depth > 8) return undefined;
   const segments = path.split(".");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,10 +36,26 @@ function lookupToken(path: string, tokens: DesignTokens | null): string | undefi
     current = current[segments[i]];
   }
 
-  if (current && typeof current === "object" && typeof current.value === "string") {
-    return current.value;
+  // Dual-value token: pick web side for compiler output
+  if (current && typeof current === "object" && typeof current.value === "object") {
+    const dual = current.value as { web?: string };
+    if (dual.web) return dual.web;
   }
-  if (typeof current === "string") return current;
+
+  if (current && typeof current === "object" && typeof current.value === "string") {
+    // Follow alias chains: if the resolved value is itself a "$" reference, recurse
+    const val: string = current.value;
+    if (val.startsWith("$")) {
+      return lookupToken(val.slice(1), tokens, depth + 1);
+    }
+    return val;
+  }
+  if (typeof current === "string") {
+    if (current.startsWith("$")) {
+      return lookupToken(current.slice(1), tokens, depth + 1);
+    }
+    return current;
+  }
 
   return undefined;
 }

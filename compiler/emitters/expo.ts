@@ -393,6 +393,79 @@ function emitNode(node: Node): EmitResult {
       break;
     }
 
+    case "Rectangle": {
+      imports.add("View");
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const parts: string[] = [];
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`borderWidth: ${sw}`, `borderColor: "${stroke}"`);
+      if (cr) parts.push(`borderRadius: ${cr}`);
+      if (rot) parts.push(`transform: [{ rotate: "${rot}deg" }]`);
+      const styleStr = parts.length ? ` style={{ ${parts.join(", ")} }}` : "";
+      const children = emitChildren(node.children ?? []);
+      children.imports.forEach((i) => imports.add(i));
+      jsx = `<View${styleStr}>\n${indentLines(children.jsx, 2)}\n</View>`;
+      break;
+    }
+
+    case "Ellipse": {
+      imports.add("View");
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const parts: string[] = ["borderRadius: 9999"];
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`borderWidth: ${sw}`, `borderColor: "${stroke}"`);
+      jsx = `<View style={{ ${parts.join(", ")} }} />`;
+      break;
+    }
+
+    case "Line": {
+      imports.add("View");
+      const stroke = typeof props.stroke === "string" ? props.stroke : "#999999";
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 1;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const dir = props.direction === "vertical" ? "vertical" : "horizontal";
+      const borderProp = dir === "horizontal" ? "borderTopWidth" : "borderLeftWidth";
+      const colorProp = dir === "horizontal" ? "borderTopColor" : "borderLeftColor";
+      const sizeProp = dir === "horizontal" ? "width: \"100%\", height: 0" : "height: \"100%\", width: 0";
+      jsx = `<View style={{ ${borderProp}: ${sw}, ${colorProp}: "${stroke}", borderStyle: "${ss}", ${sizeProp} }} />`;
+      break;
+    }
+
+    case "Frame": {
+      imports.add("View");
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : undefined;
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const clip = !!props.clip;
+      const autoLayout = props.autoLayout !== false;
+      const dir = props.direction === "row" ? "row" : "column";
+      const gap = resolveGapRN(props.gap);
+      const parts: string[] = [];
+      if (autoLayout) parts.push(`flexDirection: "${dir}"`, `gap: ${gap}`);
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`borderWidth: ${sw}`, `borderColor: "${stroke}"`);
+      if (cr) parts.push(`borderRadius: ${cr}`);
+      if (clip) parts.push(`overflow: "hidden"`);
+      const styleStr = parts.length ? ` style={{ ${parts.join(", ")} }}` : "";
+      const children = emitChildren(node.children ?? []);
+      children.imports.forEach((i) => imports.add(i));
+      jsx = `<View${styleStr}>\n${indentLines(children.jsx, 2)}\n</View>`;
+      break;
+    }
+
+    case "DSComponent": {
+      // DSComponent nodes are design-system placeholders; emit nothing at compile time
+      jsx = "{/* DS component placeholder */}";
+      break;
+    }
+
     default: {
       imports.add("View");
       imports.add("Text");

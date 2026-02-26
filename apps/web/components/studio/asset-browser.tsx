@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import NextImage from "next/image";
 import { useDraggable } from "@dnd-kit/core";
 import { useEditorStore } from "@/lib/studio/store";
+import { toast } from "@/lib/studio/toast";
 
 // -------------------------------------------------------------------------
 // Draggable thumbnail
@@ -34,13 +36,16 @@ function AssetThumbnail({
       }`}
       title={asset.name}
     >
-      {/* eslint-disable @next/next/no-img-element */}
-      <img
-        src={asset.url}
-        alt={asset.name}
-        className="w-full h-16 object-cover bg-muted"
-        draggable={false}
-      />
+      <div className="relative w-full h-16 bg-muted">
+        <NextImage
+          src={asset.url}
+          alt={asset.name}
+          fill
+          unoptimized
+          draggable={false}
+          className="object-cover"
+        />
+      </div>
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
         {isImageSelected && (
           <button
@@ -96,18 +101,33 @@ export function AssetBrowser() {
       : null;
   const isImageSelected = selectedNode?.type === "Image";
 
+  // Read projectId from URL search params (e.g. /studio/screen?project=xxx)
+  const projectId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("project")
+    : null;
+
   // Load assets on mount
   const loaded = useRef(false);
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    fetch("/api/studio/assets")
+    const params = projectId ? `?projectId=${projectId}` : "";
+    fetch(`/api/studio/assets${params}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.assets) setAssets(data.assets);
+        if (data.assets) {
+          setAssets(
+            data.assets.map((a: Record<string, unknown>) => ({
+              name: a.name as string,
+              url: a.url as string,
+              id: a.id as string | undefined,
+              storagePath: a.storagePath as string | undefined,
+            }))
+          );
+        }
       })
-      .catch(() => {});
-  }, [setAssets]);
+      .catch(() => { toast.error("Failed to load assets"); });
+  }, [setAssets, projectId]);
 
   const handleUpload = useCallback(
     async (file: File) => {
@@ -115,13 +135,14 @@ export function AssetBrowser() {
       try {
         const formData = new FormData();
         formData.append("file", file);
+        if (projectId) formData.append("projectId", projectId);
         const res = await fetch("/api/studio/assets/upload", {
           method: "POST",
           body: formData,
         });
         const data = await res.json();
         if (data.url) {
-          addAsset({ name: data.name, url: data.url });
+          addAsset({ name: data.name, url: data.url, id: data.id, storagePath: data.storagePath });
         }
       } catch {
         // Silently fail
@@ -129,13 +150,20 @@ export function AssetBrowser() {
         setUploading(false);
       }
     },
-    [addAsset]
+    [addAsset, projectId]
   );
 
   const handleDelete = useCallback(
     async (name: string) => {
       try {
-        await fetch(`/api/studio/assets?name=${encodeURIComponent(name)}`, {
+        const asset = assets.find((a) => a.name === name) as Record<string, unknown> | undefined;
+        const id = asset?.id as string | undefined;
+        const sp = asset?.storagePath as string | undefined;
+        const params = new URLSearchParams();
+        params.set("name", name);
+        if (id) params.set("id", id);
+        if (sp) params.set("storagePath", sp);
+        await fetch(`/api/studio/assets?${params.toString()}`, {
           method: "DELETE",
         });
         removeAsset(name);
@@ -143,7 +171,7 @@ export function AssetBrowser() {
         // Silently fail
       }
     },
-    [removeAsset]
+    [removeAsset, assets]
   );
 
   const handleClickSet = useCallback(

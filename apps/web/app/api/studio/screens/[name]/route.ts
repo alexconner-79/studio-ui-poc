@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { isSupabaseConfigured, getScreen, upsertScreen, createVersion } from "@/lib/supabase/queries";
-
-const SCREENS_DIR = path.resolve(process.cwd(), "../../spec/screens");
+import { isSupabaseConfigured, getScreen, upsertScreen, createVersion, deleteScreen } from "@/lib/supabase/queries";
+import { SCREENS_DIR } from "@/lib/studio/config-paths";
 
 type Params = { params: Promise<{ name: string }> };
 
@@ -78,6 +77,33 @@ export async function PUT(request: Request, context: Params) {
     );
 
     return NextResponse.json({ name, spec });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** DELETE /api/studio/screens/[name] -- delete a screen */
+export async function DELETE(request: Request, context: Params) {
+  try {
+    const { name } = await context.params;
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
+
+    if (isSupabaseConfigured() && projectId) {
+      const ok = await deleteScreen(projectId, name);
+      if (!ok) {
+        return NextResponse.json({ error: "Failed to delete screen" }, { status: 500 });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    const filePath = path.join(SCREENS_DIR, `${name}.screen.json`);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -40,6 +40,9 @@ export function useRealtimeCollaboration(
 ) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [presenceUsers, setPresenceUsers] = useState<PresenceUser[]>([]);
+  // Keep a stable ref so the effect doesn't need callbacks in its dep array
+  const callbacksRef = useRef<RealtimeCallbacks>(callbacks);
+  useEffect(() => { callbacksRef.current = callbacks; });
 
   useEffect(() => {
     if (!screenId || !currentUserId) return;
@@ -77,13 +80,13 @@ export function useRealtimeCollaboration(
         }
       }
       setPresenceUsers(users);
-      callbacks.onPresenceChange?.(users);
+      callbacksRef.current.onPresenceChange?.(users);
     });
 
     channel.on("broadcast", { event: "spec-update" }, (payload) => {
       const data = payload.payload as { tree: Node; senderId: string };
       if (data.senderId !== currentUserId && data.tree) {
-        callbacks.onRemoteSpecChange?.(data.tree);
+        callbacksRef.current.onRemoteSpecChange?.(data.tree);
       }
     });
 
@@ -103,8 +106,7 @@ export function useRealtimeCollaboration(
       channel.unsubscribe();
       channelRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screenId, currentUserId]);
+  }, [screenId, currentUserId, currentUserName]);
 
   const broadcastSpecUpdate = useCallback(
     (tree: Node) => {

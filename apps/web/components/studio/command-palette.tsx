@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { NODE_SCHEMAS } from "@/lib/studio/node-schemas";
+import { toast } from "@/lib/studio/toast";
 
 // -------------------------------------------------------------------------
 // Types
@@ -32,6 +33,7 @@ type CommandPaletteProps = {
     openThemeEditor: () => void;
     openA11yPanel: () => void;
     save: () => void;
+    batchSpacing: () => void;
     insertNode: (nodeType: string) => void;
     navigateToScreen: (screen: string) => void;
   };
@@ -84,7 +86,7 @@ export function CommandPalette({
           );
         }
       })
-      .catch(() => {});
+      .catch(() => { toast.error("Failed to load screens"); });
   }, []);
 
   // Build the full command list
@@ -105,6 +107,7 @@ export function CommandPalette({
       { id: "theme-editor", label: "Theme Editor", category: "action", action: actions.openThemeEditor },
       { id: "a11y-check", label: "Accessibility Checker", category: "action", action: actions.openA11yPanel },
       { id: "save", label: "Save & Compile", shortcut: "Cmd+S", category: "action", action: actions.save },
+      { id: "batch-spacing", label: "Set spacing for all elements", category: "action", action: actions.batchSpacing },
     ];
 
     // Insert node types

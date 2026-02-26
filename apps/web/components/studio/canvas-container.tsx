@@ -285,10 +285,7 @@ export function CanvasContainerWithControls({
         ref={containerRef}
         className="relative w-full h-full overflow-hidden"
         style={{
-          background:
-            "radial-gradient(circle, hsl(var(--muted)/0.3) 1px, transparent 1px)",
-          backgroundSize: `${20 * scale}px ${20 * scale}px`,
-          backgroundPosition: `${translateX}px ${translateY}px`,
+          background: `var(--s-canvas-bg)`,
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

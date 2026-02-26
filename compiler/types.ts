@@ -83,7 +83,12 @@ export type BuiltInNodeType =
   | "Carousel"
   | "Calendar"
   | "Timeline"
-  | "ComponentRef";
+  | "ComponentRef"
+  // Shapes (v0.8.5)
+  | "Rectangle"
+  | "Ellipse"
+  | "Line"
+  | "Frame";
 
 export type NodeProps = Record<string, unknown>;
 
@@ -170,15 +175,28 @@ export type NodeStyle = {
   opacity?: number;
   boxShadow?: StyleValue;
 
-  // Layout (flex child / container)
+  // Layout (flex container)
+  flexDirection?: "row" | "column";
   overflow?: "visible" | "hidden" | "auto" | "scroll";
   justifyContent?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around";
   alignItems?: "flex-start" | "center" | "flex-end" | "stretch" | "baseline";
   flexWrap?: "nowrap" | "wrap";
   gap?: StyleValue;
+
+  // Layout (flex child)
   flexGrow?: number;
   flexShrink?: number;
   alignSelf?: "auto" | "flex-start" | "center" | "flex-end" | "stretch";
+
+  // Sizing modes (override raw width/height)
+  widthMode?: "fixed" | "fill" | "hug";
+  heightMode?: "fixed" | "fill" | "hug";
+
+  // Edge constraints (active when inside a Frame with autoLayout OFF)
+  constraints?: {
+    horizontal?: "left" | "right" | "left-right" | "center" | "scale";
+    vertical?: "top" | "bottom" | "top-bottom" | "center" | "scale";
+  };
 
   // Position
   position?: "static" | "relative" | "absolute" | "fixed" | "sticky";
@@ -204,6 +222,8 @@ export type Node = {
   dataSource?: DataSource;
   style?: NodeStyle;
   responsive?: ResponsiveOverrides;
+  /** When false the compiler skips this node and its subtree. Absent = true. */
+  compile?: boolean;
 };
 
 // ---------------------------------------------------------------------------

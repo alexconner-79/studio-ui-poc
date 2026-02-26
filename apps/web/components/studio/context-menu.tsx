@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { useEditorStore } from "@/lib/studio/store";
 import type { Node } from "@/lib/studio/types";
+import { toast } from "@/lib/studio/toast";
 
 function findNode(root: Node, id: string): Node | null {
   if (root.id === id) return root;
@@ -44,8 +45,20 @@ export function ContextMenu({
   const removeNode = useEditorStore((s) => s.removeNode);
 
   const lockedNodeIds = useEditorStore((s) => s.lockedNodeIds);
+  const toggleNodeCompile = useEditorStore((s) => s.toggleNodeCompile);
+  const updateNode = useEditorStore((s) => s.updateNode);
+  const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
+  const addNode = useEditorStore((s) => s.addNode);
+  const convertToAutoLayout = useEditorStore((s) => s.convertToAutoLayout);
+  const breakAutoLayout = useEditorStore((s) => s.breakAutoLayout);
   const isRoot = selectedNodeId === spec?.tree.id;
   const isLocked = selectedNodeId ? lockedNodeIds.has(selectedNodeId) : false;
+  const selectedNode = spec && selectedNodeId ? findNode(spec.tree, selectedNodeId) : null;
+  const isDesignOnly = selectedNode?.compile === false;
+  const isAbsolute = selectedNode?.style?.position === "absolute";
+  const isFrame = selectedNode?.type === "Frame";
+  const frameProps = selectedNode?.props as Record<string, unknown> | undefined;
+  const hasAutoLayout = isFrame && (frameProps?.autoLayout !== false);
 
   // Close on click outside or Escape
   useEffect(() => {
@@ -95,6 +108,56 @@ export function ContextMenu({
       disabled: !selectedNodeId || isRoot || isLocked,
     },
     {
+      label: isDesignOnly ? "Promote to Build" : "Move to Design",
+      action: () => {
+        if (!selectedNodeId || isRoot) return;
+        if (isDesignOnly && isAbsolute) {
+          const wrapInFrame = window.confirm(
+            "This node uses absolute positioning. Wrap it in an auto-layout Frame first?"
+          );
+          if (wrapInFrame) {
+            useEditorStore.getState().groupIntoStack();
+          }
+        }
+        toggleNodeCompile(selectedNodeId);
+        onClose();
+      },
+      disabled: !selectedNodeId || isRoot,
+    },
+    {
+      label: "Convert to Component",
+      action: () => {
+        if (!selectedNodeId || isRoot || !selectedNode) return;
+        const types = ["Card", "Section", "Box", "Button", "Nav", "Form"];
+        const choice = window.prompt(
+          `Convert to semantic type:\n${types.map((t, i) => `${i + 1}. ${t}`).join("\n")}\n\nEnter number or type name:`
+        );
+        if (!choice) { onClose(); return; }
+        const idx = parseInt(choice, 10);
+        const targetType = idx >= 1 && idx <= types.length ? types[idx - 1] : types.find((t) => t.toLowerCase() === choice.trim().toLowerCase());
+        if (targetType) {
+          updateNode(selectedNodeId, { type: targetType, compile: true });
+        }
+        onClose();
+      },
+      disabled: !selectedNodeId || isRoot || isLocked,
+    },
+    ...(isFrame ? [
+      {
+        label: hasAutoLayout ? "Break Auto Layout" : "Add Auto Layout",
+        action: () => {
+          if (!selectedNodeId) return;
+          if (hasAutoLayout) {
+            breakAutoLayout(selectedNodeId);
+          } else {
+            convertToAutoLayout(selectedNodeId);
+          }
+          onClose();
+        },
+        disabled: !selectedNodeId || isLocked,
+      },
+    ] : []),
+    {
       label: "Delete",
       shortcut: "Del",
       action: () => {
@@ -124,7 +187,7 @@ export function ContextMenu({
                     useEditorStore.getState().addCustomComponent(data.component);
                   }
                 })
-                .catch(() => {});
+                .catch(() => { toast.error("Failed to save component"); });
             }
           }
         }

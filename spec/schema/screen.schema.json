@@ -85,9 +85,15 @@
           "type": "string",
           "minLength": 1
         },
+        "name": {
+          "type": "string"
+        },
         "type": {
           "type": "string",
           "minLength": 1
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -177,6 +183,9 @@
         "id": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "type": {
           "const": "Stack"
         },
@@ -213,6 +222,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -226,6 +238,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -259,6 +274,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -272,6 +290,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -300,6 +321,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -313,6 +337,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -341,6 +368,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -353,6 +383,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -375,6 +408,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -387,6 +423,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -417,6 +456,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -429,6 +471,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -458,6 +503,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -470,6 +518,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -505,6 +556,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -517,6 +571,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -553,6 +610,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -565,6 +625,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -599,6 +662,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -611,6 +677,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -629,6 +698,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -641,6 +713,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -669,6 +744,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -681,6 +759,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -709,6 +790,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -721,6 +805,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -764,6 +851,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -776,6 +866,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -811,6 +904,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -823,6 +919,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -854,6 +953,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -866,6 +968,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -897,6 +1002,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -909,6 +1017,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -947,6 +1058,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -959,6 +1073,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -990,6 +1107,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -1002,6 +1122,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -1032,6 +1155,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     },
@@ -1043,6 +1169,9 @@
       ],
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "type": {
@@ -1089,6 +1218,9 @@
         },
         "dataSource": {
           "type": "object"
+        },
+        "compile": {
+          "type": "boolean"
         }
       }
     }

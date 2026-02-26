@@ -18,6 +18,7 @@ export interface Project {
   slug: string;
   framework: string;
   config: Record<string, unknown>;
+  design_system_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +61,19 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   role: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DesignSystem {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  platform: "web" | "native" | "universal";
+  tokens: Record<string, unknown>;
+  themes: Record<string, unknown>;
+  components: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -178,7 +192,7 @@ export async function createProject(input: {
   return data as Project | null;
 }
 
-export async function updateProject(id: string, updates: Partial<Pick<Project, "name" | "framework" | "config">>): Promise<Project | null> {
+export async function updateProject(id: string, updates: Partial<Pick<Project, "name" | "framework" | "config" | "design_system_id">>): Promise<Project | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerClient();
   const { data } = await supabase
@@ -494,6 +508,101 @@ export async function removePendingInvite(projectId: string, email: string): Pro
 }
 
 // ─────────────────────────────────────────────────────────────
+// Assets (Supabase Storage + assets table)
+// ─────────────────────────────────────────────────────────────
+
+export interface Asset {
+  id: string;
+  project_id: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  created_at: string;
+}
+
+export async function listAssets(projectId: string): Promise<Asset[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("assets")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as Asset[];
+}
+
+export async function insertAsset(
+  projectId: string,
+  fileName: string,
+  storagePath: string,
+  mimeType: string,
+  sizeBytes: number,
+): Promise<Asset | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("assets")
+    .insert({
+      project_id: projectId,
+      file_name: fileName,
+      storage_path: storagePath,
+      mime_type: mimeType,
+      size_bytes: sizeBytes,
+    })
+    .select()
+    .single();
+  if (error) {
+    console.error("insertAsset error:", error.message);
+    return null;
+  }
+  return data as Asset;
+}
+
+export async function deleteAsset(assetId: string, storagePath: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  const supabase = await createServerClient();
+  const { error: storageError } = await supabase.storage
+    .from("studio-assets")
+    .remove([storagePath]);
+  if (storageError) {
+    console.error("deleteAsset storage error:", storageError.message);
+  }
+  const { error: dbError } = await supabase
+    .from("assets")
+    .delete()
+    .eq("id", assetId);
+  return !dbError;
+}
+
+export async function uploadAssetToStorage(
+  projectId: string,
+  fileBuffer: Buffer,
+  fileName: string,
+  mimeType: string,
+): Promise<{ storagePath: string; publicUrl: string } | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const storagePath = `${user.id}/${projectId}/${fileName}`;
+  const { error } = await supabase.storage
+    .from("studio-assets")
+    .upload(storagePath, fileBuffer, {
+      contentType: mimeType,
+      upsert: true,
+    });
+  if (error) {
+    console.error("uploadAssetToStorage error:", error.message);
+    return null;
+  }
+  const { data: urlData } = supabase.storage
+    .from("studio-assets")
+    .getPublicUrl(storagePath);
+  return { storagePath, publicUrl: urlData.publicUrl };
+}
+
+// ─────────────────────────────────────────────────────────────
 // Admin queries (requires admin role)
 // ─────────────────────────────────────────────────────────────
 
@@ -523,4 +632,96 @@ export async function adminListAllProfiles(): Promise<Profile[]> {
     .select("*")
     .order("created_at", { ascending: false });
   return (data ?? []) as Profile[];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Design System queries
+// ─────────────────────────────────────────────────────────────
+
+export async function listDesignSystems(): Promise<DesignSystem[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("design_systems")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  return (data ?? []) as DesignSystem[];
+}
+
+export async function getDesignSystem(id: string): Promise<DesignSystem | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("design_systems")
+    .select("*")
+    .eq("id", id)
+    .single();
+  return data as DesignSystem | null;
+}
+
+export async function createDesignSystem(input: {
+  name: string;
+  description?: string;
+  platform?: "web" | "native" | "universal";
+  tokens?: Record<string, unknown>;
+}): Promise<DesignSystem | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("design_systems")
+    .insert({
+      owner_id: user.id,
+      name: input.name,
+      description: input.description ?? null,
+      platform: input.platform ?? "web",
+      tokens: input.tokens ?? {},
+      themes: {},
+      components: {},
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create design system: ${error.message}`);
+  return data as DesignSystem | null;
+}
+
+export async function updateDesignSystem(
+  id: string,
+  updates: Partial<Pick<DesignSystem, "name" | "description" | "platform" | "tokens" | "themes" | "components">>
+): Promise<DesignSystem | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("design_systems")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  return data as DesignSystem | null;
+}
+
+export async function deleteDesignSystem(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("design_systems")
+    .delete()
+    .eq("id", id);
+  return !error;
+}
+
+export async function linkProjectToDesignSystem(
+  projectId: string,
+  designSystemId: string | null
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("projects")
+    .update({ design_system_id: designSystemId })
+    .eq("id", projectId);
+  return !error;
 }

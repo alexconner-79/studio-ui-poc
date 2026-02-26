@@ -1,0 +1,1133 @@
+{
+  "id": "studio-minimal-web",
+  "name": "Minimal / Neutral",
+  "description": "Clean, opinionated starter for bespoke web products — monochromatic with one accent. Best starting point for a custom brand.",
+  "platform": "web",
+  "preview": [
+    "#7c3aed",
+    "#f5f5f5",
+    "#171717"
+  ],
+  "tokens": {
+    "color": {
+      "accent": {
+        "value": "#7c3aed",
+        "description": "Brand accent — swap to customise"
+      },
+      "accent-hover": {
+        "value": "#6d28d9",
+        "description": "Accent on hover"
+      },
+      "accent-muted": {
+        "value": "#ede9fe",
+        "description": "Subtle accent background"
+      },
+      "accent-foreground": {
+        "value": "#ffffff",
+        "description": "Text on accent"
+      },
+      "background": {
+        "value": "#ffffff",
+        "description": "Page background"
+      },
+      "foreground": {
+        "value": "#171717",
+        "description": "Primary text"
+      },
+      "surface": {
+        "value": "#fafafa",
+        "description": "Card/panel surface"
+      },
+      "surface-raised": {
+        "value": "#ffffff",
+        "description": "Elevated surface"
+      },
+      "muted": {
+        "value": "#f5f5f5",
+        "description": "Muted/subtle background"
+      },
+      "muted-foreground": {
+        "value": "#737373",
+        "description": "De-emphasised text"
+      },
+      "border": {
+        "value": "#e5e5e5",
+        "description": "Subtle border"
+      },
+      "border-strong": {
+        "value": "#d4d4d4",
+        "description": "Prominent border"
+      },
+      "success": {
+        "value": "#16a34a",
+        "description": "Success state"
+      },
+      "warning": {
+        "value": "#d97706",
+        "description": "Warning state"
+      },
+      "error": {
+        "value": "#dc2626",
+        "description": "Error/destructive"
+      }
+    },
+    "spacing": {
+      "1": {
+        "value": "4px"
+      },
+      "2": {
+        "value": "8px"
+      },
+      "3": {
+        "value": "12px"
+      },
+      "4": {
+        "value": "16px"
+      },
+      "5": {
+        "value": "20px"
+      },
+      "6": {
+        "value": "24px"
+      },
+      "8": {
+        "value": "32px"
+      },
+      "10": {
+        "value": "40px"
+      },
+      "12": {
+        "value": "48px"
+      },
+      "16": {
+        "value": "64px"
+      },
+      "20": {
+        "value": "80px"
+      }
+    },
+    "radius": {
+      "sm": {
+        "value": "4px"
+      },
+      "md": {
+        "value": "8px"
+      },
+      "lg": {
+        "value": "12px"
+      },
+      "xl": {
+        "value": "16px"
+      },
+      "full": {
+        "value": "9999px"
+      }
+    },
+    "typography": {
+      "font-sans": {
+        "value": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "font-mono": {
+        "value": "JetBrains Mono, ui-monospace, monospace"
+      },
+      "text-xs": {
+        "value": "11px"
+      },
+      "text-sm": {
+        "value": "13px"
+      },
+      "text-base": {
+        "value": "15px"
+      },
+      "text-lg": {
+        "value": "17px"
+      },
+      "text-xl": {
+        "value": "20px"
+      },
+      "text-2xl": {
+        "value": "24px"
+      },
+      "text-3xl": {
+        "value": "30px"
+      },
+      "text-4xl": {
+        "value": "38px"
+      },
+      "leading-tight": {
+        "value": "1.2"
+      },
+      "leading-normal": {
+        "value": "1.5"
+      },
+      "leading-relaxed": {
+        "value": "1.75"
+      }
+    },
+    "shadow": {
+      "xs": {
+        "value": "0 1px 2px rgb(0 0 0 / 0.04)"
+      },
+      "sm": {
+        "value": "0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04)"
+      },
+      "md": {
+        "value": "0 4px 8px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04)"
+      },
+      "lg": {
+        "value": "0 8px 24px rgb(0 0 0 / 0.08), 0 4px 8px rgb(0 0 0 / 0.04)"
+      },
+      "xl": {
+        "value": "0 20px 40px rgb(0 0 0 / 0.10)"
+      }
+    },
+    "textStyles": {
+      "H1": {
+        "fontSize": "48px",
+        "fontWeight": "700",
+        "lineHeight": "1.1",
+        "letterSpacing": "-0.03em"
+      },
+      "H2": {
+        "fontSize": "36px",
+        "fontWeight": "700",
+        "lineHeight": "1.15",
+        "letterSpacing": "-0.02em"
+      },
+      "H3": {
+        "fontSize": "28px",
+        "fontWeight": "600",
+        "lineHeight": "1.2"
+      },
+      "H4": {
+        "fontSize": "22px",
+        "fontWeight": "600",
+        "lineHeight": "1.25"
+      },
+      "H5": {
+        "fontSize": "18px",
+        "fontWeight": "500",
+        "lineHeight": "1.3"
+      },
+      "H6": {
+        "fontSize": "16px",
+        "fontWeight": "500",
+        "lineHeight": "1.3"
+      },
+      "Body Large": {
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "1.7"
+      },
+      "Body": {
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "1.6"
+      },
+      "Body Small": {
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.5"
+      },
+      "Caption": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.4"
+      },
+      "Label": {
+        "fontSize": "13px",
+        "fontWeight": "500",
+        "lineHeight": "1.2"
+      },
+      "Code": {
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.5",
+        "fontFamily": "monospace"
+      }
+    }
+  },
+  "components": {
+    "Button": {
+      "name": "Button",
+      "description": "Trigger actions",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "destructive",
+            "outline",
+            "secondary",
+            "ghost",
+            "link"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "default",
+            "sm",
+            "lg",
+            "icon"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string",
+          "default": "Button"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "asChild",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Input": {
+      "name": "Input",
+      "description": "Single-line text input",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "default": "text"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ]
+    },
+    "Textarea": {
+      "name": "Textarea",
+      "description": "Multi-line text input",
+      "variants": [],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "rows",
+          "type": "number",
+          "default": 3
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Select": {
+      "name": "Select",
+      "description": "Dropdown selection",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "default": "Select…"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ]
+    },
+    "Checkbox": {
+      "name": "Checkbox",
+      "description": "Boolean checkbox",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Radio": {
+      "name": "RadioGroup",
+      "description": "Exclusive radio group",
+      "variants": [
+        {
+          "name": "orientation",
+          "options": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Switch": {
+      "name": "Switch",
+      "description": "Toggle on/off",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "checked",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    "Alert": {
+      "name": "Alert",
+      "description": "Contextual feedback",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "destructive"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    "Dialog": {
+      "name": "Dialog",
+      "description": "Modal dialog",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg",
+            "full"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "onOpenChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Drawer": {
+      "name": "Drawer",
+      "description": "Slide-in panel",
+      "variants": [
+        {
+          "name": "side",
+          "options": [
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "right"
+        },
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "open",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "onOpenChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Tooltip": {
+      "name": "Tooltip",
+      "description": "Hover hint",
+      "variants": [
+        {
+          "name": "side",
+          "options": [
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "top"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "delayDuration",
+          "type": "number",
+          "default": 400
+        }
+      ]
+    },
+    "Tabs": {
+      "name": "Tabs",
+      "description": "Tab content switcher",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "outline"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "orientation",
+          "options": [
+            "horizontal",
+            "vertical"
+          ],
+          "default": "horizontal"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "defaultValue",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "onValueChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Breadcrumb": {
+      "name": "Breadcrumb",
+      "description": "Navigation trail",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "separator",
+          "type": "string",
+          "default": "/"
+        }
+      ]
+    },
+    "Pagination": {
+      "name": "Pagination",
+      "description": "Page navigation",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "page",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "name": "total",
+          "type": "number"
+        },
+        {
+          "name": "pageSize",
+          "type": "number",
+          "default": 10
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        }
+      ]
+    },
+    "Table": {
+      "name": "Table",
+      "description": "Tabular data",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "striped",
+            "bordered"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default",
+            "lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "columns",
+          "type": "node"
+        },
+        {
+          "name": "data",
+          "type": "node"
+        }
+      ]
+    },
+    "Card": {
+      "name": "Card",
+      "description": "Content container",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "elevated",
+            "outlined",
+            "filled"
+          ],
+          "default": "elevated"
+        }
+      ],
+      "states": [
+        "default",
+        "hover"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "footer",
+          "type": "node"
+        }
+      ]
+    },
+    "Badge": {
+      "name": "Badge",
+      "description": "Status label",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "secondary",
+            "destructive",
+            "outline",
+            "success",
+            "warning"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "default"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string",
+          "default": "Badge"
+        }
+      ]
+    },
+    "Avatar": {
+      "name": "Avatar",
+      "description": "User image/initials",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "default",
+            "lg",
+            "xl"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "src",
+          "type": "string"
+        },
+        {
+          "name": "alt",
+          "type": "string"
+        },
+        {
+          "name": "fallback",
+          "type": "string"
+        }
+      ]
+    },
+    "Accordion": {
+      "name": "Accordion",
+      "description": "Collapsible sections",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "single",
+            "multiple"
+          ],
+          "default": "single"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "node"
+        },
+        {
+          "name": "defaultValue",
+          "type": "string"
+        },
+        {
+          "name": "collapsible",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "Skeleton": {
+      "name": "Skeleton",
+      "description": "Loading placeholder",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "text",
+            "circular",
+            "rectangular"
+          ],
+          "default": "rectangular"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "width",
+          "type": "string"
+        },
+        {
+          "name": "height",
+          "type": "string"
+        }
+      ]
+    },
+    "Spinner": {
+      "name": "Spinner",
+      "description": "Loading spinner",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        },
+        {
+          "name": "variant",
+          "options": [
+            "border",
+            "dots",
+            "pulse"
+          ],
+          "default": "border"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    "ProgressBar": {
+      "name": "ProgressBar",
+      "description": "Progress bar",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "striped"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "options": [
+            "sm",
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "default": 100
+        }
+      ]
+    },
+    "Heading": {
+      "name": "Heading",
+      "description": "Heading element",
+      "variants": [
+        {
+          "name": "level",
+          "options": [
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6"
+          ],
+          "default": "h2"
+        },
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "2xl",
+            "3xl"
+          ],
+          "default": "lg"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string"
+        }
+      ]
+    },
+    "Text": {
+      "name": "Text",
+      "description": "Body text",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        },
+        {
+          "name": "weight",
+          "options": [
+            "normal",
+            "medium",
+            "semibold",
+            "bold"
+          ],
+          "default": "normal"
+        },
+        {
+          "name": "color",
+          "options": [
+            "default",
+            "muted",
+            "destructive",
+            "success"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string"
+        }
+      ]
+    },
+    "Link": {
+      "name": "Link",
+      "description": "Hyperlink",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "default",
+            "muted",
+            "underline"
+          ],
+          "default": "default"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "href",
+          "type": "string"
+        },
+        {
+          "name": "children",
+          "type": "string"
+        },
+        {
+          "name": "external",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    }
+  }
+}

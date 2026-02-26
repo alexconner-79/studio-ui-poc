@@ -17,6 +17,7 @@ import {
   SliderInput,
   SegmentedSelect,
 } from "./style-fields";
+import { getTextStyles, getTokensForCategory, applyThemeOverrides } from "@/lib/studio/resolve-token";
 
 // ---------------------------------------------------------------------------
 // Collapsible section wrapper
@@ -33,14 +34,16 @@ function StyleSection({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-t pt-2">
-      <button
+    <div className="[border-top:1px_solid_var(--s-border)] [padding:10px_12px] last:border-b-0">
+      <div
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2"
+        className="flex items-center justify-between cursor-pointer select-none [margin-bottom:8px]"
       >
-        {title}
-        <span className="text-[10px] font-normal">{open ? "−" : "+"}</span>
-      </button>
+        <span className="[font-size:var(--s-text-xs)] [font-weight:var(--s-weight-semibold)] uppercase [letter-spacing:var(--s-tracking-wide)] [color:var(--s-text-ter)]">
+          {title}
+        </span>
+        <span className="[font-size:8px] [color:var(--s-text-ter)]">{open ? "▾" : "▸"}</span>
+      </div>
       {open && <div className="space-y-2.5 pb-1">{children}</div>}
     </div>
   );
@@ -55,7 +58,7 @@ const TEXT_BEARING_TYPES = new Set([
 ]);
 
 const CONTAINER_TYPES = new Set([
-  "Stack", "Grid", "Section", "ScrollArea", "Card", "Form", "Modal", "Tabs", "Nav",
+  "Frame", "Stack", "Grid", "Section", "ScrollArea", "Card", "Form", "Modal", "Tabs", "Nav",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -71,18 +74,20 @@ const BREAKPOINT_OPTIONS = [
 export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: string }) {
   const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
   const updateNodeResponsiveStyle = useEditorStore((s) => s.updateNodeResponsiveStyle);
+  const updateNodeProps = useEditorStore((s) => s.updateNodeProps);
   const editingBreakpoint = useEditorStore((s) => s.editingBreakpoint);
   const setEditingBreakpoint = useEditorStore((s) => s.setEditingBreakpoint);
   const designTokens = useEditorStore((s) => s.designTokens);
+  const dsThemes = useEditorStore((s) => s.dsThemes);
+  const activeThemeId = useEditorStore((s) => s.activeThemeId);
   const loadDesignTokens = useEditorStore((s) => s.loadDesignTokens);
+  const currentProjectId = useEditorStore((s) => s.currentProjectId);
   const spec = useEditorStore((s) => s.spec);
 
-  // Load tokens on first mount
+  // Load tokens on first mount and whenever the project changes
   useEffect(() => {
-    if (!designTokens) {
-      loadDesignTokens();
-    }
-  }, [designTokens, loadDesignTokens]);
+    loadDesignTokens();
+  }, [currentProjectId, loadDesignTokens]);
 
   // Get current node's style
   const node = spec ? findNodeById(spec.tree, nodeId) : null;
@@ -113,9 +118,24 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
     [nodeId, updateNodeStyle, updateNodeResponsiveStyle, editingBreakpoint]
   );
 
-  const tokens = designTokens ?? null;
+  // Apply active theme overrides if a theme is selected
+  const tokens = React.useMemo(() => {
+    if (!designTokens) return null;
+    if (!activeThemeId || !dsThemes[activeThemeId]) return designTokens;
+    return applyThemeOverrides(designTokens, dsThemes[activeThemeId]);
+  }, [designTokens, activeThemeId, dsThemes]);
   const isTextNode = TEXT_BEARING_TYPES.has(nodeType);
   const isContainer = CONTAINER_TYPES.has(nodeType);
+  const isFrame = nodeType === "Frame";
+  const nodeProps = node?.props as Record<string, unknown> | undefined;
+  const autoLayout = isFrame ? (nodeProps?.autoLayout !== false) : false;
+
+  const handlePropsChange = useCallback(
+    (key: string, value: unknown) => {
+      updateNodeProps(nodeId, { [key]: value });
+    },
+    [nodeId, updateNodeProps]
+  );
 
   return (
     <div className="space-y-0">
@@ -166,7 +186,15 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
 
       {/* Layout - shown for containers */}
       {isContainer && (
-        <LayoutSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+        <LayoutSection
+          style={effectiveStyle}
+          tokens={tokens}
+          onChange={handleStyleChange}
+          isFrame={isFrame}
+          autoLayout={autoLayout}
+          frameDirection={nodeProps?.direction as "row" | "column" | undefined}
+          onPropsChange={handlePropsChange}
+        />
       )}
 
       {/* Position */}
@@ -188,8 +216,82 @@ function TypographySection({
   tokens: DesignTokens | null;
   onChange: (prop: string, value: StyleValue | undefined) => void;
 }) {
+  const textStyles = getTextStyles(tokens);
+  const fontFamilyTokens = getTokensForCategory("typography.fontFamily", tokens);
+  const projectFonts = useEditorStore((s) => s.projectFonts);
+
+  // Detect whether the current style matches a named text style
+  const activeTextStyle = textStyles.find((ts) =>
+    (!ts.fontSize || ts.fontSize === String(style.fontSize ?? "")) &&
+    (!ts.fontWeight || ts.fontWeight === String(style.fontWeight ?? "")) &&
+    (!ts.lineHeight || ts.lineHeight === String(style.lineHeight ?? ""))
+  );
+
+  const applyTextStyle = (name: string) => {
+    const ts = textStyles.find((t) => t.name === name);
+    if (!ts) return;
+    if (ts.fontSize) onChange("fontSize", ts.fontSize);
+    if (ts.fontWeight) onChange("fontWeight", ts.fontWeight);
+    if (ts.lineHeight) onChange("lineHeight", ts.lineHeight);
+    if (ts.letterSpacing) onChange("letterSpacing", ts.letterSpacing);
+    if (ts.fontFamily) onChange("fontFamily", ts.fontFamily);
+  };
+
   return (
     <StyleSection title="Typography" defaultOpen>
+      {/* Text Style preset picker */}
+      {textStyles.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] text-muted-foreground font-medium">Text Style</label>
+          <select
+            value={activeTextStyle?.name ?? ""}
+            onChange={(e) => { if (e.target.value) applyTextStyle(e.target.value); }}
+            className="w-full h-7 px-2 text-[11px] bg-background border rounded"
+          >
+            <option value="">Custom</option>
+            {textStyles.map((ts) => (
+              <option key={ts.name} value={ts.name}>
+                {ts.name}{ts.fontSize ? ` — ${ts.fontSize}` : ""}{ts.fontWeight && ts.fontWeight !== "400" ? ` / ${ts.fontWeight}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Font Family with token picker or project fonts fallback */}
+      {fontFamilyTokens.length > 0 ? (
+        <TokenAwareInput
+          label="Font Family"
+          value={style.fontFamily as StyleValue | undefined}
+          tokenCategory="typography.fontFamily"
+          tokens={tokens}
+          onChange={(v) => onChange("fontFamily", v)}
+          renderInput={({ value: v, onChange: onC }) => (
+            <input
+              type="text"
+              value={String(v || "")}
+              onChange={(e) => onC(e.target.value)}
+              placeholder="Inter, sans-serif"
+              className="w-full h-7 px-2 text-[11px] bg-background border rounded"
+            />
+          )}
+        />
+      ) : (
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] text-muted-foreground font-medium">Font Family</label>
+          <select
+            value={String(style.fontFamily ?? "")}
+            onChange={(e) => onChange("fontFamily", e.target.value || undefined)}
+            className="w-full h-7 px-2 text-[11px] bg-background border rounded"
+          >
+            <option value="">Default</option>
+            {projectFonts.map((f) => (
+              <option key={f.family} value={f.family}>{f.family}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <NumberWithUnit
         label="Font Size"
         value={style.fontSize}
@@ -314,6 +416,60 @@ function TypographySection({
 // Sizing Section
 // ---------------------------------------------------------------------------
 
+const SIZING_MODE_OPTIONS = [
+  { value: "fixed", label: "Fixed" },
+  { value: "fill", label: "Fill" },
+  { value: "hug", label: "Hug" },
+];
+
+function SizingModeField({
+  label,
+  mode,
+  value,
+  tokens,
+  onModeChange,
+  onValueChange,
+}: {
+  label: string;
+  mode: "fixed" | "fill" | "hug" | undefined;
+  value: StyleValue | undefined;
+  tokens: DesignTokens | null;
+  onModeChange: (m: "fixed" | "fill" | "hug") => void;
+  onValueChange: (v: StyleValue | undefined) => void;
+}) {
+  const effective = mode ?? "fixed";
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] text-muted-foreground font-medium">{label}</label>
+      <div className="flex gap-1">
+        <select
+          value={effective}
+          onChange={(e) => onModeChange(e.target.value as "fixed" | "fill" | "hug")}
+          className="h-7 px-1.5 text-[10px] bg-background border rounded w-[58px] shrink-0"
+        >
+          {SIZING_MODE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {effective === "fixed" && (
+          <NumberWithUnit
+            label=""
+            value={value}
+            tokenCategory="size"
+            tokens={tokens}
+            onChange={onValueChange}
+          />
+        )}
+        {effective !== "fixed" && (
+          <div className="flex-1 h-7 flex items-center px-2 text-[10px] text-muted-foreground bg-muted/40 border rounded">
+            {effective === "fill" ? "100%" : "auto"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SizingSection({
   style,
   tokens,
@@ -323,22 +479,30 @@ function SizingSection({
   tokens: DesignTokens | null;
   onChange: (prop: string, value: StyleValue | undefined) => void;
 }) {
+  const handleModeChange = (axis: "width" | "height", m: "fixed" | "fill" | "hug") => {
+    const modeKey = axis === "width" ? "widthMode" : "heightMode";
+    onChange(modeKey, m === "fixed" ? undefined : m);
+    if (m !== "fixed") onChange(axis, undefined);
+  };
+
   return (
     <StyleSection title="Size">
       <div className="grid grid-cols-2 gap-2">
-        <NumberWithUnit
+        <SizingModeField
           label="Width"
+          mode={style.widthMode}
           value={style.width}
-          tokenCategory="size"
           tokens={tokens}
-          onChange={(v) => onChange("width", v)}
+          onModeChange={(m) => handleModeChange("width", m)}
+          onValueChange={(v) => onChange("width", v)}
         />
-        <NumberWithUnit
+        <SizingModeField
           label="Height"
+          mode={style.heightMode}
           value={style.height}
-          tokenCategory="size"
           tokens={tokens}
-          onChange={(v) => onChange("height", v)}
+          onModeChange={(m) => handleModeChange("height", m)}
+          onValueChange={(v) => onChange("height", v)}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -381,6 +545,45 @@ function SizingSection({
 // Spacing Section
 // ---------------------------------------------------------------------------
 
+function BoxModelDiagram({ style }: { style: NodeStyle }) {
+  const val = (prop: string) => {
+    const v = (style as Record<string, unknown>)[prop];
+    return v ? String(v) : "–";
+  };
+  return (
+    <div className="relative w-full max-w-[200px] mx-auto mb-2">
+      {/* Margin layer */}
+      <div className="border border-violet-300 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-950/20 rounded p-2 text-[8px]">
+        <div className="text-violet-500 dark:text-violet-400 text-center mb-0.5">margin</div>
+        <div className="flex justify-between text-violet-500 dark:text-violet-400 mb-0.5">
+          <span>{val("marginLeft")}</span>
+          <span>{val("marginTop")}</span>
+          <span>{val("marginRight")}</span>
+        </div>
+        {/* Padding layer */}
+        <div className="border border-teal-300 dark:border-teal-700 bg-teal-50/50 dark:bg-teal-950/20 rounded p-2">
+          <div className="text-teal-600 dark:text-teal-400 text-center mb-0.5">padding</div>
+          <div className="flex justify-between text-teal-600 dark:text-teal-400 mb-0.5">
+            <span>{val("paddingLeft")}</span>
+            <span>{val("paddingTop")}</span>
+            <span>{val("paddingRight")}</span>
+          </div>
+          {/* Content */}
+          <div className="border border-indigo-300 dark:border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 rounded py-1 text-center">
+            <span className="text-indigo-500 dark:text-indigo-400">
+              {val("width") !== "–" || val("height") !== "–"
+                ? `${val("width")} × ${val("height")}`
+                : "content"}
+            </span>
+          </div>
+          <div className="text-teal-600 dark:text-teal-400 text-center mt-0.5">{val("paddingBottom")}</div>
+        </div>
+        <div className="text-violet-500 dark:text-violet-400 text-center mt-0.5">{val("marginBottom")}</div>
+      </div>
+    </div>
+  );
+}
+
 function SpacingSection({
   style,
   tokens,
@@ -392,6 +595,7 @@ function SpacingSection({
 }) {
   return (
     <StyleSection title="Spacing">
+      <BoxModelDiagram style={style} />
       <SpacingEditor
         label="Padding"
         property="padding"
@@ -595,57 +799,111 @@ function LayoutSection({
   style,
   tokens,
   onChange,
+  isFrame = false,
+  autoLayout = false,
+  frameDirection,
+  onPropsChange,
 }: {
   style: NodeStyle;
   tokens: DesignTokens | null;
   onChange: (prop: string, value: StyleValue | undefined) => void;
+  isFrame?: boolean;
+  autoLayout?: boolean;
+  frameDirection?: "row" | "column";
+  onPropsChange?: (key: string, value: unknown) => void;
 }) {
   return (
     <StyleSection title="Layout">
-      <SegmentedSelect
-        label="Justify Content"
-        value={style.justifyContent}
-        options={[
-          { value: "flex-start", label: "Start" },
-          { value: "center", label: "Center" },
-          { value: "flex-end", label: "End" },
-          { value: "space-between", label: "Between" },
-          { value: "space-around", label: "Around" },
-        ]}
-        onChange={(v) => onChange("justifyContent", v as StyleValue | undefined)}
-      />
+      {/* Auto Layout toggle for Frame nodes */}
+      {isFrame && onPropsChange && (
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground font-medium">Auto Layout</span>
+          <button
+            onClick={() => {
+              onPropsChange("autoLayout", !autoLayout);
+              if (!autoLayout) onPropsChange("direction", frameDirection ?? "row");
+            }}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              autoLayout ? "bg-blue-500" : "bg-muted"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                autoLayout ? "translate-x-[18px]" : "translate-x-[2px]"
+              }`}
+            />
+          </button>
+        </div>
+      )}
 
-      <SegmentedSelect
-        label="Align Items"
-        value={style.alignItems}
-        options={[
-          { value: "flex-start", label: "Start" },
-          { value: "center", label: "Center" },
-          { value: "flex-end", label: "End" },
-          { value: "stretch", label: "Stretch" },
-          { value: "baseline", label: "Base" },
-        ]}
-        onChange={(v) => onChange("alignItems", v as StyleValue | undefined)}
-      />
+      {/* Direction toggle (Frame auto-layout or style-level flexDirection) */}
+      {((isFrame && autoLayout) || (!isFrame)) && (
+        <SegmentedSelect
+          label="Direction"
+          value={isFrame ? (frameDirection ?? "row") : (style.flexDirection ?? "row")}
+          options={[
+            { value: "row", label: "→ Row" },
+            { value: "column", label: "↓ Column" },
+          ]}
+          onChange={(v) => {
+            if (isFrame && onPropsChange) {
+              onPropsChange("direction", v);
+            } else {
+              onChange("flexDirection", v as StyleValue | undefined);
+            }
+          }}
+        />
+      )}
 
-      <SegmentedSelect
-        label="Flex Wrap"
-        value={style.flexWrap}
-        options={[
-          { value: "nowrap", label: "No Wrap" },
-          { value: "wrap", label: "Wrap" },
-        ]}
-        onChange={(v) => onChange("flexWrap", v as StyleValue | undefined)}
-      />
+      {/* Show flex container controls only when auto-layout is active */}
+      {(!isFrame || autoLayout) && (
+        <>
+          <SegmentedSelect
+            label="Justify Content"
+            value={style.justifyContent}
+            options={[
+              { value: "flex-start", label: "Start" },
+              { value: "center", label: "Center" },
+              { value: "flex-end", label: "End" },
+              { value: "space-between", label: "Between" },
+              { value: "space-around", label: "Around" },
+            ]}
+            onChange={(v) => onChange("justifyContent", v as StyleValue | undefined)}
+          />
 
-      <NumberWithUnit
-        label="Gap"
-        value={style.gap}
-        tokenCategory="spacing"
-        tokens={tokens}
-        onChange={(v) => onChange("gap", v)}
-        units={["px", "rem", "%"]}
-      />
+          <SegmentedSelect
+            label="Align Items"
+            value={style.alignItems}
+            options={[
+              { value: "flex-start", label: "Start" },
+              { value: "center", label: "Center" },
+              { value: "flex-end", label: "End" },
+              { value: "stretch", label: "Stretch" },
+              { value: "baseline", label: "Base" },
+            ]}
+            onChange={(v) => onChange("alignItems", v as StyleValue | undefined)}
+          />
+
+          <SegmentedSelect
+            label="Flex Wrap"
+            value={style.flexWrap}
+            options={[
+              { value: "nowrap", label: "No Wrap" },
+              { value: "wrap", label: "Wrap" },
+            ]}
+            onChange={(v) => onChange("flexWrap", v as StyleValue | undefined)}
+          />
+
+          <NumberWithUnit
+            label="Gap"
+            value={style.gap}
+            tokenCategory="spacing"
+            tokens={tokens}
+            onChange={(v) => onChange("gap", v)}
+            units={["px", "rem", "%"]}
+          />
+        </>
+      )}
 
       <SegmentedSelect
         label="Overflow"

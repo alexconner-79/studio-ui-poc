@@ -1,0 +1,1097 @@
+{
+  "id": "studio-minimal-native",
+  "name": "Minimal (Native)",
+  "description": "Clean neutral starter for bespoke React Native apps — one accent, numeric spacing, no CSS units",
+  "platform": "native",
+  "preview": [
+    "#7c3aed",
+    "#f5f5f5",
+    "#171717"
+  ],
+  "tokens": {
+    "color": {
+      "accent": {
+        "value": "#7c3aed",
+        "description": "Brand accent — swap to customise"
+      },
+      "accent-hover": {
+        "value": "#6d28d9"
+      },
+      "accent-muted": {
+        "value": "#ede9fe"
+      },
+      "accent-foreground": {
+        "value": "#ffffff"
+      },
+      "background": {
+        "value": "#ffffff"
+      },
+      "foreground": {
+        "value": "#171717"
+      },
+      "surface": {
+        "value": "#fafafa"
+      },
+      "muted": {
+        "value": "#f5f5f5"
+      },
+      "muted-foreground": {
+        "value": "#737373"
+      },
+      "border": {
+        "value": "#e5e5e5"
+      },
+      "success": {
+        "value": "#16a34a"
+      },
+      "warning": {
+        "value": "#d97706"
+      },
+      "error": {
+        "value": "#dc2626"
+      }
+    },
+    "spacing": {
+      "1": {
+        "value": 4
+      },
+      "2": {
+        "value": 8
+      },
+      "3": {
+        "value": 12
+      },
+      "4": {
+        "value": 16
+      },
+      "5": {
+        "value": 20
+      },
+      "6": {
+        "value": 24
+      },
+      "8": {
+        "value": 32
+      },
+      "10": {
+        "value": 40
+      },
+      "12": {
+        "value": 48
+      },
+      "16": {
+        "value": 64
+      }
+    },
+    "radius": {
+      "sm": {
+        "value": 4
+      },
+      "md": {
+        "value": 8
+      },
+      "lg": {
+        "value": 12
+      },
+      "xl": {
+        "value": 16
+      },
+      "full": {
+        "value": 999
+      }
+    },
+    "typography": {
+      "font-sans": {
+        "value": "System"
+      },
+      "font-mono": {
+        "value": "Courier New"
+      },
+      "text-xs": {
+        "value": 11
+      },
+      "text-sm": {
+        "value": 13
+      },
+      "text-base": {
+        "value": 15
+      },
+      "text-lg": {
+        "value": 17
+      },
+      "text-xl": {
+        "value": 20
+      },
+      "text-2xl": {
+        "value": 24
+      },
+      "text-3xl": {
+        "value": 30
+      },
+      "leading-tight": {
+        "value": 1.2
+      },
+      "leading-normal": {
+        "value": 1.5
+      }
+    },
+    "textStyles": {
+      "H1": {
+        "fontSize": "34px",
+        "fontWeight": "700",
+        "lineHeight": "1.15"
+      },
+      "H2": {
+        "fontSize": "28px",
+        "fontWeight": "700",
+        "lineHeight": "1.2"
+      },
+      "H3": {
+        "fontSize": "22px",
+        "fontWeight": "600",
+        "lineHeight": "1.25"
+      },
+      "H4": {
+        "fontSize": "20px",
+        "fontWeight": "600",
+        "lineHeight": "1.3"
+      },
+      "H5": {
+        "fontSize": "17px",
+        "fontWeight": "500",
+        "lineHeight": "1.35"
+      },
+      "H6": {
+        "fontSize": "15px",
+        "fontWeight": "500",
+        "lineHeight": "1.35"
+      },
+      "Body Large": {
+        "fontSize": "17px",
+        "fontWeight": "400",
+        "lineHeight": "1.6"
+      },
+      "Body": {
+        "fontSize": "15px",
+        "fontWeight": "400",
+        "lineHeight": "1.5"
+      },
+      "Body Small": {
+        "fontSize": "13px",
+        "fontWeight": "400",
+        "lineHeight": "1.4"
+      },
+      "Caption": {
+        "fontSize": "12px",
+        "fontWeight": "400",
+        "lineHeight": "1.3"
+      },
+      "Label": {
+        "fontSize": "13px",
+        "fontWeight": "500",
+        "lineHeight": "1.2"
+      }
+    }
+  },
+  "components": {
+    "Button": {
+      "name": "Button",
+      "description": "RN Paper button",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "text",
+            "outlined",
+            "contained",
+            "elevated",
+            "contained-tonal"
+          ],
+          "default": "contained"
+        },
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "medium",
+            "large"
+          ],
+          "default": "medium"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string",
+          "default": "Button"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "icon",
+          "type": "icon"
+        },
+        {
+          "name": "compact",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "TextInput": {
+      "name": "TextInput",
+      "description": "RN Paper text field",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "flat",
+            "outlined"
+          ],
+          "default": "outlined"
+        }
+      ],
+      "states": [
+        "default",
+        "focus",
+        "error",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "placeholder",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "error",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "multiline",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "secureTextEntry",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Switch": {
+      "name": "Switch",
+      "description": "RN toggle",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "onValueChange",
+          "type": "function"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Checkbox": {
+      "name": "Checkbox",
+      "description": "RN Paper checkbox",
+      "variants": [
+        {
+          "name": "status",
+          "options": [
+            "checked",
+            "unchecked",
+            "indeterminate"
+          ],
+          "default": "unchecked"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "status",
+          "type": "string",
+          "default": "unchecked"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Slider": {
+      "name": "Slider",
+      "description": "RN range slider",
+      "variants": [],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number"
+        },
+        {
+          "name": "minimumValue",
+          "type": "number",
+          "default": 0
+        },
+        {
+          "name": "maximumValue",
+          "type": "number",
+          "default": 100
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "default": 1
+        }
+      ]
+    },
+    "Picker": {
+      "name": "Picker",
+      "description": "iOS wheel picker",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "dropdown",
+            "dialog",
+            "spinner"
+          ],
+          "default": "spinner"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "selectedValue",
+          "type": "string"
+        },
+        {
+          "name": "onValueChange",
+          "type": "function"
+        },
+        {
+          "name": "items",
+          "type": "node"
+        }
+      ]
+    },
+    "Modal": {
+      "name": "Modal",
+      "description": "Native modal sheet",
+      "variants": [
+        {
+          "name": "presentationStyle",
+          "options": [
+            "fullScreen",
+            "pageSheet",
+            "formSheet",
+            "overFullScreen"
+          ],
+          "default": "pageSheet"
+        },
+        {
+          "name": "animationType",
+          "options": [
+            "none",
+            "slide",
+            "fade"
+          ],
+          "default": "slide"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "visible",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "onRequestClose",
+          "type": "function"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "BottomSheet": {
+      "name": "BottomSheet",
+      "description": "Slide-up panel",
+      "variants": [
+        {
+          "name": "snapPoints",
+          "options": [
+            "25%",
+            "50%",
+            "75%",
+            "100%"
+          ],
+          "default": "50%"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "index",
+          "type": "number",
+          "default": -1
+        },
+        {
+          "name": "onChange",
+          "type": "function"
+        },
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "enablePanDownToClose",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "ActivityIndicator": {
+      "name": "ActivityIndicator",
+      "description": "Spinner (RN)",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "large"
+          ],
+          "default": "small"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "animating",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "color",
+          "type": "string"
+        }
+      ]
+    },
+    "ProgressBar": {
+      "name": "ProgressBar",
+      "description": "Linear progress (RN Paper)",
+      "variants": [
+        {
+          "name": "indeterminate",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "progress",
+          "type": "number",
+          "default": 0,
+          "description": "0-1"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        }
+      ]
+    },
+    "Snackbar": {
+      "name": "Snackbar",
+      "description": "Brief notification",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "visible",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "children",
+          "type": "string"
+        },
+        {
+          "name": "onDismiss",
+          "type": "function"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 7000
+        },
+        {
+          "name": "action",
+          "type": "node"
+        }
+      ]
+    },
+    "Alert": {
+      "name": "Alert",
+      "description": "iOS alert",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "alert",
+            "prompt"
+          ],
+          "default": "alert"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "buttons",
+          "type": "node"
+        }
+      ]
+    },
+    "Appbar": {
+      "name": "Appbar",
+      "description": "Top nav bar (RN Paper)",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "small",
+            "medium",
+            "large",
+            "center-aligned"
+          ],
+          "default": "small"
+        },
+        {
+          "name": "elevated",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "subtitle",
+          "type": "string"
+        },
+        {
+          "name": "onBack",
+          "type": "function"
+        },
+        {
+          "name": "actions",
+          "type": "node"
+        }
+      ]
+    },
+    "BottomNavigation": {
+      "name": "BottomNavigation",
+      "description": "Bottom tab bar (RN Paper)",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "navigationState",
+          "type": "node"
+        },
+        {
+          "name": "onIndexChange",
+          "type": "function"
+        },
+        {
+          "name": "renderScene",
+          "type": "function"
+        }
+      ]
+    },
+    "TabView": {
+      "name": "TabView",
+      "description": "Swipeable tabs (RN)",
+      "variants": [],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "navigationState",
+          "type": "node"
+        },
+        {
+          "name": "renderScene",
+          "type": "function"
+        },
+        {
+          "name": "onIndexChange",
+          "type": "function"
+        }
+      ]
+    },
+    "FlatList": {
+      "name": "FlatList",
+      "description": "Virtualised list",
+      "variants": [
+        {
+          "name": "horizontal",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        },
+        {
+          "name": "numColumns",
+          "options": [
+            "1",
+            "2",
+            "3"
+          ],
+          "default": "1"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "data",
+          "type": "node"
+        },
+        {
+          "name": "renderItem",
+          "type": "function"
+        },
+        {
+          "name": "keyExtractor",
+          "type": "function"
+        },
+        {
+          "name": "onEndReached",
+          "type": "function"
+        },
+        {
+          "name": "refreshing",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Card": {
+      "name": "Card",
+      "description": "Material card (RN Paper)",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "elevated",
+            "outlined",
+            "contained"
+          ],
+          "default": "elevated"
+        }
+      ],
+      "states": [
+        "default",
+        "pressed"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        }
+      ]
+    },
+    "Badge": {
+      "name": "Badge",
+      "description": "Notification badge (RN Paper)",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "16",
+            "20",
+            "24"
+          ],
+          "default": "20"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string"
+        },
+        {
+          "name": "visible",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "Avatar": {
+      "name": "Avatar",
+      "description": "User avatar (RN Paper)",
+      "variants": [
+        {
+          "name": "type",
+          "options": [
+            "image",
+            "icon",
+            "text"
+          ],
+          "default": "text"
+        },
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "medium",
+            "large"
+          ],
+          "default": "medium"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "source",
+          "type": "string"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        }
+      ]
+    },
+    "Chip": {
+      "name": "Chip",
+      "description": "Compact label (RN Paper)",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "flat",
+            "outlined"
+          ],
+          "default": "flat"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "icon"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Divider": {
+      "name": "Divider",
+      "description": "Separator (RN Paper)",
+      "variants": [
+        {
+          "name": "bold",
+          "options": [
+            "false",
+            "true"
+          ],
+          "default": "false"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "style",
+          "type": "node"
+        }
+      ]
+    },
+    "Surface": {
+      "name": "Surface",
+      "description": "Elevated container (RN Paper)",
+      "variants": [
+        {
+          "name": "mode",
+          "options": [
+            "flat",
+            "elevated"
+          ],
+          "default": "elevated"
+        },
+        {
+          "name": "elevation",
+          "options": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "default": "1"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    },
+    "FAB": {
+      "name": "FAB",
+      "description": "Floating action button",
+      "variants": [
+        {
+          "name": "variant",
+          "options": [
+            "surface",
+            "primary",
+            "secondary",
+            "tertiary"
+          ],
+          "default": "primary"
+        },
+        {
+          "name": "size",
+          "options": [
+            "small",
+            "medium",
+            "large"
+          ],
+          "default": "medium"
+        }
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "active",
+        "disabled"
+      ],
+      "props": [
+        {
+          "name": "icon",
+          "type": "icon"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "onPress",
+          "type": "function"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    "Icon": {
+      "name": "Icon",
+      "description": "SF Symbol / icon",
+      "variants": [
+        {
+          "name": "size",
+          "options": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
+          ],
+          "default": "md"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "weight",
+          "type": {
+            "default": "regular"
+          }
+        }
+      ]
+    },
+    "SafeAreaView": {
+      "name": "SafeAreaView",
+      "description": "Safe area container",
+      "variants": [
+        {
+          "name": "edges",
+          "options": [
+            "all",
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "default": "all"
+        }
+      ],
+      "states": [
+        "default"
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "node"
+        }
+      ]
+    }
+  }
+}

@@ -4,36 +4,36 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Star } from "lucide-react";
 
 export function LandingPage() {
   return (
-    <div className="flex-col flex gap-[1rem]">
+    <div className="flex-col flex gap-1 p-6">
       <nav className="flex flex-row gap-1 border-b pb-2">
-        <div className="flex-row flex gap-[1rem]">
+        <div className="flex-row flex gap-4">
           <p>YourBrand</p>
-          <div className="h-[1.5rem]" />
+          <div className="h-6" />
           <Link href="#features">Features</Link>
           <Link href="#pricing">Pricing</Link>
           <Button variant="default">Get Started</Button>
         </div>
       </nav>
       <section className="w-full">
-        <div className="flex-col flex gap-[1rem]">
-          <h1 className="text-3xl font-bold">Build Something Amazing</h1>
+        <div className="flex-col flex gap-4">
+          <h2 className="text-2xl font-semibold">Build Something Amazing</h2>
           <p>A modern platform for teams who ship fast.</p>
-          <div className="flex-row flex gap-[1rem]">
+          <div className="flex-row flex gap-4">
             <Button variant="default">Start Free Trial</Button>
             <Button variant="outline">Watch Demo</Button>
           </div>
-          <h1 className="text-3xl font-bold">Heading</h1>
-          <h2 className="text-2xl font-semibold">Features</h2>
         </div>
       </section>
       <section className="w-full">
-        <div className="grid grid-cols-3 gap-[1rem]">
+        <h2 className="text-2xl font-semibold">Features</h2>
+        <div className="grid grid-cols-3 gap-4">
           <Card>
             <div className="p-4">
-              <div className="flex-col flex gap-[1rem]">
+              <div className="flex-col flex gap-4">
                 <h3 className="text-xl font-semibold">Fast</h3>
                 <p>Lightning-fast performance.</p>
               </div>
@@ -41,28 +41,45 @@ export function LandingPage() {
           </Card>
           <Card>
             <div className="p-4">
-              <div className="flex-col flex gap-[1rem]">
+              <div className="flex-col flex gap-4">
                 <h3 className="text-xl font-semibold">Secure</h3>
                 <p>Enterprise-grade security.</p>
-              </div>
-            </div>
-          </Card>
-          <Card>
-            <div className="p-4">
-              <div className="flex-col flex gap-[1rem]">
-                <h3 className="text-xl font-semibold">Scalable</h3>
-                <p>Grows with your team.</p>
               </div>
             </div>
           </Card>
         </div>
       </section>
       <Separator />
-      <p>2026 YourBrand. All rights reserved.</p>
-      <img
-        src="/assets/screenshot-2026-01-21-at-20.07.55.png"
-        alt="screenshot-2026-01-21-at-20.07.55.png"
-      />
+      <div style={{ gap: "8px", display: "flex", padding: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "var(--space-4, 0.5rem)",
+          }}
+        >
+          <Card>
+            <div className="p-4">
+              <div className="flex-col flex gap-4">
+                <h3 className="text-xl font-semibold">Scalable</h3>
+                <p>Grows with your team.</p>
+              </div>
+            </div>
+          </Card>
+          <p>2026 YourBrand. All rights reserved.</p>
+        </div>
+      </div>
+      <div style={{ gap: "8px", display: "flex", padding: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "var(--space-4, 0.5rem)",
+          }}
+        ></div>
+      </div>
+      <Star />
+      <p>Text content</p>
     </div>
   );
 }

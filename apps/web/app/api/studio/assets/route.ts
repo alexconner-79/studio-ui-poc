@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import {
+  isSupabaseConfigured,
+  listAssets,
+  deleteAsset,
+} from "@/lib/supabase/queries";
 
 const ROOT_DIR = path.resolve(process.cwd(), "../..");
 const ASSETS_DIR = path.resolve(ROOT_DIR, "apps/web/public/assets");
@@ -15,8 +20,26 @@ const IMAGE_EXTENSIONS = new Set([
 ]);
 
 /** GET -- list all uploaded image assets */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("projectId");
+
+    // Supabase path: query assets table
+    if (isSupabaseConfigured() && projectId) {
+      const rows = await listAssets(projectId);
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+      const assets = rows.map((row) => ({
+        id: row.id,
+        name: row.file_name,
+        url: `${supabaseUrl}/storage/v1/object/public/studio-assets/${row.storage_path}`,
+        storagePath: row.storage_path,
+        size: row.size_bytes ?? 0,
+      }));
+      return NextResponse.json({ assets });
+    }
+
+    // Filesystem fallback
     if (!fs.existsSync(ASSETS_DIR)) {
       return NextResponse.json({ assets: [] });
     }
@@ -46,21 +69,33 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get("name");
+    const assetId = searchParams.get("id");
+    const storagePath = searchParams.get("storagePath");
+
+    // Supabase path: delete from storage + DB
+    if (isSupabaseConfigured() && assetId && storagePath) {
+      const success = await deleteAsset(assetId, storagePath);
+      if (!success) {
+        return NextResponse.json({ error: "Failed to delete asset" }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Filesystem fallback
     if (!name) {
       return NextResponse.json(
         { error: "name query param is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Prevent path traversal
     const safeName = path.basename(name);
     const filePath = path.join(ASSETS_DIR, safeName);
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json(
         { error: "Asset not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 

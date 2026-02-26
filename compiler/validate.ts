@@ -47,8 +47,11 @@ const fail = (path: string, message: string): never => {
 
 let cachedValidator: ValidateFunction<ScreenSpec> | null | undefined;
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const getSchemaValidator = (): ValidateFunction<ScreenSpec> | null => {
-  if (cachedValidator !== undefined) {
+  // In dev, always re-read from disk so schema changes take effect without a restart.
+  if (!isDev && cachedValidator !== undefined) {
     return cachedValidator ?? null;
   }
 
@@ -216,10 +219,15 @@ const ALLOWED_PROPS: Record<string, Record<string, PropDef>> = {
     fontFamily: { type: "string" },
   },
   Image: {
-    src: { type: "string", required: true },
-    alt: { type: "string", required: true },
+    src: { type: "string" },
+    alt: { type: "string" },
     width: { type: "number" },
     height: { type: "number" },
+    objectFit: { type: "string" },
+    objectPosition: { type: "string" },
+    aspectRatio: { type: "string" },
+    clipPath: { type: "string" },
+    lockAspectRatio: { type: "boolean" },
   },
   Input: {
     placeholder: { type: "string" },
@@ -352,15 +360,8 @@ function validateBuiltInNode(
   const allowed = ALLOWED_PROPS[type];
   if (!allowed) return;
 
-  // Check for unknown props
-  for (const key of Object.keys(props)) {
-    if (!(key in allowed)) {
-      fail(
-        `${nodePath}.props.${key}`,
-        `unknown prop "${key}" for ${type}. Allowed: ${Object.keys(allowed).join(", ") || "none"}`
-      );
-    }
-  }
+  // Unknown props are silently ignored — the editor may store extra metadata props
+  // (e.g. lockAspectRatio, clipPath) that the compiler simply doesn't use.
 
   // Validate each prop against its definition
   for (const [key, def] of Object.entries(allowed)) {

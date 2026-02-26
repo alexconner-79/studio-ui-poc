@@ -5,6 +5,8 @@ import { produce, enableMapSet } from "immer";
 import type { Node, NodeStyle, ScreenSpec, DesignTokens, ResponsiveOverrides } from "./types";
 import type { ComponentDef } from "./component-system";
 import { resolveAllRefs, isComponentRef, resetToComponent } from "./component-system";
+import type { GuideLine, DistanceIndicator } from "./geometry";
+import { detectLayoutDirection, computeFlexGap, snapshotAbsolutePositions } from "./geometry";
 
 // Enable Immer support for Set/Map (needed for hiddenNodeIds, lockedNodeIds)
 enableMapSet();
@@ -63,6 +65,7 @@ export function cloneWithNewIds(node: Node): Node {
   const clone: Node = {
     id: generateId(node.type.toLowerCase()),
     type: node.type,
+    name: node.name,
     props: node.props ? JSON.parse(JSON.stringify(node.props)) : undefined,
     children: node.children
       ? node.children.map(cloneWithNewIds)
@@ -114,8 +117,8 @@ type EditorState = {
   // Project fonts (synced with studio.config.json)
   projectFonts: Array<{ family: string; source: "google" | "local"; weights?: string[]; files?: string[] }>;
 
-  // Image assets (from public/assets/)
-  assets: Array<{ name: string; url: string }>;
+  // Image assets (filesystem or Supabase Storage)
+  assets: Array<{ name: string; url: string; id?: string; storagePath?: string }>;
 
   // Custom composite components
   customComponents: Array<{ name: string; description: string; category: string; tree: Node }>;
@@ -123,14 +126,49 @@ type EditorState = {
   // Responsive preview (legacy single breakpoint)
   viewportBreakpoint: "full" | "desktop" | "tablet" | "mobile";
 
-  // Canvas frames (new multi-frame mode)
-  activeFrames: Array<"mobile" | "tablet" | "desktop">;
+  // Canvas frames (kept for legacy compat)
+  activeFrames: Array<"mobile" | "tablet" | "desktop" | "full">;
+  customBreakpointWidth: number | undefined;
+  // Single artboard width — null means "full / responsive"
+  artboardWidth: number | null;
+  // Project framework — drives artboard picker presets and preview behaviour
+  projectFramework: string; // "nextjs" | "expo" | ""
 
   // Design tokens (loaded from /api/studio/tokens)
   designTokens: DesignTokens | null;
 
+  // DS themes and active theme (v0.10.0+)
+  dsThemes: Record<string, Record<string, Record<string, { value: string }>>>;
+  activeThemeId: string | null;
+
+  // DS component definitions available for insertion
+  dsComponents: Array<{ name: string; category?: string; description?: string; variants?: unknown[]; states?: unknown[]; props?: unknown[] }>;
+
+  // Linked DS metadata (set on project load, used by Insert panel empty state)
+  dsId: string | null;
+  dsName: string | null;
+  setDsId: (id: string | null) => void;
+  setDsName: (name: string | null) => void;
+
   // Rename trigger (set by R shortcut, consumed by Layers panel)
   renamingNodeId: string | null;
+
+  // Canvas mode (v0.8.0 dual-mode)
+  canvasMode: "design" | "build";
+
+  // Drawing tool (v0.8.5)
+  currentTool: "select" | "frame" | "rectangle" | "ellipse" | "text" | "line";
+
+  // Smart guides (v0.8.5)
+  smartGuides: GuideLine[];
+  smartDistances: DistanceIndicator[];
+  snapEnabled: boolean;
+
+  // Promote suggestions (v0.8.5)
+  promoteSuggestion: { nodeId: string; message: string; targetType: string } | null;
+
+  // Inline text editing (v0.8.6)
+  inlineEditingNodeId: string | null;
 
   // Preview mode (A1 -- interactive canvas)
   previewMode: boolean;
@@ -143,6 +181,13 @@ type EditorState = {
 
   // Component definitions (ref/override system)
   componentDefs: Map<string, ComponentDef>;
+
+  // Artboard tabs (v0.9.8) -- per-session, not persisted
+  openScreenTabs: string[];
+  activeScreenTab: string | null;
+
+  // Current project context
+  currentProjectId: string | null;
 
   // History (undo/redo)
   history: ScreenSpec[];
@@ -165,6 +210,7 @@ type EditorState = {
   ) => void;
 
   renameNode: (oldId: string, newId: string) => void;
+  renameNodeLabel: (id: string, newName: string) => void;
   toggleNodeVisibility: (nodeId: string) => void;
   toggleNodeLock: (nodeId: string) => void;
   isNodeLocked: (nodeId: string) => boolean;
@@ -184,10 +230,14 @@ type EditorState = {
 
   setViewportBreakpoint: (bp: EditorState["viewportBreakpoint"]) => void;
   setActiveFrames: (frames: EditorState["activeFrames"]) => void;
-  toggleFrame: (frame: "mobile" | "tablet" | "desktop") => void;
+  toggleFrame: (frame: "mobile" | "tablet" | "desktop" | "full") => void;
+  setCustomBreakpointWidth: (width: number | undefined) => void;
+  setArtboardWidth: (width: number | null) => void;
+  setProjectFramework: (fw: string) => void;
 
   setRenamingNodeId: (id: string | null) => void;
   groupIntoStack: () => void;
+  groupSelectedIntoFrame: () => void;
 
   // Style
   updateNodeStyle: (nodeId: string, style: Partial<NodeStyle>) => void;
@@ -198,6 +248,26 @@ type EditorState = {
 
   // Design tokens
   loadDesignTokens: () => Promise<void>;
+  setActiveTheme: (themeId: string | null) => void;
+
+  // Canvas mode (v0.8.0)
+  setCanvasMode: (mode: "design" | "build") => void;
+  toggleNodeCompile: (nodeId: string) => void;
+
+  // Drawing tool (v0.8.5)
+  setCurrentTool: (tool: EditorState["currentTool"]) => void;
+
+  // Smart guides (v0.8.5)
+  setSmartGuides: (guides: GuideLine[], distances: DistanceIndicator[]) => void;
+  clearSmartGuides: () => void;
+  toggleSnap: () => void;
+
+  // Promote suggestions (v0.8.5)
+  dismissPromoteSuggestion: () => void;
+  acceptPromoteSuggestion: () => void;
+
+  // Inline text editing (v0.8.6)
+  setInlineEditingNodeId: (id: string | null) => void;
 
   // Preview mode
   setPreviewMode: (mode: boolean) => void;
@@ -215,6 +285,18 @@ type EditorState = {
   undo: () => void;
   redo: () => void;
   markClean: () => void;
+
+  // Layout conversion (v0.9.5)
+  convertToAutoLayout: (frameId: string) => void;
+  breakAutoLayout: (frameId: string) => void;
+
+  // Artboard tabs (v0.9.8)
+  openTab: (screenName: string) => void;
+  closeTab: (screenName: string) => void;
+  setActiveTab: (screenName: string) => void;
+
+  // Project context
+  setProjectId: (id: string | null) => void;
 
   // Component system (ref/override)
   addComponentDef: (def: ComponentDef) => void;
@@ -238,6 +320,9 @@ function pushHistory(state: EditorState): void {
   state.historyIndex = newHistory.length - 1;
 }
 
+// Module-level timer for debouncing artboard width persistence
+let _artboardWidthTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useEditorStore = create<EditorState>((set, get) => ({
   spec: null,
   screenName: null,
@@ -252,26 +337,54 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   customComponents: [],
   viewportBreakpoint: "full",
   activeFrames: ["desktop"],
+  customBreakpointWidth: undefined,
+  artboardWidth: null,
+  projectFramework: "",
   designTokens: null,
+  dsThemes: {},
+  activeThemeId: null,
+  dsComponents: [],
+  dsId: null,
+  dsName: null,
+  setDsId: (id) => set({ dsId: id }),
+  setDsName: (name) => set({ dsName: name }),
   renamingNodeId: null,
+  canvasMode: "build",
+  currentTool: "select",
+  promoteSuggestion: null,
+  smartGuides: [],
+  smartDistances: [],
+  snapEnabled: true,
+  inlineEditingNodeId: null,
   previewMode: false,
   interactionState: {},
   editingBreakpoint: "base",
   componentDefs: new Map<string, ComponentDef>(),
+  openScreenTabs: [],
+  activeScreenTab: null,
+  currentProjectId: null,
   history: [],
   historyIndex: -1,
 
   setSpec: (spec, screenName) =>
-    set({
-      spec: JSON.parse(JSON.stringify(spec)),
-      screenName,
-      dirty: false,
-      selectedNodeId: null,
-      selectedNodeIds: new Set<string>(),
-      hiddenNodeIds: new Set<string>(),
-      lockedNodeIds: new Set<string>(),
-      history: [JSON.parse(JSON.stringify(spec))],
-      historyIndex: 0,
+    set((state) => {
+      // Register as an open tab when spec loads
+      const tabs = state.openScreenTabs.includes(screenName)
+        ? state.openScreenTabs
+        : [...state.openScreenTabs, screenName];
+      return {
+        spec: JSON.parse(JSON.stringify(spec)),
+        screenName,
+        dirty: false,
+        selectedNodeId: null,
+        selectedNodeIds: new Set<string>(),
+        hiddenNodeIds: new Set<string>(),
+        lockedNodeIds: new Set<string>(),
+        openScreenTabs: tabs,
+        activeScreenTab: screenName,
+        history: [JSON.parse(JSON.stringify(spec))],
+        historyIndex: 0,
+      };
     }),
 
   selectNode: (id) => set({ selectedNodeId: id, selectedNodeIds: new Set<string>() }),
@@ -418,6 +531,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       })
     ),
 
+  renameNodeLabel: (id, newName) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        const trimmed = newName.trim();
+        if (!trimmed) return;
+        const node = findNode(state.spec.tree, id);
+        if (!node) return;
+        pushHistory(state);
+        node.name = trimmed;
+        state.dirty = true;
+      })
+    ),
+
   toggleNodeVisibility: (nodeId) =>
     set((state) => {
       const next = new Set(state.hiddenNodeIds);
@@ -494,13 +621,37 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleFrame: (frame) =>
     set((state) => {
       const current = state.activeFrames;
-      if (current.includes(frame)) {
-        // Don't allow removing the last frame
-        if (current.length <= 1) return state;
-        return { activeFrames: current.filter((f) => f !== frame) };
+      // "full" is an exclusive single-frame mode
+      if (frame === "full") {
+        if (current.length === 1 && current[0] === "full") return state;
+        return { activeFrames: ["full"] };
       }
-      return { activeFrames: [...current, frame] };
+      // When switching to any other frame, remove "full" first
+      const withoutFull = current.filter((f) => f !== "full");
+      if (withoutFull.includes(frame)) {
+        if (withoutFull.length <= 1) return state;
+        return { activeFrames: withoutFull.filter((f) => f !== frame) };
+      }
+      return { activeFrames: [...withoutFull, frame] };
     }),
+
+  setCustomBreakpointWidth: (width) => set({ customBreakpointWidth: width }),
+  setArtboardWidth: (width) => {
+    set({ artboardWidth: width });
+    const projectId = get().currentProjectId;
+    if (!projectId || typeof window === "undefined") return;
+    // Debounce Supabase persistence so rapid drag events don't spam the API
+    if (_artboardWidthTimer !== null) clearTimeout(_artboardWidthTimer);
+    _artboardWidthTimer = setTimeout(() => {
+      _artboardWidthTimer = null;
+      fetch(`/api/studio/projects?id=${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: { artboardWidth: width } }),
+      }).catch(() => {});
+    }, 800);
+  },
+  setProjectFramework: (fw) => set({ projectFramework: fw }),
 
   setRenamingNodeId: (id) => set({ renamingNodeId: id }),
 
@@ -526,6 +677,67 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         // Replace the node in the parent with the wrapper
         parentInfo.parent.children![parentInfo.index] = wrapper;
         state.selectedNodeId = stackId;
+        state.dirty = true;
+      })
+    ),
+
+  groupSelectedIntoFrame: () =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        // Collect all selected node IDs (primary + multi-select set)
+        const ids = new Set<string>();
+        if (state.selectedNodeId) ids.add(state.selectedNodeId);
+        state.selectedNodeIds.forEach((id) => ids.add(id));
+        if (ids.size < 1) return;
+
+        // All selected nodes must share the same parent
+        let commonParent: Node | null = null;
+        const indices: number[] = [];
+        for (const id of ids) {
+          if (id === state.spec.tree.id) return;
+          const info = findParent(state.spec.tree, id);
+          if (!info) return;
+          if (!commonParent) {
+            commonParent = info.parent;
+          } else if (commonParent.id !== info.parent.id) {
+            return; // Different parents -- can't group
+          }
+          indices.push(info.index);
+        }
+        if (!commonParent?.children) return;
+
+        pushHistory(state);
+
+        // Sort indices so we remove from end first
+        indices.sort((a, b) => a - b);
+
+        // Extract nodes in tree order
+        const extracted: Node[] = indices.map(
+          (i) => JSON.parse(JSON.stringify(commonParent!.children![i]))
+        );
+
+        // Create Frame wrapper
+        const frameId = `frame_${Date.now().toString(36)}_${++idCounter}`;
+        const frame: Node = {
+          id: frameId,
+          type: "Stack",
+          props: { direction: "column", gap: "4" },
+          style: { position: "relative" },
+          children: extracted,
+        };
+
+        // Remove extracted nodes (reverse order to keep indices valid)
+        for (let i = indices.length - 1; i >= 0; i--) {
+          commonParent.children!.splice(indices[i], 1);
+        }
+
+        // Insert Frame at the position of the first extracted node
+        commonParent.children!.splice(indices[0], 0, frame);
+
+        // Select the new frame
+        state.selectedNodeId = frameId;
+        state.selectedNodeIds = new Set<string>();
         state.dirty = true;
       })
     ),
@@ -584,16 +796,118 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   loadDesignTokens: async () => {
     try {
-      const res = await fetch("/api/studio/tokens");
+      const projectId = get().currentProjectId;
+      const url = projectId
+        ? `/api/studio/tokens?projectId=${encodeURIComponent(projectId)}`
+        : "/api/studio/tokens";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
+        // Capture dsId/dsName whenever the tokens route surfaces them
+        if (data.dsId) set({ dsId: data.dsId, dsName: data.dsName ?? null });
         const tokens = data.tokens ?? data;
-        set({ designTokens: { ...tokens, raw: tokens } });
+        // Accept the response even when tokens is empty — components or dsId alone is useful
+        const hasTokens = Object.keys(tokens).length > 0;
+        const themes = data.themes ?? {};
+        const raw = data.components ?? {};
+        const components = Array.isArray(raw) ? raw : Object.values(raw as Record<string, unknown>);
+        if (hasTokens || components.length > 0 || data.dsId) {
+          set({
+            designTokens: hasTokens ? { ...tokens, raw: tokens } : null,
+            dsThemes: themes,
+            dsComponents: components,
+          });
+          return;
+        }
+      }
+
+      // Fallback: use dsId already in store (set by editor-layout on project load)
+      if (projectId) {
+        try {
+          const linkedDsId = get().dsId;
+          if (linkedDsId) {
+            const dsRes = await fetch(`/api/studio/design-systems/${encodeURIComponent(linkedDsId)}`);
+            if (dsRes.ok) {
+              const dsData = await dsRes.json();
+              const ds = dsData.designSystem ?? dsData;
+              const dsTokens = ds.tokens ?? {};
+              const themes = ds.themes ?? {};
+              const rawDs = ds.components ?? {};
+              const components = Array.isArray(rawDs) ? rawDs : Object.values(rawDs as Record<string, unknown>);
+              set({
+                designTokens: Object.keys(dsTokens).length > 0 ? { ...dsTokens, raw: dsTokens } : null,
+                dsThemes: themes,
+                dsComponents: components,
+                dsId: ds.id ?? linkedDsId,
+                dsName: ds.name ?? null,
+              });
+              return;
+            }
+          }
+        } catch {
+          // DS fetch failed; continue
+        }
       }
     } catch {
       // silently fail - tokens are optional
     }
   },
+
+  setActiveTheme: (themeId) => set({ activeThemeId: themeId }),
+
+  setCanvasMode: (mode) => set({ canvasMode: mode }),
+  setCurrentTool: (tool) => set({ currentTool: tool }),
+
+  toggleNodeCompile: (nodeId) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        pushHistory(state);
+        const node = findNode(state.spec.tree, nodeId);
+        if (!node) return;
+        const wasDesignOnly = node.compile === false;
+        node.compile = wasDesignOnly ? undefined : false;
+        state.dirty = true;
+
+        // Auto-suggest when promoting to build
+        if (wasDesignOnly && node.children && node.children.length > 0) {
+          const childTypes = node.children.map((c) => c.type);
+          const hasText = childTypes.some((t) => t === "Text" || t === "Heading");
+          const hasImage = childTypes.some((t) => t === "Image");
+          if ((node.type === "Rectangle" || node.type === "Frame") && hasText && !hasImage && node.children.length <= 2) {
+            state.promoteSuggestion = { nodeId, message: "Convert to Button?", targetType: "Button" };
+          } else if ((node.type === "Rectangle" || node.type === "Frame") && hasText && hasImage) {
+            state.promoteSuggestion = { nodeId, message: "Convert to Card?", targetType: "Card" };
+          }
+        }
+      })
+    ),
+
+  dismissPromoteSuggestion: () => set({ promoteSuggestion: null }),
+
+  acceptPromoteSuggestion: () =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec || !state.promoteSuggestion) return;
+        pushHistory(state);
+        const node = findNode(state.spec.tree, state.promoteSuggestion.nodeId);
+        if (node) {
+          node.type = state.promoteSuggestion.targetType;
+          state.dirty = true;
+        }
+        state.promoteSuggestion = null;
+      })
+    ),
+
+  setSmartGuides: (guides, distances) =>
+    set({ smartGuides: guides, smartDistances: distances }),
+  clearSmartGuides: () =>
+    set({ smartGuides: [], smartDistances: [] }),
+  toggleSnap: () =>
+    set((s) => ({ snapEnabled: !s.snapEnabled, smartGuides: [], smartDistances: [] })),
+
+  setInlineEditingNodeId: (id) =>
+    set({ inlineEditingNodeId: id }),
 
   setPreviewMode: (mode) =>
     set({ previewMode: mode, selectedNodeId: mode ? null : get().selectedNodeId }),
@@ -702,6 +1016,87 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   markClean: () => set({ dirty: false }),
 
+  // Layout conversion actions (v0.9.5)
+  convertToAutoLayout: (frameId) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        const frame = findNode(state.spec.tree, frameId);
+        if (!frame || frame.type !== "Frame") return;
+        const children = frame.children ?? [];
+        if (children.length === 0) return;
+        pushHistory(state);
+        const direction = detectLayoutDirection(children);
+        const gap = computeFlexGap(children, direction);
+        // Set autoLayout on props
+        frame.props = { ...(frame.props as Record<string, unknown> ?? {}), autoLayout: true, direction };
+        // Set gap on style
+        if (!frame.style) frame.style = {};
+        frame.style.gap = `${gap}px`;
+        // Clear absolute positioning from children
+        for (const child of children) {
+          if (!child.style) continue;
+          if (child.style.position === "absolute") {
+            child.style.position = undefined;
+            child.style.top = undefined;
+            child.style.left = undefined;
+          }
+        }
+        state.dirty = true;
+      })
+    ),
+
+  breakAutoLayout: (frameId) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec) return;
+        const frame = findNode(state.spec.tree, frameId);
+        if (!frame || frame.type !== "Frame") return;
+        const children = frame.children ?? [];
+        pushHistory(state);
+        // Snapshot positions before breaking layout
+        const positions = snapshotAbsolutePositions(children, frame);
+        // Apply absolute positions to each child
+        for (const child of children) {
+          const pos = positions.get(child.id);
+          if (!pos) continue;
+          if (!child.style) child.style = {};
+          child.style.position = "absolute";
+          child.style.top = `${pos.top}px`;
+          child.style.left = `${pos.left}px`;
+        }
+        // Disable autoLayout on frame props
+        frame.props = { ...(frame.props as Record<string, unknown> ?? {}), autoLayout: false };
+        if (frame.style) {
+          frame.style.gap = undefined;
+        }
+        state.dirty = true;
+      })
+    ),
+
+  // Artboard tabs (v0.9.8)
+  openTab: (screenName) =>
+    set((state) => ({
+      openScreenTabs: state.openScreenTabs.includes(screenName)
+        ? state.openScreenTabs
+        : [...state.openScreenTabs, screenName],
+      activeScreenTab: screenName,
+    })),
+
+  closeTab: (screenName) =>
+    set((state) => {
+      const tabs = state.openScreenTabs.filter((t) => t !== screenName);
+      const newActive =
+        state.activeScreenTab === screenName
+          ? (tabs.length > 0 ? tabs[tabs.length - 1] : null)
+          : state.activeScreenTab;
+      return { openScreenTabs: tabs, activeScreenTab: newActive };
+    }),
+
+  setActiveTab: (screenName) => set({ activeScreenTab: screenName }),
+
+  setProjectId: (id) => set({ currentProjectId: id }),
+
   // Component system actions
   addComponentDef: (def) =>
     set((state) => {
@@ -735,7 +1130,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const defId = generateId("comp");
     const def: ComponentDef = {
       id: defId,
-      name: node.id,
+      name: node.name ?? node.id,
       tree: JSON.parse(JSON.stringify(node)),
     };
 

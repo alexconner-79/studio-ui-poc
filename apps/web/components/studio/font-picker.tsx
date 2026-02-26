@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useEditorStore } from "@/lib/studio/store";
+import { toast } from "@/lib/studio/toast";
 
 type GoogleFontResult = {
   family: string;
@@ -232,7 +233,7 @@ export function FontPicker() {
       .then((data) => {
         if (data.fonts) setProjectFonts(data.fonts);
       })
-      .catch(() => {});
+      .catch(() => { toast.error("Failed to load fonts"); });
   }, [setProjectFonts]);
 
   const handleAddGoogleFont = useCallback(

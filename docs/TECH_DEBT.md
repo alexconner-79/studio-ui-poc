@@ -87,3 +87,12 @@ The compiler overwrites every generated file on every run, even when the content
 - `apps/web/components/studio/renderer.tsx` -- `eslint-disable @next/next/no-img-element` to allow native `<img>` in the runtime renderer
 
 **Suggestion:** Consider switching to Next.js `Image` component if/when image optimisation is needed.
+
+---
+
+## Resolved
+
+### Signup Page (fixed)
+
+- The `/signup` route was serving an auto-generated spec component (static mockup) instead of a real auth page. Replaced with a proper Supabase auth signup page with OAuth buttons, full name field, password validation, and email confirmation flow.
+- **Status:** Fixed (pre-v0.7.0)

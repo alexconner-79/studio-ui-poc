@@ -15,7 +15,9 @@ export type PropDef = {
 };
 
 export type NodeCategory =
+  | "Shapes"
   | "Layout"
+  | "Structure"
   | "Content"
   | "Components"
   | "Forms"
@@ -198,13 +200,38 @@ export const NODE_SCHEMAS: Record<string, NodeSchema> = {
     type: "Image",
     label: "Image",
     category: "Content",
-    description: "Image element",
+    description: "Image element with fit, position, aspect ratio and masking",
     acceptsChildren: false,
     props: {
       src: { type: "string", label: "Source URL", required: true },
       alt: { type: "string", label: "Alt text", required: true },
       width: { type: "number", label: "Width" },
       height: { type: "number", label: "Height" },
+      objectFit: { type: "string", label: "Object Fit", defaultValue: "cover", options: [
+        { label: "Cover", value: "cover" },
+        { label: "Contain", value: "contain" },
+        { label: "Fill", value: "fill" },
+        { label: "None", value: "none" },
+        { label: "Scale Down", value: "scale-down" },
+      ] },
+      objectPosition: { type: "string", label: "Object Position", defaultValue: "center" },
+      aspectRatio: { type: "string", label: "Aspect Ratio", defaultValue: "", options: [
+        { label: "None", value: "" },
+        { label: "16:9", value: "16/9" },
+        { label: "4:3", value: "4/3" },
+        { label: "1:1", value: "1/1" },
+        { label: "3:2", value: "3/2" },
+        { label: "21:9", value: "21/9" },
+      ] },
+      clipPath: { type: "string", label: "Mask Shape", defaultValue: "", options: [
+        { label: "None", value: "" },
+        { label: "Circle", value: "circle(50%)" },
+        { label: "Ellipse", value: "ellipse(50% 40%)" },
+        { label: "Triangle", value: "polygon(50% 0%, 0% 100%, 100% 100%)" },
+        { label: "Diamond", value: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" },
+        { label: "Pentagon", value: "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)" },
+      ] },
+      lockAspectRatio: { type: "boolean", label: "Lock Aspect Ratio", defaultValue: false },
     },
   },
   Input: {
@@ -1027,6 +1054,74 @@ export const NODE_SCHEMAS: Record<string, NodeSchema> = {
     acceptsChildren: false,
     props: {
       ref: { type: "string", label: "Component ID", required: true },
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // Shapes (v0.8.5)
+  // ---------------------------------------------------------------------------
+
+  Rectangle: {
+    type: "Rectangle",
+    label: "Rectangle",
+    category: "Shapes",
+    description: "A rectangle shape with configurable fill, stroke and corner radius",
+    acceptsChildren: true,
+    props: {
+      fill: { type: "string", label: "Fill", defaultValue: "#D9D9D9" },
+      stroke: { type: "string", label: "Stroke colour", defaultValue: "" },
+      strokeWidth: { type: "number", label: "Stroke width", defaultValue: 0 },
+      strokeStyle: { type: "string", label: "Stroke style", defaultValue: "solid", options: [{ label: "Solid", value: "solid" }, { label: "Dashed", value: "dashed" }, { label: "Dotted", value: "dotted" }] },
+      cornerRadius: { type: "number", label: "Corner radius", defaultValue: 0 },
+      rotation: { type: "number", label: "Rotation (deg)", defaultValue: 0 },
+    },
+  },
+
+  Ellipse: {
+    type: "Ellipse",
+    label: "Ellipse",
+    category: "Shapes",
+    description: "An ellipse / circle shape",
+    acceptsChildren: false,
+    props: {
+      fill: { type: "string", label: "Fill", defaultValue: "#D9D9D9" },
+      stroke: { type: "string", label: "Stroke colour", defaultValue: "" },
+      strokeWidth: { type: "number", label: "Stroke width", defaultValue: 0 },
+      strokeStyle: { type: "string", label: "Stroke style", defaultValue: "solid", options: [{ label: "Solid", value: "solid" }, { label: "Dashed", value: "dashed" }, { label: "Dotted", value: "dotted" }] },
+      rotation: { type: "number", label: "Rotation (deg)", defaultValue: 0 },
+    },
+  },
+
+  Line: {
+    type: "Line",
+    label: "Line",
+    category: "Shapes",
+    description: "A horizontal or vertical line with configurable weight and style",
+    acceptsChildren: false,
+    props: {
+      stroke: { type: "string", label: "Colour", defaultValue: "#999999" },
+      strokeWidth: { type: "number", label: "Weight", defaultValue: 1 },
+      strokeStyle: { type: "string", label: "Style", defaultValue: "solid", options: [{ label: "Solid", value: "solid" }, { label: "Dashed", value: "dashed" }, { label: "Dotted", value: "dotted" }] },
+      direction: { type: "string", label: "Direction", defaultValue: "horizontal", options: [{ label: "Horizontal", value: "horizontal" }, { label: "Vertical", value: "vertical" }] },
+      rotation: { type: "number", label: "Rotation (deg)", defaultValue: 0 },
+    },
+  },
+
+  Frame: {
+    type: "Frame",
+    label: "Frame",
+    category: "Shapes",
+    description: "A structural container with optional auto-layout, clip and constraints",
+    acceptsChildren: true,
+    props: {
+      autoLayout: { type: "boolean", label: "Auto-layout", defaultValue: true },
+      direction: { type: "string", label: "Direction", defaultValue: "column", options: [{ label: "Vertical", value: "column" }, { label: "Horizontal", value: "row" }] },
+      gap: { type: "string", label: "Gap", defaultValue: "0", options: TOKEN_OPTIONS },
+      clip: { type: "boolean", label: "Clip content", defaultValue: false },
+      fill: { type: "string", label: "Fill", defaultValue: "" },
+      stroke: { type: "string", label: "Stroke colour", defaultValue: "" },
+      strokeWidth: { type: "number", label: "Stroke width", defaultValue: 0 },
+      cornerRadius: { type: "number", label: "Corner radius", defaultValue: 0 },
     },
   },
 };

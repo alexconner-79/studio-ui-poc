@@ -1,21 +1,67 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import NextImage from "next/image";
 import { useDraggable } from "@dnd-kit/core";
 import { resolveGap, resolveSize } from "@/lib/studio/tokens";
 import type { Node } from "@/lib/studio/types";
 import { CONTAINER_TYPES } from "@/lib/studio/types";
 import { useEditorStore } from "@/lib/studio/store";
-import { resolvedStyleToCSS } from "@/lib/studio/resolve-token";
+import { resolvedStyleToCSS, applyThemeOverrides } from "@/lib/studio/resolve-token";
+import { collectSnapTargets, snapMove, makeBBox, type BBox } from "@/lib/studio/geometry";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { icons } from "lucide-react";
+// Icons are loaded lazily to avoid pulling all ~1500 icons at startup
 import { DropIndicator } from "./drop-indicator";
 import { useA11yIssues, type A11yIssue } from "./a11y-panel";
 import { resolveAllRefs } from "@/lib/studio/component-system";
+import { CanvasControlsContext } from "./canvas-container";
+
+// -------------------------------------------------------------------------
+// Lazy Lucide icon renderer -- defers loading the full lucide-react module
+// until the first Icon node is actually rendered.
+// -------------------------------------------------------------------------
+
+type LucideIconType = React.ComponentType<{ size?: number; color?: string }>;
+let lucideModuleCache: Record<string, LucideIconType> | null = null;
+
+function LazyLucideIcon({
+  name,
+  size,
+  color,
+}: {
+  name: string;
+  size?: number;
+  color?: string;
+}) {
+  const [IconComponent, setIconComponent] = useState<LucideIconType | null>(() => {
+    if (lucideModuleCache) return (lucideModuleCache[name] as LucideIconType) ?? null;
+    return null;
+  });
+
+  useEffect(() => {
+    if (lucideModuleCache) {
+      setIconComponent((lucideModuleCache[name] as LucideIconType) ?? null);
+      return;
+    }
+    import("lucide-react").then((mod) => {
+      lucideModuleCache = mod as unknown as Record<string, LucideIconType>;
+      setIconComponent((lucideModuleCache[name] as LucideIconType) ?? null);
+    });
+  }, [name]);
+
+  if (!IconComponent) {
+    return (
+      <div className="flex items-center justify-center h-8 w-8 bg-muted border border-dashed rounded text-[10px] text-muted-foreground">
+        ?
+      </div>
+    );
+  }
+  return <IconComponent size={size} color={color} />;
+}
 
 // -------------------------------------------------------------------------
 // Font loading helper -- injects a Google Fonts <link> tag if not present
@@ -76,11 +122,20 @@ function NodeWrapper({
 }) {
   const isSelected = !previewMode && selectedId === node.id;
   const isMultiSelected = useEditorStore((s) => !previewMode && s.selectedNodeIds.has(node.id));
+  const { scale } = React.useContext(CanvasControlsContext);
+  const inv = 1 / (scale || 1);
   const toggleSelectNode = useEditorStore((s) => s.toggleSelectNode);
   const isHidden = useEditorStore((s) => s.hiddenNodeIds.has(node.id));
   const isLocked = useEditorStore((s) => s.lockedNodeIds.has(node.id));
+  const canvasMode = useEditorStore((s) => s.canvasMode);
   const interactionState = useEditorStore((s) => s.interactionState);
   const setInteractionStateValue = useEditorStore((s) => s.setInteractionStateValue);
+  const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
+  const setInlineEditingNodeId = useEditorStore((s) => s.setInlineEditingNodeId);
+  const inlineEditingNodeId = useEditorStore((s) => s.inlineEditingNodeId);
+  const isDesignOnly = node.compile === false;
+  const isInlineEditing = inlineEditingNodeId === node.id;
+  const isAbsoluteInDesign = !previewMode && !isRoot && !isLocked && canvasMode === "design" && node.style?.position === "absolute";
   const a11yIssues = useA11yIssues();
   const nodeIssues = previewMode ? [] : a11yIssues.filter((i: A11yIssue) => i.nodeId === node.id);
   const hasA11yError = nodeIssues.some((i: A11yIssue) => i.severity === "error");
@@ -105,13 +160,99 @@ function NodeWrapper({
   const visToggleKey = `visibility_${node.id}`;
   if (interactionState[visToggleKey] === false) return null;
 
-  // Draggable only in edit mode
-  const disableDrag = !!previewMode || !!isRoot || isLocked;
+  // Draggable only in edit mode; absolute nodes in Design Mode use raw pointer events instead
+  const disableDrag = !!previewMode || !!isRoot || isLocked || !!isAbsoluteInDesign;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `canvas-${node.id}`,
     data: { type: "canvas-node", nodeId: node.id, nodeType: node.type },
     disabled: disableDrag,
   });
+
+  // Free-form drag for absolute-positioned nodes in Design Mode
+  const [isFreeDragging, setIsFreeDragging] = React.useState(false);
+  const [freeDragPos, setFreeDragPos] = React.useState<{ x: number; y: number } | null>(null);
+  const spec = useEditorStore((s) => s.spec);
+  const setSmartGuides = useEditorStore((s) => s.setSmartGuides);
+  const clearSmartGuides = useEditorStore((s) => s.clearSmartGuides);
+  const snapEnabled = useEditorStore((s) => s.snapEnabled);
+
+  const handleFreePointerDown = React.useCallback((e: React.PointerEvent) => {
+    if (!isAbsoluteInDesign || e.button !== 0 || !spec) return;
+
+    const el = e.currentTarget as HTMLElement;
+    const transformEl = el.closest("[data-canvas-transform]") as HTMLElement | null;
+    const scaleMatch = transformEl?.style.transform.match(/scale\(([\d.]+)\)/);
+    const scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+
+    const cs = window.getComputedStyle(el);
+    const startTop = parseFloat(cs.top) || 0;
+    const startLeft = parseFloat(cs.left) || 0;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const elRect = el.getBoundingClientRect();
+    const elW = elRect.width / scale;
+    const elH = elRect.height / scale;
+    const GRID = 8;
+    let activated = false;
+
+    // Cache snap targets once at drag start
+    const canvasEl = el.closest("[data-canvas-root]") as HTMLElement | null;
+    let targets: BBox[] = [];
+    if (canvasEl) {
+      targets = collectSnapTargets(node.id, spec.tree, canvasEl, scale);
+    }
+
+    const onMove = (ev: PointerEvent) => {
+      const rawDx = ev.clientX - startX;
+      const rawDy = ev.clientY - startY;
+
+      if (!activated) {
+        if (Math.abs(rawDx) < 5 && Math.abs(rawDy) < 5) return;
+        activated = true;
+        setIsFreeDragging(true);
+        el.setPointerCapture(ev.pointerId);
+      }
+
+      const dx = rawDx / scale;
+      const dy = rawDy / scale;
+      let newLeft = Math.round((startLeft + dx) / GRID) * GRID;
+      let newTop = Math.round((startTop + dy) / GRID) * GRID;
+
+      // Smart snap (gated by snapEnabled)
+      if (snapEnabled && targets.length > 0 && canvasEl) {
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const boxLeft = (elRect.left - canvasRect.left) / scale + (newLeft - startLeft);
+        const boxTop = (elRect.top - canvasRect.top) / scale + (newTop - startTop);
+        const movingBox = makeBBox(boxTop, boxLeft, elW, elH, node.id);
+        const snap = snapMove(movingBox, targets);
+        if (snap.deltaX !== 0) newLeft += snap.deltaX;
+        if (snap.deltaY !== 0) newTop += snap.deltaY;
+        if (snap.guides.length > 0 || snap.distances.length > 0) {
+          setSmartGuides(snap.guides, snap.distances);
+        } else {
+          clearSmartGuides();
+        }
+      } else if (!snapEnabled) {
+        clearSmartGuides();
+      }
+
+      setFreeDragPos({ x: newLeft, y: newTop });
+      updateNodeStyle(node.id, { top: `${newTop}px`, left: `${newLeft}px` });
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (activated) {
+        setIsFreeDragging(false);
+        setFreeDragPos(null);
+        clearSmartGuides();
+      }
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }, [isAbsoluteInDesign, node.id, updateNodeStyle, spec, snapEnabled, setSmartGuides, clearSmartGuides]);
 
   // Hidden nodes render as a faint dashed placeholder (edit mode only)
   if (isHidden && !previewMode) {
@@ -120,8 +261,8 @@ function NodeWrapper({
         ref={setNodeRef}
         data-studio-node={node.id}
         data-studio-type={node.type}
-        className={`relative border border-dashed border-gray-300 rounded-sm bg-muted/30 opacity-40 ${
-          isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""
+        className={`relative border border-dashed border-gray-300 bg-muted/30 opacity-40 ${
+          isSelected ? "ring-2 ring-[var(--s-accent)] ring-offset-1" : ""
         }`}
         onClick={(e) => {
           e.stopPropagation();
@@ -153,6 +294,15 @@ function NodeWrapper({
     }
   };
 
+  const isTextEditable = node.type === "Text" || node.type === "Heading";
+
+  const handleDoubleClick = React.useCallback((e: React.MouseEvent) => {
+    if (previewMode || !isTextEditable || isLocked) return;
+    e.stopPropagation();
+    e.preventDefault();
+    setInlineEditingNodeId(node.id);
+  }, [previewMode, isTextEditable, isLocked, node.id, setInlineEditingNodeId]);
+
   // In preview mode, render without any editor chrome
   if (previewMode) {
     return (
@@ -169,27 +319,54 @@ function NodeWrapper({
     );
   }
 
+  const designOnlyOpacity = isDesignOnly && canvasMode === "build" ? 0.5 : 1;
+
+  // Size heuristic for design-only badge: parse px values from node style
+  const parseStylePx = (v: unknown) => {
+    if (typeof v !== "string") return null;
+    const m = v.match(/^([\d.]+)px$/);
+    return m ? parseFloat(m[1]) : null;
+  };
+  const nodeStyleW = parseStylePx(node.style?.width);
+  const nodeStyleH = parseStylePx(node.style?.height);
+  const isTinyNode = (nodeStyleW !== null && nodeStyleW < 40) || (nodeStyleH !== null && nodeStyleH < 40);
+
+  const anyDragging = isDragging || isFreeDragging;
+
   return (
     <div
       ref={setNodeRef}
-      {...(isRoot || isLocked ? {} : listeners)}
-      {...(isRoot || isLocked ? {} : attributes)}
+      {...(isRoot || isLocked || isAbsoluteInDesign ? {} : listeners)}
+      {...(isRoot || isLocked || isAbsoluteInDesign ? {} : attributes)}
       data-studio-node={node.id}
       data-studio-type={node.type}
       className={`relative ${
-        isDragging
-          ? "opacity-30 ring-2 ring-blue-300 ring-dashed"
+        isFreeDragging
+          ? ""
+          : isDragging
+          ? "opacity-30 ring-2 ring-[var(--s-accent)]/40 ring-dashed"
           : isSelected
-          ? "ring-2 ring-blue-500 ring-offset-1"
+          ? ""
           : isMultiSelected
-          ? "ring-2 ring-blue-400 ring-offset-1 ring-dashed"
+          ? "ring-2 ring-[var(--s-accent)]/60 ring-offset-1 ring-dashed"
           : hasA11yError
           ? "ring-2 ring-red-400/60 ring-offset-1 hover:ring-red-500"
           : hasA11yWarning
           ? "ring-2 ring-amber-400/40 ring-offset-1 hover:ring-amber-500"
-          : "hover:ring-1 hover:ring-blue-300 hover:ring-offset-1"
-      } rounded-sm transition-shadow ${isRoot || isLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+          : "hover:outline hover:outline-1 hover:outline-[var(--s-accent)]/50 hover:outline-offset-0"
+      } transition-shadow ${isRoot || isLocked ? "cursor-default" : isAbsoluteInDesign && isSelected ? "cursor-move" : "cursor-default"}`}
+      style={{
+        opacity: isFreeDragging ? 0.6 : isDragging ? undefined : designOnlyOpacity,
+        boxShadow: isFreeDragging ? "0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)" : undefined,
+        outline: isFreeDragging ? `2px solid var(--s-accent)` : undefined,
+        outlineOffset: isFreeDragging ? "1px" : undefined,
+        ...(isDesignOnly && !previewMode
+          ? { outline: "1.5px dashed rgba(234,179,8,0.7)", outlineOffset: "-1px", borderRadius: 2 }
+          : {}),
+      }}
+      onPointerDown={isAbsoluteInDesign ? handleFreePointerDown : undefined}
       onClick={(e) => {
+        if (isFreeDragging || isInlineEditing) return;
         e.stopPropagation();
         if (e.shiftKey) {
           toggleSelectNode(node.id);
@@ -198,16 +375,96 @@ function NodeWrapper({
         }
         handleInteractionClick(e);
       }}
+      onDoubleClick={isTextEditable ? handleDoubleClick : undefined}
     >
-      {isSelected && !isDragging && (
-        <div className="absolute -top-5 left-0 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-t-sm font-mono z-10 flex items-center gap-1">
-          {node.type}
+      {/* Diagonal stripe overlay for design-only nodes */}
+      {isDesignOnly && !previewMode && (
+        <div
+          className="absolute inset-0 pointer-events-none z-[1]"
+          style={{
+            borderRadius: 2,
+            background: "repeating-linear-gradient(135deg, transparent, transparent 5px, rgba(234,179,8,0.1) 5px, rgba(234,179,8,0.1) 6px)",
+          }}
+        />
+      )}
+      {/* Persistent "Design only" badge — visible even when not selected */}
+      {isDesignOnly && !previewMode && !isSelected && !anyDragging && (
+        isTinyNode ? (
+          // Tiny node: just a small amber corner dot
+          <div
+            className="absolute top-0 right-0 pointer-events-none z-[9]"
+            style={{
+              width: 6,
+              height: 6,
+              background: "rgba(234,179,8,0.9)",
+              borderRadius: "0 2px 0 2px",
+            }}
+          />
+        ) : (
+          // Normal node: "Design only" text pill at top-right
+          <div
+            className="absolute pointer-events-none z-[9] flex items-center gap-0.5"
+            style={{
+              top: -18,
+              right: 0,
+              background: "rgba(234,179,8,0.92)",
+              color: "#78350f",
+              fontSize: 9,
+              fontWeight: 600,
+              padding: "2px 5px",
+              borderRadius: "3px 3px 0 3px",
+              whiteSpace: "nowrap",
+              lineHeight: 1.2,
+            }}
+          >
+            <svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2L2 12h12Z"/><line x1="8" y1="7" x2="8" y2="9"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor"/></svg>
+            Design only
+          </div>
+        )
+      )}
+      {isSelected && !anyDragging && (
+        <div
+          className="absolute left-0 text-white font-mono z-10 flex items-center"
+          style={{
+            bottom: "100%",
+            background: isDesignOnly ? "var(--s-warning)" : "var(--s-accent)",
+            fontSize: `${11 * inv}px`,
+            padding: `${2.5 * inv}px ${5 * inv}px`,
+            borderRadius: `${3 * inv}px ${3 * inv}px 0 0`,
+            gap: `${4 * inv}px`,
+            lineHeight: 1.4,
+            whiteSpace: "nowrap",
+            transformOrigin: "bottom left",
+          }}
+        >
+          {isDesignOnly && <span style={{ fontSize: `${9 * inv}px`, opacity: 0.85 }}>Design</span>}
+          {node.name ?? node.type}
           {isLocked && (
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width={`${10 * inv}`} height={`${10 * inv}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           )}
+        </div>
+      )}
+      {/* Position pill during free-form drag */}
+      {isFreeDragging && freeDragPos && (
+        <div
+          className="absolute font-mono z-20 pointer-events-none"
+          style={{
+            top: -26,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.8)",
+            color: "#fff",
+            fontSize: 10,
+            padding: "3px 8px",
+            borderRadius: 4,
+            whiteSpace: "nowrap",
+            letterSpacing: "0.02em",
+          }}
+        >
+          X: {freeDragPos.x}&nbsp;&nbsp;Y: {freeDragPos.y}
         </div>
       )}
       {isLocked && !isSelected && (
@@ -228,7 +485,9 @@ function NodeWrapper({
           !
         </div>
       )}
-      {children}
+      <div style={isInlineEditing ? { visibility: "hidden" } : undefined}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -297,8 +556,17 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
   const props = node.props ?? {};
   const type = node.type;
   const designTokens = useEditorStore((s) => s.designTokens);
+  const dsThemes = useEditorStore((s) => s.dsThemes);
+  const activeThemeId = useEditorStore((s) => s.activeThemeId);
   const interactionState = useEditorStore((s) => s.interactionState);
   const setInteractionStateValue = useEditorStore((s) => s.setInteractionStateValue);
+
+  // Apply active theme overrides to tokens before resolving styles
+  const effectiveTokens = React.useMemo(() => {
+    if (!designTokens) return null;
+    if (!activeThemeId || !dsThemes[activeThemeId]) return designTokens;
+    return applyThemeOverrides(designTokens, dsThemes[activeThemeId]);
+  }, [designTokens, activeThemeId, dsThemes]);
 
   // Resolve responsive styles: merge base + breakpoint override
   const resolvedStyle = React.useMemo(() => {
@@ -314,7 +582,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     return base;
   }, [node.style, node.responsive, frameWidth]);
 
-  const nodeStyleCSS = resolvedStyleToCSS(resolvedStyle, designTokens);
+  const nodeStyleCSS = resolvedStyleToCSS(resolvedStyle, effectiveTokens);
   const hasNodeStyle = Object.keys(nodeStyleCSS).length > 0;
 
   let content: React.ReactNode;
@@ -375,13 +643,21 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     case "Heading": {
       const text = String(props.text ?? "");
       const level = typeof props.level === "number" ? props.level : 1;
-      const clampedLevel = Math.min(Math.max(level, 1), 6);
+      const clampedLevel = Math.min(Math.max(level, 1), 6) as 1 | 2 | 3 | 4 | 5 | 6;
       const fontFamily = typeof props.fontFamily === "string" && props.fontFamily ? props.fontFamily : undefined;
       if (fontFamily) ensureFontLoaded(fontFamily);
       const headingStyle = fontFamily ? { fontFamily } : undefined;
+      const headingClasses: Record<1 | 2 | 3 | 4 | 5 | 6, string> = {
+        1: "text-4xl font-bold",
+        2: "text-3xl font-bold",
+        3: "text-2xl font-semibold",
+        4: "text-xl font-semibold",
+        5: "text-lg font-medium",
+        6: "text-base font-medium",
+      };
       content = React.createElement(
         `h${clampedLevel}`,
-        { className: "text-xl font-semibold", style: headingStyle },
+        { className: headingClasses[clampedLevel], style: headingStyle },
         text
       );
       break;
@@ -415,11 +691,27 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
         );
         break;
       }
-      const imgProps: Record<string, unknown> = { src, alt };
-      if (typeof props.width === "number") imgProps.width = props.width;
-      if (typeof props.height === "number") imgProps.height = props.height;
-      /* eslint-disable @next/next/no-img-element */
-      content = <img {...imgProps} alt={alt} />;
+      const imgStyle: React.CSSProperties = {};
+      const objectFit = typeof props.objectFit === "string" ? props.objectFit : undefined;
+      const objectPosition = typeof props.objectPosition === "string" ? props.objectPosition : undefined;
+      const aspectRatio = typeof props.aspectRatio === "string" && props.aspectRatio ? props.aspectRatio : undefined;
+      const clipPath = typeof props.clipPath === "string" && props.clipPath ? props.clipPath : undefined;
+      if (objectFit) imgStyle.objectFit = objectFit as React.CSSProperties["objectFit"];
+      if (objectPosition) imgStyle.objectPosition = objectPosition;
+      if (aspectRatio) imgStyle.aspectRatio = aspectRatio;
+      if (clipPath) imgStyle.clipPath = clipPath;
+      if (typeof props.width === "number") imgStyle.width = props.width;
+      if (typeof props.height === "number") imgStyle.height = props.height;
+      content = (
+        <NextImage
+          src={src}
+          alt={alt}
+          width={0}
+          height={0}
+          unoptimized
+          style={{ width: "100%", height: "100%", objectFit: "cover", ...imgStyle }}
+        />
+      );
       break;
     }
 
@@ -481,16 +773,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const iconName = typeof props.name === "string" ? props.name : "Star";
       const iconSize = typeof props.size === "number" ? props.size : 24;
       const iconColor = typeof props.color === "string" && props.color ? props.color : undefined;
-      const LucideIcon = icons[iconName as keyof typeof icons];
-      if (LucideIcon) {
-        content = <LucideIcon size={iconSize} color={iconColor} />;
-      } else {
-        content = (
-          <div className="flex items-center justify-center h-8 w-8 bg-muted border border-dashed rounded text-[10px] text-muted-foreground">
-            ?
-          </div>
-        );
-      }
+      content = <LazyLucideIcon name={iconName} size={iconSize} color={iconColor} />;
       break;
     }
 
@@ -1518,6 +1801,177 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       break;
     }
 
+    // -- Shapes (v0.8.5) --
+
+    case "Rectangle": {
+      const fill = typeof props.fill === "string" ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const rectStyle: React.CSSProperties = {
+        backgroundColor: fill || undefined,
+        border: stroke && sw ? `${sw}px ${ss} ${stroke}` : undefined,
+        borderRadius: cr ? `${cr}px` : undefined,
+        transform: rot ? `rotate(${rot}deg)` : undefined,
+        minHeight: 40,
+        minWidth: 40,
+      };
+      content = (
+        <div style={rectStyle}>
+          {renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth)}
+        </div>
+      );
+      break;
+    }
+
+    case "Ellipse": {
+      const fill = typeof props.fill === "string" ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const ellipseStyle: React.CSSProperties = {
+        backgroundColor: fill || undefined,
+        border: stroke && sw ? `${sw}px ${ss} ${stroke}` : undefined,
+        borderRadius: "50%",
+        transform: rot ? `rotate(${rot}deg)` : undefined,
+        minHeight: 40,
+        minWidth: 40,
+      };
+      content = <div style={ellipseStyle} />;
+      break;
+    }
+
+    case "Line": {
+      const stroke = typeof props.stroke === "string" ? props.stroke : "#999999";
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 1;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const dir = props.direction === "vertical" ? "vertical" : "horizontal";
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const lineStyle: React.CSSProperties = dir === "horizontal"
+        ? { borderTop: `${sw}px ${ss} ${stroke}`, width: "100%", height: 0, transform: rot ? `rotate(${rot}deg)` : undefined }
+        : { borderLeft: `${sw}px ${ss} ${stroke}`, height: "100%", width: 0, transform: rot ? `rotate(${rot}deg)` : undefined };
+      content = <div style={lineStyle} />;
+      break;
+    }
+
+    case "DSComponent": {
+      const compName = typeof props.dsComponentName === "string" ? props.dsComponentName : "DS Component";
+      const selVariants = props.selectedVariants as Record<string, string> | undefined;
+      const variantLabel = selVariants && Object.keys(selVariants).length > 0
+        ? Object.entries(selVariants).map(([k, v]) => `${k}=${v}`).join(", ")
+        : null;
+      content = (
+        <div style={{
+          border: "1.5px dashed #a855f7",
+          borderRadius: 6,
+          padding: "8px 12px",
+          minWidth: 80,
+          minHeight: 36,
+          display: "inline-flex",
+          flexDirection: "column",
+          gap: 2,
+          background: "rgba(168,85,247,0.06)",
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#a855f7", lineHeight: 1.3 }}>{compName}</span>
+          {variantLabel && <span style={{ fontSize: 10, color: "#888" }}>{variantLabel}</span>}
+          <span style={{ fontSize: 9, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.05em" }}>Design System</span>
+        </div>
+      );
+      break;
+    }
+
+    case "Frame": {
+      // Backward-compat: legacy nodes typed as Frame but with dsComponentName should render as DSComponent
+      if (typeof props.dsComponentName === "string" && props.dsComponentName) {
+        const compName = props.dsComponentName as string;
+        content = (
+          <div style={{
+            border: "1.5px dashed #a855f7",
+            borderRadius: 6,
+            padding: "8px 12px",
+            minWidth: 80,
+            minHeight: 36,
+            display: "inline-flex",
+            flexDirection: "column",
+            gap: 2,
+            background: "rgba(168,85,247,0.06)",
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#a855f7", lineHeight: 1.3 }}>{compName}</span>
+            <span style={{ fontSize: 9, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.05em" }}>Design System</span>
+          </div>
+        );
+        break;
+      }
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : undefined;
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const clip = !!props.clip;
+      const autoLayout = props.autoLayout !== false;
+      const dir = props.direction === "row" ? "row" : "column";
+      const gap = props.gap ? resolveGap(props.gap) : "0";
+      const frameStyle: React.CSSProperties = {
+        display: autoLayout ? "flex" : "relative" as never,
+        flexDirection: autoLayout ? dir : undefined,
+        gap: autoLayout ? `var(--space-${gap}, ${gap === "0" ? "0px" : "0.5rem"})` : undefined,
+        position: autoLayout ? undefined : "relative",
+        backgroundColor: fill,
+        border: stroke && sw ? `${sw}px solid ${stroke}` : undefined,
+        borderRadius: cr ? `${cr}px` : undefined,
+        overflow: clip ? "hidden" : undefined,
+        minHeight: 40,
+      };
+      content = (
+        <div style={frameStyle}>
+          {renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth)}
+        </div>
+      );
+      break;
+    }
+
+    // -- External (brownfield) component placeholder (0.10.5) --
+    case "ExternalComponent": {
+      const compName = typeof props.componentName === "string" ? props.componentName : type;
+      const importPath = typeof props.importPath === "string" ? props.importPath : "";
+      const selVariants = props.selectedVariants as Record<string, string> | undefined;
+      const variantLabel = selVariants && Object.keys(selVariants).length > 0
+        ? Object.entries(selVariants).map(([k, v]) => `${k}=${v}`).join(", ")
+        : null;
+      content = (
+        <div
+          style={{
+            border: "1.5px dashed #6366f1",
+            borderRadius: 6,
+            padding: "8px 10px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            minHeight: 40,
+            minWidth: 80,
+            background: "rgba(99,102,241,0.04)",
+          }}
+        >
+          <span style={{ fontSize: 11, color: "#6366f1", fontWeight: 600, lineHeight: 1.3 }}>
+            {compName}
+          </span>
+          {importPath && (
+            <span style={{ fontSize: 9, color: "#9ca3af", fontFamily: "monospace" }}>
+              {importPath}
+            </span>
+          )}
+          {variantLabel && (
+            <span style={{ fontSize: 9, color: "#a5b4fc", fontFamily: "monospace" }}>
+              {variantLabel}
+            </span>
+          )}
+        </div>
+      );
+      break;
+    }
+
     // -- Fallback (repo component / unknown) --
     default: {
       content = (
@@ -1590,10 +2044,29 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 // Empty canvas placeholder
 // -------------------------------------------------------------------------
 
-export function EmptyCanvas() {
+export function EmptyCanvas({ onQuickStart }: { onQuickStart?: (action: "stack" | "template") => void }) {
   return (
-    <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
-      Drag components here to start building
+    <div className="flex flex-col items-center justify-center h-80 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-gray-400 gap-4">
+      <div className="text-center space-y-1">
+        <p className="text-base font-medium text-muted-foreground">Empty canvas</p>
+        <p className="text-sm text-muted-foreground/70">Drag a component from the left panel, or pick a quick start:</p>
+      </div>
+      <div className="flex gap-3">
+        <button
+          onClick={() => onQuickStart?.("stack")}
+          className="px-4 py-2.5 text-sm border-2 border-dashed rounded-lg hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all text-muted-foreground hover:text-blue-600"
+        >
+          <span className="block font-medium">Start with a Stack</span>
+          <span className="block text-xs mt-0.5 opacity-70">Vertical layout container</span>
+        </button>
+        <button
+          onClick={() => onQuickStart?.("template")}
+          className="px-4 py-2.5 text-sm border-2 border-dashed rounded-lg hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all text-muted-foreground hover:text-blue-600"
+        >
+          <span className="block font-medium">Start from Template</span>
+          <span className="block text-xs mt-0.5 opacity-70">Pre-built page layout</span>
+        </button>
+      </div>
     </div>
   );
 }

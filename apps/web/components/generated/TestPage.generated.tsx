@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function TestPage() {
   return (
-    <div className="flex-col flex gap-[1rem] p-[2rem]">
+    <div className="flex-col flex gap-4 p-8">
       <nav className="flex flex-row gap-1 border-b pb-2">
         <Link
           href="/"
@@ -20,7 +20,7 @@ export function TestPage() {
           About
         </Link>
       </nav>
-      <div className="flex-row flex gap-[1rem]">
+      <div className="flex-row flex gap-4">
         <Button>Button</Button>
         <p>Text content</p>
         <p>Text content</p>

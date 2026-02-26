@@ -129,4 +129,4 @@ What works today:
 | [docs/COMPILER_RULES_V1.md](docs/COMPILER_RULES_V1.md) | Compiler behaviour: route-based file generation, deterministic rules, publish workflow |
 | [docs/REPO_TEMPLATE_V1.md](docs/REPO_TEMPLATE_V1.md) | Target repo structure: `studio.config.json`, layout primitives, folder conventions |
 
-See [ROADMAP.md](ROADMAP.md) for the full roadmap (all tiers complete).
+See [RELEASES.md](RELEASES.md) for the full release timeline (v0.1.0 -- v1.3.0).

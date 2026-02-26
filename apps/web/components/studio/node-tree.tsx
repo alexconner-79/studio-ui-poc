@@ -107,6 +107,7 @@ function TreeItem({
   const [isRenaming, setIsRenaming] = useState(false);
 
   const renameNode = useEditorStore((s) => s.renameNode);
+  const renameNodeLabel = useEditorStore((s) => s.renameNodeLabel);
   const hiddenNodeIds = useEditorStore((s) => s.hiddenNodeIds);
   const lockedNodeIds = useEditorStore((s) => s.lockedNodeIds);
   const toggleNodeVisibility = useEditorStore((s) => s.toggleNodeVisibility);
@@ -127,6 +128,7 @@ function TreeItem({
   const isContainer = CONTAINER_TYPES.has(node.type);
   const isHidden = hiddenNodeIds.has(node.id);
   const isLocked = lockedNodeIds.has(node.id);
+  const isDesignOnly = node.compile === false;
 
   // Draggable (root is not draggable)
   const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
@@ -143,13 +145,14 @@ function TreeItem({
   });
 
   const handleRenameConfirm = useCallback(
-    (newId: string) => {
+    (newName: string) => {
       setIsRenaming(false);
-      if (newId !== node.id) {
-        renameNode(node.id, newId);
+      const current = node.name ?? node.type;
+      if (newName.trim() && newName.trim() !== current) {
+        renameNodeLabel(node.id, newName.trim());
       }
     },
-    [node.id, renameNode]
+    [node.id, node.name, node.type, renameNodeLabel]
   );
 
   // Combine refs for drag + drop
@@ -161,20 +164,75 @@ function TreeItem({
     [setDragRef, setDropRef]
   );
 
+  // Small node-type icon
+  const typeIcon = (() => {
+    switch (node.type) {
+      case "Frame": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-500 flex-shrink-0">
+          <rect x="1" y="1" width="9" height="9" rx="1"/>
+          <line x1="1" y1="4" x2="10" y2="4"/><line x1="1" y1="7" x2="10" y2="7"/>
+        </svg>
+      );
+      case "Text": case "Heading": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-blue-500 flex-shrink-0">
+          <line x1="2" y1="3" x2="9" y2="3"/><line x1="5.5" y1="3" x2="5.5" y2="9"/><line x1="2" y1="6.5" x2="9" y2="6.5"/>
+        </svg>
+      );
+      case "Image": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-green-500 flex-shrink-0">
+          <rect x="1" y="1" width="9" height="9" rx="1"/><circle cx="3.5" cy="3.5" r="0.8" fill="currentColor" stroke="none"/>
+          <polyline points="1,8 4,5 6.5,7.5 8,6 10,8"/>
+        </svg>
+      );
+      case "Button": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-orange-500 flex-shrink-0">
+          <rect x="1" y="3" width="9" height="5" rx="2"/>
+        </svg>
+      );
+      case "Stack": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400 flex-shrink-0">
+          <rect x="1" y="1" width="9" height="3.5" rx="1"/><rect x="1" y="6.5" width="9" height="3.5" rx="1"/>
+        </svg>
+      );
+      default: return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground/60 flex-shrink-0">
+          <rect x="2" y="2" width="7" height="7" rx="1"/>
+        </svg>
+      );
+    }
+  })();
+
   return (
-    <div className={isDragging ? "opacity-30" : ""}>
+    <div className={isDragging ? "opacity-30" : ""} style={{ position: "relative" }}>
+      {/* Indentation guide line */}
+      {depth > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            left: `${depth * 12 + 8 - 6}px`,
+            top: 0,
+            bottom: 0,
+            width: 1,
+            background: "var(--s-border)",
+            opacity: 0.5,
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <div
         ref={combinedRef}
         {...(isRoot ? {} : listeners)}
         {...(isRoot ? {} : attributes)}
-        className={`group flex items-center gap-1 px-2 py-0.5 text-xs transition-colors rounded-sm ${
+        className={`group flex items-center gap-1.5 px-2 text-xs transition-colors rounded-sm ${
           isRoot ? "cursor-default" : "cursor-grab active:cursor-grabbing"
         } ${
           isSelected
             ? "bg-blue-500/15 text-blue-600 font-medium"
             : "hover:bg-accent"
-        } ${isOver && isContainer ? "ring-1 ring-blue-400 bg-blue-500/5" : ""}`}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        } ${isOver && isContainer ? "ring-1 ring-blue-400 bg-blue-500/5" : ""} ${
+          isDesignOnly ? "opacity-60 italic" : ""
+        }`}
+        style={{ paddingLeft: `${depth * 12 + 8}px`, minHeight: "28px" }}
         onClick={(e) => {
           e.stopPropagation();
           onSelect(node.id);
@@ -184,7 +242,7 @@ function TreeItem({
           setIsRenaming(true);
         }}
       >
-        {/* Expand/collapse toggle */}
+        {/* Expand/collapse toggle -- rotating SVG chevron */}
         {hasChildren || isContainer ? (
           <button
             onClick={(e) => {
@@ -193,31 +251,54 @@ function TreeItem({
             }}
             className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground flex-shrink-0"
           >
-            {expanded ? "▾" : "▸"}
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+                transition: "transform 0.15s ease",
+              }}
+            >
+              <polyline points="3,2 7,5 3,8" />
+            </svg>
           </button>
         ) : (
           <span className="w-4 h-4 flex-shrink-0" />
         )}
 
-        {/* Type badge */}
-        <span
-          className={`font-mono truncate ${
-            isContainer ? "text-purple-600 dark:text-purple-400" : ""
-          }`}
-        >
-          {node.type}
-        </span>
+        {/* Node-type icon */}
+        {!isRoot && typeIcon}
 
-        {/* ID label or rename input */}
+        {/* Design-only badge */}
+        {isDesignOnly && (
+          <span
+            className="flex-shrink-0 flex items-center justify-center rounded-sm [font-size:8px] [font-weight:600] [line-height:1] [padding:1px_3px] [color:white] [background:var(--s-warning)]"
+            title="Design only -- not compiled"
+          >
+            D
+          </span>
+        )}
+
+        {/* Layer name or rename input */}
         {isRenaming ? (
           <InlineRenameInput
-            initialValue={node.id}
+            initialValue={node.name ?? node.type}
             onConfirm={handleRenameConfirm}
             onCancel={() => setIsRenaming(false)}
           />
         ) : (
-          <span className="text-muted-foreground truncate ml-auto text-[10px]">
-            {node.id}
+          <span
+            className={`truncate ${
+              isContainer ? "text-purple-600 dark:text-purple-400" : ""
+            }`}
+          >
+            {node.name ?? node.type}
           </span>
         )}
 

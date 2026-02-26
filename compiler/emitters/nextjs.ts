@@ -116,8 +116,55 @@ function emitStyleAttr(style: NodeStyle | undefined): { classes: string[]; style
   const classes: string[] = [];
   const styleObj: Record<string, string | number> = {};
 
+  // --- Sizing modes take priority over raw width/height ---
+  const skipKeys = new Set<string>();
+
+  if (style.widthMode === "fill") {
+    styleObj.width = "100%";
+    skipKeys.add("width");
+    skipKeys.add("widthMode");
+  } else if (style.widthMode === "hug") {
+    styleObj.width = "fit-content";
+    skipKeys.add("width");
+    skipKeys.add("widthMode");
+  } else {
+    skipKeys.add("widthMode");
+  }
+
+  if (style.heightMode === "fill") {
+    styleObj.height = "100%";
+    skipKeys.add("height");
+    skipKeys.add("heightMode");
+  } else if (style.heightMode === "hug") {
+    styleObj.height = "fit-content";
+    skipKeys.add("height");
+    skipKeys.add("heightMode");
+  } else {
+    skipKeys.add("heightMode");
+  }
+
+  // --- Constraints (skip from generic loop, handled separately) ---
+  if (style.constraints) {
+    skipKeys.add("constraints");
+    const hc = style.constraints.horizontal;
+    const vc = style.constraints.vertical;
+    if (hc === "right") { styleObj.right = styleObj.right ?? 0; styleObj.left = "auto"; }
+    else if (hc === "left-right") { /* left and right come from explicit position values */ }
+    else if (hc === "center") { styleObj.left = "50%"; styleObj.transform = "translateX(-50%)"; }
+    if (vc === "bottom") { styleObj.bottom = styleObj.bottom ?? 0; styleObj.top = "auto"; }
+    else if (vc === "top-bottom") { /* top and bottom come from explicit position values */ }
+    else if (vc === "center") {
+      const existing = styleObj.transform as string | undefined;
+      styleObj.top = "50%";
+      styleObj.transform = existing ? `${existing} translateY(-50%)` : "translateY(-50%)";
+    }
+  } else {
+    skipKeys.add("constraints");
+  }
+
   for (const [key, rawValue] of Object.entries(style)) {
     if (rawValue === undefined || rawValue === null) continue;
+    if (skipKeys.has(key)) continue;
 
     // Try Tailwind shortcut
     const twMap = TAILWIND_MAP[key];
@@ -296,6 +343,20 @@ function buildImportLines(imports: Set<string>, config: StudioConfig): string {
       const compName = parts[0];
       const importSource = parts.slice(1).join(":");
       if (compName && importSource) {
+        const existing = bySource.get(importSource) ?? [];
+        if (!existing.includes(compName)) existing.push(compName);
+        bySource.set(importSource, existing);
+      }
+      continue;
+    }
+
+    // ExternalComponent imports (brownfield, 0.10.5): "__external:ComponentName:importPath"
+    if (key.startsWith("__external:")) {
+      const rest = key.slice(11);
+      const colonIdx = rest.indexOf(":");
+      if (colonIdx !== -1) {
+        const compName = rest.slice(0, colonIdx);
+        const importSource = rest.slice(colonIdx + 1);
         const existing = bySource.get(importSource) ?? [];
         if (!existing.includes(compName)) existing.push(compName);
         bySource.set(importSource, existing);
@@ -583,12 +644,34 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
     case "Image": {
       const src = escapeText(props.src);
       const alt = escapeText(props.alt);
-      const widthAttr =
-        typeof props.width === "number" ? ` width={${props.width}}` : "";
-      const heightAttr =
-        typeof props.height === "number" ? ` height={${props.height}}` : "";
+      const srcAttr = src ? `"${src}"` : `{undefined}`;
+      const hasWidth = typeof props.width === "number";
+      const hasHeight = typeof props.height === "number";
+      const objectFit = typeof props.objectFit === "string" && props.objectFit ? props.objectFit : undefined;
+      const objectPosition = typeof props.objectPosition === "string" && props.objectPosition && props.objectPosition !== "center" ? props.objectPosition : undefined;
+      const aspectRatio = typeof props.aspectRatio === "string" && props.aspectRatio ? props.aspectRatio : undefined;
+      const clipPath = typeof props.clipPath === "string" && props.clipPath ? props.clipPath : undefined;
+
+      const styleParts: string[] = [];
+      if (objectFit) styleParts.push(`objectFit: "${objectFit}"`);
+      if (objectPosition) styleParts.push(`objectPosition: "${objectPosition}"`);
+      if (aspectRatio) styleParts.push(`aspectRatio: "${aspectRatio}"`);
+      if (clipPath) styleParts.push(`clipPath: "${clipPath}"`);
+
+      const useNextImage = hasWidth && hasHeight && src;
+      if (useNextImage) {
+        const styleAttr = styleParts.length ? ` style={{ ${styleParts.join(", ")} }}` : "";
+        return {
+          jsx: `<Image src="${src}" alt="${alt}" width={${props.width}} height={${props.height}}${styleAttr} />`,
+          imports: new Set(["Image"]),
+        };
+      }
+
+      const widthAttr = hasWidth ? ` width={${props.width}}` : "";
+      const heightAttr = hasHeight ? ` height={${props.height}}` : "";
+      const styleAttr = styleParts.length ? ` style={{ ${styleParts.join(", ")} }}` : "";
       return {
-        jsx: `<img src="${src}" alt="${alt}"${widthAttr}${heightAttr} />`,
+        jsx: `<img src=${srcAttr} alt="${alt}"${widthAttr}${heightAttr}${styleAttr} />`,
         imports: new Set(),
       };
     }
@@ -1208,6 +1291,102 @@ ${rowJsx}
       }).join("\n");
       const childBody = children.jsx ? `\n  <div className="mt-2">\n${indentLines(children.jsx, 4)}\n  </div>` : "";
       return { jsx: `<div className="relative pl-6">\n  <div className="absolute left-2.5 top-0 bottom-0 w-px bg-zinc-200" />\n${items}${childBody}\n</div>`, imports: children.imports };
+    }
+
+    // -- Shapes (v0.8.5) -- only emitted when compile !== false --------------
+
+    case "Rectangle": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const parts: string[] = [];
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`border: "${sw}px solid ${stroke}"`);
+      if (cr) parts.push(`borderRadius: "${cr}px"`);
+      if (rot) parts.push(`transform: "rotate(${rot}deg)"`);
+      const children = emitChildren(node.children ?? []);
+      const styleStr = parts.length ? ` style={{ ${parts.join(", ")} }}` : "";
+      return { jsx: `<div${styleStr}>${children.jsx ? `\n${indentLines(children.jsx, 2)}\n` : ""}</div>`, imports: children.imports };
+    }
+
+    case "Ellipse": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const parts: string[] = [`borderRadius: "50%"`];
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`border: "${sw}px solid ${stroke}"`);
+      if (rot) parts.push(`transform: "rotate(${rot}deg)"`);
+      const styleStr = ` style={{ ${parts.join(", ")} }}`;
+      return { jsx: `<div${styleStr} />`, imports: new Set() };
+    }
+
+    case "Line": {
+      const stroke = typeof props.stroke === "string" ? props.stroke : "#999999";
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 1;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const dir = props.direction === "vertical" ? "vertical" : "horizontal";
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const borderProp = dir === "horizontal" ? "borderTop" : "borderLeft";
+      const sizeProp = dir === "horizontal" ? `width: "100%", height: 0` : `height: "100%", width: 0`;
+      const parts = [`${borderProp}: "${sw}px ${ss} ${stroke}"`, sizeProp];
+      if (rot) parts.push(`transform: "rotate(${rot}deg)"`);
+      return { jsx: `<div style={{ ${parts.join(", ")} }} />`, imports: new Set() };
+    }
+
+    case "Frame": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : undefined;
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const clip = !!props.clip;
+      const autoLayout = props.autoLayout !== false;
+      const dir = props.direction === "row" ? "row" : "column";
+      const gap = resolveGap(props.gap);
+      const parts: string[] = [];
+      if (autoLayout) {
+        parts.push(`display: "flex"`, `flexDirection: "${dir}"`, `gap: "${gap === "0" ? "0" : `var(--space-${gap}, 0.5rem)`}"`);
+      } else {
+        parts.push(`position: "relative"`);
+      }
+      if (fill) parts.push(`backgroundColor: "${fill}"`);
+      if (stroke && sw) parts.push(`border: "${sw}px solid ${stroke}"`);
+      if (cr) parts.push(`borderRadius: "${cr}px"`);
+      if (clip) parts.push(`overflow: "hidden"`);
+      const children = emitChildren(node.children ?? []);
+      const styleStr = parts.length ? ` style={{ ${parts.join(", ")} }}` : "";
+      return { jsx: `<div${styleStr}>${children.jsx ? `\n${indentLines(children.jsx, 2)}\n` : ""}</div>`, imports: children.imports };
+    }
+
+    // -- External (brownfield) component (0.10.5) ----------------------------
+
+    case "ExternalComponent": {
+      const compName = typeof props.componentName === "string" && props.componentName
+        ? props.componentName
+        : "UnknownComponent";
+      const importPath = typeof props.importPath === "string" && props.importPath
+        ? props.importPath
+        : "@unknown/components";
+      const componentProps = (props.componentProps ?? {}) as Record<string, unknown>;
+      const selectedVariants = (props.selectedVariants ?? {}) as Record<string, string>;
+      const allProps = { ...componentProps, ...selectedVariants };
+      const propEntries = Object.entries(allProps).map(([k, v]) => {
+        if (typeof v === "string") return `${k}="${escapeText(v)}"`;
+        return `${k}={${JSON.stringify(v)}}`;
+      });
+      const attrStr = propEntries.length > 0 ? " " + propEntries.join(" ") : "";
+      const importKey = `__external:${compName}:${importPath}`;
+      return { jsx: `<${compName}${attrStr} />`, imports: new Set([importKey]) };
+    }
+
+    // -- DS Component placeholder (design-only, not compiled to real code) ---
+
+    case "DSComponent": {
+      // DSComponent nodes are design-system placeholders; emit nothing at compile time
+      return { jsx: "{/* DS component placeholder */}", imports: new Set() };
     }
 
     // -- Repo component (fallback) ------------------------------------------

@@ -237,6 +237,62 @@ function emitNode(node: Node, indent: number = 2): string {
       return `${pad}<table>\n${pad}    <thead>\n${pad}      <tr>\n${ths}\n${pad}      </tr>\n${pad}    </thead>\n${pad}    <tbody>\n${trs}\n${pad}    </tbody>\n${pad}</table>`;
     }
 
+    case "Rectangle": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const rot = typeof props.rotation === "number" ? props.rotation : 0;
+      const parts: string[] = [];
+      if (fill) parts.push(`background-color: ${fill}`);
+      if (stroke && sw) parts.push(`border: ${sw}px solid ${stroke}`);
+      if (cr) parts.push(`border-radius: ${cr}px`);
+      if (rot) parts.push(`transform: rotate(${rot}deg)`);
+      const styleStr = parts.length ? ` style="${parts.join("; ")}"` : "";
+      const children = emitChildren(node.children ?? [], indent + 2);
+      return `${pad}<div${styleStr}>\n${children}\n${pad}</div>`;
+    }
+
+    case "Ellipse": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : "#D9D9D9";
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const parts: string[] = ["border-radius: 50%"];
+      if (fill) parts.push(`background-color: ${fill}`);
+      if (stroke && sw) parts.push(`border: ${sw}px solid ${stroke}`);
+      return `${pad}<div style="${parts.join("; ")}"></div>`;
+    }
+
+    case "Line": {
+      const stroke = typeof props.stroke === "string" ? props.stroke : "#999999";
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 1;
+      const ss = typeof props.strokeStyle === "string" ? props.strokeStyle : "solid";
+      const dir = props.direction === "vertical" ? "vertical" : "horizontal";
+      const borderProp = dir === "horizontal" ? "border-top" : "border-left";
+      const sizeProp = dir === "horizontal" ? "width: 100%; height: 0" : "height: 100%; width: 0";
+      return `${pad}<div style="${borderProp}: ${sw}px ${ss} ${stroke}; ${sizeProp}"></div>`;
+    }
+
+    case "Frame": {
+      const fill = typeof props.fill === "string" && props.fill ? props.fill : undefined;
+      const stroke = typeof props.stroke === "string" && props.stroke ? props.stroke : undefined;
+      const sw = typeof props.strokeWidth === "number" ? props.strokeWidth : 0;
+      const cr = typeof props.cornerRadius === "number" ? props.cornerRadius : 0;
+      const clip = !!props.clip;
+      const autoLayout = props.autoLayout !== false;
+      const dir = props.direction === "row" ? "row" : "column";
+      const gap = resolveGap(props.gap);
+      const parts: string[] = [];
+      if (autoLayout) parts.push(`display: flex`, `flex-direction: ${dir}`, `gap: ${gap}`);
+      if (fill) parts.push(`background-color: ${fill}`);
+      if (stroke && sw) parts.push(`border: ${sw}px solid ${stroke}`);
+      if (cr) parts.push(`border-radius: ${cr}px`);
+      if (clip) parts.push("overflow: hidden");
+      const styleStr = parts.length ? ` style="${parts.join("; ")}"` : "";
+      const children = emitChildren(node.children ?? [], indent + 2);
+      return `${pad}<div${styleStr}>\n${children}\n${pad}</div>`;
+    }
+
     // Repo component
     default: {
       const kebab = toKebabCase(type);
