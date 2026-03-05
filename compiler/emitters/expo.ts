@@ -10,6 +10,7 @@ import type { ScreenSpec, Node, NodeStyle, StyleValue } from "../types";
 import type { StudioConfig } from "../config";
 import { resolveStyleValue } from "../resolve-token";
 import { loadTokens, type DesignTokens } from "../tokens";
+import { validateStyleForFramework } from "../style-validator";
 
 // ---------------------------------------------------------------------------
 // Token loading
@@ -103,6 +104,50 @@ function nodeStyleToRN(style: NodeStyle | undefined): Record<string, string | nu
   // Effects
   if (style.opacity !== undefined) result.opacity = style.opacity;
 
+  // Effects stack — map drop-shadow to RN shadow props; blur/glass/inner-shadow not supported in RN
+  if (style.effects && style.effects.length > 0) {
+    const dropShadow = style.effects.find((e) => e.type === "drop-shadow" && e.enabled !== false) as
+      | { type: "drop-shadow"; x: number; y: number; blur: number; color: string; opacity: number }
+      | undefined;
+    if (dropShadow) {
+      result.shadowColor = dropShadow.color;
+      result.shadowOpacity = dropShadow.opacity;
+      result.shadowRadius = dropShadow.blur;
+      result.shadowOffset = `{ width: ${dropShadow.x}, height: ${dropShadow.y} }` as unknown as number;
+      result.elevation = 4;
+    }
+  }
+
+  // Multiple fills — use first solid fill as backgroundColor; gradients/images not supported in RN
+  if (style.fills && style.fills.length > 0) {
+    const firstSolid = style.fills.find((f) => f.type === "solid") as
+      | { type: "solid"; color: string; opacity?: number }
+      | undefined;
+    if (firstSolid) result.backgroundColor = firstSolid.color;
+  }
+
+  // Multiple strokes — use center stroke as border; inside/outside not supported in RN
+  if (style.strokes && style.strokes.length > 0) {
+    const center = style.strokes.find((s) => s.position === "center");
+    if (center) {
+      result.borderWidth = center.width;
+      result.borderColor = center.color;
+    }
+  }
+
+  // Transform components — compile into RN transform array
+  const rnTransform: Record<string, string | number>[] = [];
+  if (style.rotation !== undefined) rnTransform.push({ rotate: `${style.rotation}deg` });
+  if (style.scaleX !== undefined) rnTransform.push({ scaleX: style.scaleX });
+  if (style.scaleY !== undefined) rnTransform.push({ scaleY: style.scaleY });
+  if (style.skewX !== undefined) rnTransform.push({ skewX: `${style.skewX}deg` });
+  if (style.skewY !== undefined) rnTransform.push({ skewY: `${style.skewY}deg` });
+  if (rnTransform.length > 0) {
+    result.transform = JSON.stringify(rnTransform) as unknown as number;
+  }
+
+  // cssFilters, mixBlendMode — not supported in React Native; silently skipped
+
   // Layout
   if (style.overflow !== undefined) result.overflow = style.overflow;
   if (style.justifyContent !== undefined) result.justifyContent = style.justifyContent;
@@ -177,7 +222,7 @@ function emitNode(node: Node): EmitResult {
   const type = node.type;
   const imports = new Set<string>();
 
-  const styleObj = nodeStyleToRN(node.style);
+  const styleObj = nodeStyleToRN(validateStyleForFramework(node.style, "expo"));
   const hasStyle = Object.keys(styleObj).length > 0;
 
   let jsx: string;
@@ -461,8 +506,53 @@ function emitNode(node: Node): EmitResult {
     }
 
     case "DSComponent": {
-      // DSComponent nodes are design-system placeholders; emit nothing at compile time
-      jsx = "{/* DS component placeholder */}";
+      // Legacy pre-v0.10.4 node — emit children wrapped in View
+      const children = emitChildren(node.children ?? []);
+      children.imports.forEach((i) => imports.add(i));
+      imports.add("View");
+      jsx = children.jsx
+        ? `<View>\n${indentLines(children.jsx, 2)}\n</View>`
+        : `{/* ${typeof props.dsComponentName === "string" ? props.dsComponentName : "component"} */}`;
+      break;
+    }
+
+    case "ComponentInstance":
+    case "ExternalComponent": {
+      const compName = typeof props.componentName === "string" && props.componentName
+        ? props.componentName
+        : (node.name ?? "UnknownComponent");
+      const importPath = typeof props.importPath === "string" && props.importPath
+        ? props.importPath
+        : null;
+      const INTERNAL_KEYS = new Set(["componentName", "importPath", "selectedVariants", "componentProps", "dsComponentName"]);
+      const componentProps = (props.componentProps ?? {}) as Record<string, unknown>;
+      const selectedVariants = (props.selectedVariants ?? {}) as Record<string, string>;
+      const typedProps = Object.fromEntries(
+        Object.entries(props).filter(([k]) => !INTERNAL_KEYS.has(k))
+      );
+      const allProps = { ...typedProps, ...componentProps, ...selectedVariants };
+      const propEntries = Object.entries(allProps).map(([k, v]) => {
+        if (typeof v === "string") return `${k}="${v}"`;
+        return `${k}={${JSON.stringify(v)}}`;
+      });
+      const attrStr = propEntries.length > 0 ? " " + propEntries.join(" ") : "";
+      const children = emitChildren(node.children ?? []);
+      children.imports.forEach((i) => imports.add(i));
+
+      if (!importPath) {
+        // No package known — emit children in a View; user must wire up the import manually
+        imports.add("View");
+        jsx = children.jsx
+          ? `<View>\n${indentLines(children.jsx, 2)}\n</View>`
+          : `{/* ${compName} — add importPath to compile as a real component */}`;
+        break;
+      }
+
+      const importKey = `__rnexternal:${compName}:${importPath}`;
+      imports.add(importKey);
+      jsx = children.jsx
+        ? `<${compName}${attrStr}>\n${indentLines(children.jsx, 2)}\n</${compName}>`
+        : `<${compName}${attrStr} />`;
       break;
     }
 
@@ -475,13 +565,54 @@ function emitNode(node: Node): EmitResult {
     }
   }
 
-  // Apply node.style overlay
   if (hasStyle) {
-    imports.add("View");
-    jsx = `<View style={${formatStyleObj(styleObj)}}>\n${indentLines(jsx, 2)}\n</View>`;
+    jsx = mergeStyleOntoRN(jsx, styleObj);
   }
 
   return { jsx, imports };
+}
+
+/**
+ * Merge style properties onto the root element of a RN JSX string.
+ * Finds the first opening tag and merges into its style prop,
+ * avoiding a wrapper View.
+ */
+function mergeStyleOntoRN(
+  jsx: string,
+  styleObj: Record<string, string | number>,
+): string {
+  if (Object.keys(styleObj).length === 0) return jsx;
+
+  const newEntries = formatStyleObj(styleObj);
+
+  const tagMatch = jsx.match(/^(\s*<[\w.-]+)/);
+  if (!tagMatch) return jsx;
+
+  const tagEnd = tagMatch[0];
+  let rest = jsx.slice(tagEnd.length);
+
+  const styleIdx = rest.indexOf("style={");
+  if (styleIdx !== -1) {
+    const openBrace = rest.indexOf("{", styleIdx + 6);
+    if (openBrace !== -1) {
+      let depth = 0;
+      let closeBrace = -1;
+      for (let i = openBrace; i < rest.length; i++) {
+        if (rest[i] === "{") depth++;
+        else if (rest[i] === "}") { depth--; if (depth === 0) { closeBrace = i; break; } }
+      }
+      if (closeBrace !== -1) {
+        const existing = rest.slice(openBrace + 1, closeBrace).trim();
+        const trailingComma = existing.endsWith(",") ? " " : ", ";
+        const merged = existing ? `${existing}${trailingComma}...${newEntries}` : `...${newEntries}`;
+        rest = rest.slice(0, styleIdx) + `style={{ ${merged} }}` + rest.slice(closeBrace + 1);
+      }
+    }
+  } else {
+    rest = ` style={${newEntries}}` + rest;
+  }
+
+  return tagEnd + rest;
 }
 
 // ---------------------------------------------------------------------------
@@ -497,16 +628,41 @@ function emitScreen(spec: ScreenSpec, config: StudioConfig): EmitScreenResult {
   // Collect RN imports
   const rnComponents = ["View", "Text", "Image", "ScrollView", "TextInput", "TouchableOpacity", "FlatList", "Modal"];
   const rnImportsArr: string[] = [];
+  // External/local component imports: __rnexternal:Name:pkg or __rnlocal:Name:path
+  const externalBySource = new Map<string, string[]>();
+
   result.imports.forEach((imp) => {
+    if (imp.startsWith("__rnexternal:") || imp.startsWith("__rnlocal:")) {
+      const prefixLen = imp.startsWith("__rnexternal:") ? 13 : 9;
+      const rest = imp.slice(prefixLen);
+      const colonIdx = rest.indexOf(":");
+      if (colonIdx !== -1) {
+        const compName = rest.slice(0, colonIdx);
+        const importSource = rest.slice(colonIdx + 1);
+        // "List.Item" → import only "List"; JSX uses the full dotted name
+        const rootImportName = compName.split(".")[0];
+        const existing = externalBySource.get(importSource) ?? [];
+        if (!existing.includes(rootImportName)) existing.push(rootImportName);
+        externalBySource.set(importSource, existing);
+      }
+      return;
+    }
     if (rnComponents.indexOf(imp) !== -1 && rnImportsArr.indexOf(imp) === -1) {
       rnImportsArr.push(imp);
     }
   });
   rnImportsArr.sort();
 
-  const importLine = `import { ${rnImportsArr.join(", ")} } from "react-native";`;
+  const externalImportLines = Array.from(externalBySource.entries())
+    .map(([source, names]) => `import { ${names.sort().join(", ")} } from "${source}";`);
 
-  const contents = `// Auto-generated by Studio Compiler (Expo emitter)\n// DO NOT EDIT – changes will be overwritten.\n\nimport React from "react";\n${importLine}\n\nexport function ${componentName}() {\n  return (\n${indentLines(result.jsx, 4)}\n  );\n}\n`;
+  const importLine = rnImportsArr.length > 0
+    ? `import { ${rnImportsArr.join(", ")} } from "react-native";`
+    : "";
+
+  const allImportLines = [importLine, ...externalImportLines].filter(Boolean).join("\n");
+
+  const contents = `// Auto-generated by Studio Compiler (Expo emitter)\n// DO NOT EDIT – changes will be overwritten.\n\nimport React from "react";\n${allImportLines}\n\nexport function ${componentName}() {\n  return (\n${indentLines(result.jsx, 4)}\n  );\n}\n`;
 
   const genDir = config.generatedDir;
   const filePath = `${genDir}/${componentName}.generated.tsx`;

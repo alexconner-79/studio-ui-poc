@@ -1,7 +1,7 @@
 {
   "id": "ant-design",
   "name": "Ant Design 5",
-  "description": "Ant Design 5 design tokens — enterprise-grade UI system by Alibaba",
+  "description": "Ant Design 5 design tokens \u2014 enterprise-grade UI system by Alibaba",
   "platform": "web",
   "preview": [
     "#1677ff",
@@ -1071,7 +1071,19 @@
           "type": "boolean",
           "default": false
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Alert",
+        "props": {
+          "componentName": "Alert",
+          "importPath": "antd",
+          "type": "info",
+          "message": "This is an alert"
+        },
+        "style": {},
+        "children": []
+      }
     },
     "Message": {
       "name": "Message",
@@ -1191,7 +1203,29 @@
           "type": "number",
           "default": 520
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Modal",
+        "props": {
+          "componentName": "Modal",
+          "importPath": "antd",
+          "open": false,
+          "title": "Modal Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Text",
+            "name": "Modal body content.",
+            "props": {
+              "text": "Modal body content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Drawer": {
       "name": "Drawer",
@@ -1237,7 +1271,29 @@
           "name": "onClose",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Drawer",
+        "props": {
+          "componentName": "Drawer",
+          "importPath": "antd",
+          "open": false,
+          "title": "Drawer Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Text",
+            "name": "Drawer content.",
+            "props": {
+              "text": "Drawer content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Tooltip": {
       "name": "Tooltip",
@@ -1314,7 +1370,30 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Popover",
+        "props": {
+          "componentName": "Popover",
+          "importPath": "antd",
+          "content": "Popover content",
+          "title": "Popover Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "Button",
+            "props": {
+              "componentName": "Button",
+              "importPath": "antd"
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Popconfirm": {
       "name": "Popconfirm",
@@ -1602,7 +1681,38 @@
           "name": "onChange",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Tabs",
+        "props": {
+          "componentName": "Tabs",
+          "importPath": "antd",
+          "defaultActiveKey": "1"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Tab Content",
+            "props": {
+              "text": "Tab Content",
+              "level": 5
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Select a tab to view its content.",
+            "props": {
+              "text": "Select a tab to view its content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Breadcrumb": {
       "name": "Breadcrumb",
@@ -1712,7 +1822,43 @@
           "name": "onChange",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Steps",
+        "props": {
+          "componentName": "Steps",
+          "importPath": "antd",
+          "current": 0
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "Steps.Step",
+            "props": {
+              "componentName": "Steps.Step",
+              "importPath": "antd",
+              "title": "Step 1",
+              "description": "Do this first"
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "Steps.Step",
+            "props": {
+              "componentName": "Steps.Step",
+              "importPath": "antd",
+              "title": "Step 2",
+              "description": "Then this"
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Dropdown": {
       "name": "Dropdown",
@@ -1848,7 +1994,51 @@
           "type": "boolean",
           "default": false
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "List",
+        "props": {
+          "componentName": "List",
+          "importPath": "antd"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "List.Item",
+            "props": {
+              "componentName": "List.Item",
+              "importPath": "antd",
+              "title": "Item one"
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "List.Item",
+            "props": {
+              "componentName": "List.Item",
+              "importPath": "antd",
+              "title": "Item two"
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "List.Item",
+            "props": {
+              "componentName": "List.Item",
+              "importPath": "antd",
+              "title": "Item three"
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Card": {
       "name": "Card",
@@ -1904,7 +2094,37 @@
           "name": "cover",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Card",
+        "props": {
+          "componentName": "Card",
+          "importPath": "antd"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Card title",
+            "props": {
+              "text": "Card title",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Card content goes here.",
+            "props": {
+              "text": "Card content goes here."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Descriptions": {
       "name": "Descriptions",
@@ -2007,7 +2227,60 @@
           "name": "items",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Timeline",
+        "props": {
+          "componentName": "Timeline",
+          "importPath": "antd"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "Timeline.Item",
+            "props": {
+              "componentName": "Timeline.Item",
+              "importPath": "antd",
+              "label": "Event one"
+            },
+            "style": {},
+            "children": [
+              {
+                "type": "Text",
+                "name": "Description.",
+                "props": {
+                  "text": "Description."
+                },
+                "style": {},
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "Timeline.Item",
+            "props": {
+              "componentName": "Timeline.Item",
+              "importPath": "antd",
+              "label": "Event two"
+            },
+            "style": {},
+            "children": [
+              {
+                "type": "Text",
+                "name": "Description.",
+                "props": {
+                  "text": "Description."
+                },
+                "style": {},
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
     },
     "Tag": {
       "name": "Tag",
@@ -2205,7 +2478,62 @@
           "name": "onChange",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Collapse",
+        "props": {
+          "componentName": "Collapse",
+          "importPath": "antd"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "Collapse.Panel",
+            "props": {
+              "componentName": "Collapse.Panel",
+              "importPath": "antd",
+              "header": "Section One",
+              "key": "1"
+            },
+            "style": {},
+            "children": [
+              {
+                "type": "Text",
+                "name": "Content for section one.",
+                "props": {
+                  "text": "Content for section one."
+                },
+                "style": {},
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "Collapse.Panel",
+            "props": {
+              "componentName": "Collapse.Panel",
+              "importPath": "antd",
+              "header": "Section Two",
+              "key": "2"
+            },
+            "style": {},
+            "children": [
+              {
+                "type": "Text",
+                "name": "Content for section two.",
+                "props": {
+                  "text": "Content for section two."
+                },
+                "style": {},
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
     },
     "Divider": {
       "name": "Divider",
@@ -2248,5 +2576,6 @@
         }
       ]
     }
-  }
+  },
+  "packageName": "antd"
 }

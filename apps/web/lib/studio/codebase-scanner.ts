@@ -116,16 +116,18 @@ export function extractStorybookProps(content: string, componentName: string): S
 async function extractComponentsFromSources(
   files: Array<{ path: string; content: string }>,
   importPathPrefix: string,
+  /** When true, record the source file path on each ScannedComponent (local scan). */
+  recordFilePaths = false,
 ): Promise<ScannedComponent[]> {
   const components: ScannedComponent[] = [];
   const project = await createProject();
 
   if (project) {
     // ts-morph path
-    for (const { path, content } of files) {
-      if (!path.match(/\.(tsx?|d\.ts)$/)) continue;
+    for (const { path: filePath, content } of files) {
+      if (!filePath.match(/\.(tsx?|d\.ts)$/)) continue;
       try {
-        const sf = project.createSourceFile(path, content, { overwrite: true });
+        const sf = project.createSourceFile(filePath, content, { overwrite: true });
         const exports = sf.getExportedDeclarations();
 
         for (const [name, decls] of exports) {
@@ -187,6 +189,7 @@ async function extractComponentsFromSources(
             props,
             variants,
             needsManualMapping: needsManualMapping || props.length === 0,
+            ...(recordFilePaths ? { filePath, exportName: name } : {}),
           });
         }
       } catch {
@@ -195,8 +198,8 @@ async function extractComponentsFromSources(
     }
   } else {
     // Fallback: regex-based component detection
-    for (const { path, content } of files) {
-      if (!path.match(/\.(tsx?)$/)) continue;
+    for (const { path: filePath, content } of files) {
+      if (!filePath.match(/\.(tsx?)$/)) continue;
       const exportMatches = content.matchAll(/export\s+(?:default\s+)?(?:function|const|class)\s+([A-Z][a-zA-Z0-9]*)/g);
       for (const [, name] of exportMatches) {
         components.push({
@@ -205,6 +208,7 @@ async function extractComponentsFromSources(
           props: [],
           variants: [],
           needsManualMapping: true,
+          ...(recordFilePaths ? { filePath, exportName: name } : {}),
         });
       }
     }
@@ -282,7 +286,9 @@ export async function scanLocal(localPath: string, warnings: string[]): Promise<
     warnings.push(`No TypeScript source files found at path: ${localPath}`);
   }
 
-  const components = await extractComponentsFromSources(files, localPath);
+  // Pass recordFilePaths=true so each component carries its source file path,
+  // enabling studio:local canvas rendering in v0.10.9.
+  const components = await extractComponentsFromSources(files, localPath, true);
   return {
     components,
     tokens,

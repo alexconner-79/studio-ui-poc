@@ -1,7 +1,7 @@
 {
   "id": "material3-native",
   "name": "Material Design 3 (Native)",
-  "description": "Material You tokens adapted for React Native — numeric spacing values, no CSS units",
+  "description": "Material You tokens adapted for React Native \u2014 numeric spacing values, no CSS units",
   "platform": "native",
   "preview": [
     "#6750a4",
@@ -510,7 +510,37 @@
           "name": "onDismiss",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Dialog",
+        "props": {
+          "componentName": "Dialog",
+          "importPath": "react-native-paper"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Dialog Title",
+            "props": {
+              "text": "Dialog Title",
+              "level": 3
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Dialog content.",
+            "props": {
+              "text": "Dialog content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "BottomSheet": {
       "name": "BottomSheet",
@@ -783,7 +813,37 @@
           "name": "onPress",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Card",
+        "props": {
+          "componentName": "Card",
+          "importPath": "react-native-paper"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Card title",
+            "props": {
+              "text": "Card title",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Card content goes here.",
+            "props": {
+              "text": "Card content goes here."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "DataTable": {
       "name": "DataTable",
@@ -1019,7 +1079,38 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Surface",
+        "props": {
+          "componentName": "Surface",
+          "importPath": "react-native-paper",
+          "elevation": 1
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Surface",
+            "props": {
+              "text": "Surface",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Surface content.",
+            "props": {
+              "text": "Surface content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Menu": {
       "name": "Menu",
@@ -1180,5 +1271,6 @@
         }
       ]
     }
-  }
+  },
+  "packageName": "react-native-paper"
 }

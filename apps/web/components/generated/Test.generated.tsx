@@ -3,16 +3,9 @@
 export function Test() {
   return (
     <div style={{ paddingTop: "4px", paddingLeft: "4px" }}>
-      <div className="flex-col flex gap-4 p-8">
+      <div className="flex-col flex gap-[1rem] p-[2rem]">
         <h1 className="text-3xl font-bold">Test</h1>
-        <div
-          style={{
-            width: "1229px",
-            height: "145px",
-            marginLeft: "4px",
-            paddingLeft: "4px",
-          }}
-        >
+        <div style={{ width: "1229px", height: "145px", marginLeft: "4px", paddingLeft: "4px" }}>
           <h1 className="text-3xl font-bold">Heading</h1>
         </div>
       </div>

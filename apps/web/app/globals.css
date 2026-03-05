@@ -123,3 +123,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Studio canvas: make live component children inert in design mode.
+   Nested studio nodes (which carry data-studio-node) keep pointer-events
+   so they remain selectable. Only non-studio DOM children are disabled. */
+[data-canvas-root]:not([data-preview]) [data-studio-node] > *:not([data-studio-node]) {
+  pointer-events: none !important;
+}

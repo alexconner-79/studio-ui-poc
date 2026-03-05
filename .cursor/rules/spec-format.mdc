@@ -1,0 +1,124 @@
+---
+description: Screen spec JSON format for Studio UI
+globs: ["spec/screens/**/*.screen.json"]
+alwaysApply: false
+---
+
+# Screen Spec Format
+
+Each screen is a `*.screen.json` file in `spec/screens/`. The compiler reads these to generate React components.
+
+## Top-Level Structure
+
+```json
+{
+  "version": 1,
+  "route": "/dashboard",
+  "meta": { "title": "Dashboard", "description": "Main dashboard" },
+  "tree": { /* root node */ }
+}
+```
+
+- `version` — always 1
+- `route` — URL path for the generated page
+- `tree` — the root node of the screen (always a container type)
+
+## Node Structure
+
+Every node has this shape:
+
+```json
+{
+  "id": "unique_id",
+  "type": "Stack",
+  "name": "Hero Section",
+  "props": { },
+  "style": { },
+  "children": [ /* child nodes */ ]
+}
+```
+
+- `id` — unique within the screen (e.g. `"stack_abc123"`)
+- `type` — one of the built-in types (see below)
+- `name` — human-readable label shown in the layers panel
+- `props` — type-specific properties
+- `style` — visual styling (see NodeStyle below)
+- `children` — nested child nodes (omit for leaf nodes)
+
+## Built-In Node Types
+
+**Layout:** Stack, Grid, Section, ScrollArea, Box, Container, AspectRatio, Frame
+**Content:** Heading, Text, Image, Link, Divider, List, Icon, SVG, Video, Embed, Blockquote, Code
+**Form:** Input, Textarea, Select, Checkbox, RadioGroup, Switch, Slider, Label, FileUpload, Button, Form
+**Display:** Card, Badge, Avatar, Tooltip, Progress, Skeleton, Alert, Accordion, Carousel, Calendar
+**Overlay:** Modal, Dialog, Drawer, Sheet, Popover, HoverCard, DropdownMenu
+**Navigation:** Nav, Breadcrumb, Pagination, Stepper, Sidebar, AppBar, Tabs
+**Shapes:** Rectangle, Ellipse, Line
+
+**Component types:**
+- `ComponentInstance` — instance of a DS component (importPath, componentName, componentProps)
+- `ComponentRef` — reference to a custom composite component
+- `ExternalComponent` — external library component
+
+## ComponentInstance Node
+
+Used for design system components (shadcn, antd, MUI, etc.):
+
+```json
+{
+  "id": "btn_1",
+  "type": "ComponentInstance",
+  "name": "Primary Button",
+  "props": {
+    "componentName": "Button",
+    "importPath": "studio:shadcn",
+    "componentProps": { "variant": "default", "label": "Submit" }
+  }
+}
+```
+
+## NodeStyle Properties
+
+Style values can be raw CSS values or token references (prefixed with `$`):
+
+```json
+{
+  "style": {
+    "fontSize": "$typography.body.fontSize",
+    "color": "$color.primary",
+    "paddingTop": 16,
+    "paddingBottom": 16,
+    "backgroundColor": "#ffffff",
+    "borderRadius": "$borderRadius.md",
+    "width": "100%"
+  }
+}
+```
+
+**Categories:** typography (fontSize, fontWeight, lineHeight, textAlign, color), sizing (width, height, min/max variants), spacing (paddingTop/Right/Bottom/Left, marginTop/Right/Bottom/Left), background (backgroundColor, backgroundImage), border (borderWidth, borderColor, borderStyle, borderRadius), effects (opacity, boxShadow, effects array), transforms (rotation, scaleX, scaleY), layout (display, flexDirection, justifyContent, alignItems, gap, position).
+
+## Responsive Overrides
+
+Nodes can have breakpoint-specific style overrides:
+
+```json
+{
+  "responsive": {
+    "tablet": { "fontSize": 14, "paddingTop": 8 },
+    "mobile": { "fontSize": 12, "flexDirection": "column" }
+  }
+}
+```
+
+## Interactions
+
+Optional interaction bindings:
+
+```json
+{
+  "interactions": {
+    "onClick": { "action": "navigate", "target": "/about" },
+    "visibleWhen": { "state": "isLoggedIn", "operator": "truthy" }
+  }
+}
+```

@@ -38,6 +38,7 @@ import { CanvasErrorBoundary } from "./error-boundary";
 import { WelcomeModal } from "./onboarding/welcome-modal";
 import { TooltipGuide } from "./onboarding/tooltip-guide";
 import { VersionHistory } from "./version-history";
+import { FloatingAlignBar } from "./floating-align-bar";
 import { toast } from "@/lib/studio/toast";
 
 // -------------------------------------------------------------------------
@@ -517,7 +518,6 @@ function TopBar({
 
         {!previewMode && (
           <>
-            <SToolbarButton icon={<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M8 3v5M5 11h6M3 14h10"/></svg>} title="AI Generate" onClick={onAIGenerate} />
             <SToolbarButton icon={<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,8 5,5 2,2"/><line x1="5" y1="5" x2="14" y2="5"/></svg>} title="Undo (Ctrl+Z)" onClick={undo} />
             <SToolbarButton icon={<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="14,8 11,5 14,2"/><line x1="11" y1="5" x2="2" y2="5"/></svg>} title="Redo (Ctrl+Shift+Z)" onClick={redo} />
             <SToolbarButton icon={<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><polyline points="8,4 8,8 11,10"/></svg>} title="Version History" onClick={onHistory} />
@@ -827,6 +827,7 @@ export function EditorLayout({
   onBack: () => void;
 }) {
   const addNode = useEditorStore((s) => s.addNode);
+  const updateNode = useEditorStore((s) => s.updateNode);
   const moveNode = useEditorStore((s) => s.moveNode);
   const selectNode = useEditorStore((s) => s.selectNode);
   const spec = useEditorStore((s) => s.spec);
@@ -837,8 +838,16 @@ export function EditorLayout({
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const copyNode = useEditorStore((s) => s.copyNode);
   const pasteNode = useEditorStore((s) => s.pasteNode);
+  const cutNode = useEditorStore((s) => s.cutNode);
   const duplicateNode = useEditorStore((s) => s.duplicateNode);
   const groupIntoStack = useEditorStore((s) => s.groupIntoStack);
+  const groupSelectedIntoFrame = useEditorStore((s) => s.groupSelectedIntoFrame);
+  const ungroupNode = useEditorStore((s) => s.ungroupNode);
+  const moveNodeUp = useEditorStore((s) => s.moveNodeUp);
+  const moveNodeDown = useEditorStore((s) => s.moveNodeDown);
+  const moveNodeToFront = useEditorStore((s) => s.moveNodeToFront);
+  const moveNodeToBack = useEditorStore((s) => s.moveNodeToBack);
+  const nudgeNode = useEditorStore((s) => s.nudgeNode);
   const setRenamingNodeId = useEditorStore((s) => s.setRenamingNodeId);
   const addCustomComponent = useEditorStore((s) => s.addCustomComponent);
   const previewMode = useEditorStore((s) => s.previewMode);
@@ -902,6 +911,7 @@ export function EditorLayout({
   const [ctxMenu, setCtxMenu] = React.useState<{ x: number; y: number } | null>(null);
   const [showAIModal, setShowAIModal] = React.useState(false);
   const [showCommandPalette, setShowCommandPalette] = React.useState(false);
+  const [showShortcutRef, setShowShortcutRef] = React.useState(false);
   const [showImportTokens, setShowImportTokens] = React.useState(false);
   const [showDSWizard, setShowDSWizard] = React.useState(false);
   const [showThemeEditor, setShowThemeEditor] = React.useState(false);
@@ -977,6 +987,43 @@ export function EditorLayout({
   }, []);
 
   const setSpec = useEditorStore((s) => s.setSpec);
+  const externalSpecChanged = useEditorStore((s) => s.externalSpecChanged);
+
+  // v0.10.11: Watch spec/screens/ for external edits (Cursor, Claude Code)
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (!screenName) return;
+
+    const es = new EventSource("/api/studio/specs/watch");
+    es.addEventListener("spec-changed", (evt) => {
+      try {
+        const { screenName: changed } = JSON.parse((evt as MessageEvent).data) as { screenName: string };
+        if (changed !== screenName) return;
+        // Re-fetch the spec from the API and apply it
+        const url = projectId
+          ? `/api/studio/screens/${screenName}?projectId=${projectId}`
+          : `/api/studio/screens/${screenName}`;
+        fetch(url)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.spec) {
+              externalSpecChanged(data.spec);
+            }
+          })
+          .catch(() => {});
+      } catch {
+        // ignore malformed events
+      }
+    });
+
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [screenName, projectId, externalSpecChanged]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -998,6 +1045,15 @@ export function EditorLayout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ screenName, spec }),
       }).catch(() => {});
+      // Persist design change log
+      const changes = useEditorStore.getState().designChanges;
+      if (changes.length > 0) {
+        fetch("/api/studio/changelog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ changes }),
+        }).catch(() => {});
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Save failed";
       toast.error(`Failed to save: ${msg}`);
@@ -1063,12 +1119,14 @@ export function EditorLayout({
         e.preventDefault();
         if (!spec) return;
         const fw = useEditorStore.getState().projectFramework;
+        const dsId = useEditorStore.getState().dsId;
         const qs = new URLSearchParams({
           route: spec.route,
           screen: screenName,
           returnTo: `/studio/${screenName}${projectId ? `?project=${projectId}` : ""}`,
           ...(fw ? { framework: fw } : {}),
           ...(projectId ? { projectId } : {}),
+          ...(dsId ? { dsId } : {}),
         });
         router.push(`/preview?${qs.toString()}`);
         return;
@@ -1083,6 +1141,12 @@ export function EditorLayout({
         }
         return;
       }
+      // Cut (Cmd+X)
+      if ((e.metaKey || e.ctrlKey) && e.key === "x" && !isInput) {
+        e.preventDefault();
+        cutNode();
+        return;
+      }
       // Copy
       if ((e.metaKey || e.ctrlKey) && e.key === "c" && !isInput) {
         e.preventDefault();
@@ -1095,10 +1159,58 @@ export function EditorLayout({
         pasteNode();
         return;
       }
-      // Duplicate (Ctrl+D)
+      // Duplicate (Cmd+D)
       if ((e.metaKey || e.ctrlKey) && e.key === "d" && !isInput) {
         e.preventDefault();
         duplicateNode();
+        return;
+      }
+      // Group into frame (Cmd+G)
+      if ((e.metaKey || e.ctrlKey) && e.key === "g" && !isInput) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          ungroupNode();
+        } else {
+          groupSelectedIntoFrame();
+        }
+        return;
+      }
+      // Layer ordering: Cmd+] forward, Cmd+[ backward, Cmd+Shift+] front, Cmd+Shift+[ back
+      if ((e.metaKey || e.ctrlKey) && e.key === "]" && !isInput) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          moveNodeToFront();
+        } else {
+          moveNodeDown();
+        }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "[" && !isInput) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          moveNodeToBack();
+        } else {
+          moveNodeUp();
+        }
+        return;
+      }
+      // Enter group (Cmd+Enter) — select first child of the currently selected node
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !isInput) {
+        e.preventDefault();
+        if (selectedNodeId && spec) {
+          function findStudioNode(root: Node, id: string): Node | null {
+            if (root.id === id) return root;
+            for (const c of root.children ?? []) {
+              const found = findStudioNode(c, id);
+              if (found) return found;
+            }
+            return null;
+          }
+          const target = findStudioNode(spec.tree, selectedNodeId);
+          if (target?.children && target.children.length > 0) {
+            selectNode(target.children[0].id);
+          }
+        }
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -1112,7 +1224,19 @@ export function EditorLayout({
       if (e.key === "Escape") {
         setCtxMenu(null);
         setShowCommandPalette(false);
+        setShowShortcutRef(false);
         selectNode(null);
+        return;
+      }
+      // Arrow key nudge (only when a node is selected and not in an input)
+      if (!isInput && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        if (selectedNodeId && spec && selectedNodeId !== spec.tree.id) {
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : 1;
+          const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+          const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+          nudgeNode(dx, dy);
+        }
         return;
       }
 
@@ -1127,7 +1251,7 @@ export function EditorLayout({
         }
         return;
       }
-      // G -- group selected node into a Stack
+      // G -- group selected node into a Stack (single key, no Cmd)
       if (e.key === "g" || e.key === "G") {
         e.preventDefault();
         groupIntoStack();
@@ -1145,18 +1269,36 @@ export function EditorLayout({
         useEditorStore.getState().setCanvasMode("build");
         return;
       }
+      // E -- focus first property panel field
+      if (e.key === "e" || e.key === "E") {
+        if (selectedNodeId) {
+          e.preventDefault();
+          const panel = document.querySelector("[data-property-panel]") as HTMLElement | null;
+          const firstInput = panel?.querySelector<HTMLInputElement | HTMLSelectElement>("input, select");
+          firstInput?.focus();
+        }
+        return;
+      }
+      // ? -- open shortcut reference overlay
+      if (e.key === "?") {
+        e.preventDefault();
+        setShowShortcutRef(true);
+        return;
+      }
       // Drawing tool shortcuts (Design Mode only)
-      const toolKeys: Record<string, "select" | "frame" | "rectangle" | "ellipse" | "text" | "line"> = {
+      const toolKeys: Record<string, "select" | "frame" | "rectangle" | "ellipse" | "text" | "line" | "pan"> = {
         v: "select", V: "select",
+        a: "frame", A: "frame",
         f: "frame", F: "frame",
         r: "rectangle", R: "rectangle",
         o: "ellipse", O: "ellipse",
         t: "text", T: "text",
         l: "line", L: "line",
+        h: "pan", H: "pan",
       };
       if (toolKeys[e.key]) {
         const tool = toolKeys[e.key];
-        if (tool === "select" || useEditorStore.getState().canvasMode === "design") {
+        if (tool === "select" || tool === "pan" || useEditorStore.getState().canvasMode === "design") {
           e.preventDefault();
           useEditorStore.getState().setCurrentTool(tool);
           return;
@@ -1177,11 +1319,11 @@ export function EditorLayout({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo, removeNode, selectNode, selectedNodeId, spec, copyNode, pasteNode, duplicateNode, handleSave, groupIntoStack, setRenamingNodeId, screenName, projectId, router]);
+  }, [undo, redo, removeNode, selectNode, selectedNodeId, spec, copyNode, cutNode, pasteNode, duplicateNode, handleSave, groupIntoStack, groupSelectedIntoFrame, ungroupNode, moveNodeUp, moveNodeDown, moveNodeToFront, moveNodeToBack, nudgeNode, setRenamingNodeId, screenName, projectId, router]);
 
   // Build a new node from a palette type
   const buildNewNode = useCallback(
-    (nodeType: string) => {
+    (nodeType: string, initialProps?: Record<string, unknown>) => {
       const schema = NODE_SCHEMAS[nodeType];
       const defaultProps: Record<string, unknown> = {};
       if (schema) {
@@ -1191,11 +1333,20 @@ export function EditorLayout({
           }
         });
       }
+      const mergedProps = initialProps ? { ...defaultProps, ...initialProps } : defaultProps;
+
+      // Text-bearing nodes default to hug sizing (like Figma text auto-resize)
+      const TEXT_HUG_TYPES = new Set(["Heading", "Text"]);
+      const defaultStyle = TEXT_HUG_TYPES.has(nodeType)
+        ? { widthMode: "hug" as const, heightMode: "hug" as const }
+        : undefined;
+
       return {
         id: generateId(nodeType.toLowerCase()),
         type: nodeType,
         name: schema?.label ?? nodeType,
-        props: Object.keys(defaultProps).length > 0 ? defaultProps : undefined,
+        props: Object.keys(mergedProps).length > 0 ? mergedProps : undefined,
+        style: defaultStyle,
         children: schema?.acceptsChildren ? [] : undefined,
       };
     },
@@ -1243,7 +1394,8 @@ export function EditorLayout({
       // -------------------------------------------------------------------
       if (wasPaletteDrag && activeData?.type === "palette") {
         const nodeType = activeData.nodeType as string;
-        const newNode = buildNewNode(nodeType);
+        const initialProps = activeData.initialProps as Record<string, unknown> | undefined;
+        const newNode = buildNewNode(nodeType, initialProps);
 
         if (overData?.type === "insertion") {
           const parentId = overData.parentId as string;
@@ -1347,6 +1499,7 @@ export function EditorLayout({
           const index = overData.index as number;
           addNode(parentId, cloned, index);
           selectNode(cloned.id);
+          autoApplyTemplate(cloned);
           return;
         }
 
@@ -1360,11 +1513,59 @@ export function EditorLayout({
             addNode(parent?.id ?? spec.tree.id, cloned);
           }
           selectNode(cloned.id);
+          autoApplyTemplate(cloned);
         }
       }
     },
-    [spec, addNode, buildNewNode, moveNode, selectNode, draggedType, draggedNodeId, draggedAssetUrl, draggedComposite]
+    [spec, addNode, updateNode, buildNewNode, moveNode, selectNode, draggedType, draggedNodeId, draggedAssetUrl, draggedComposite]
   );
+
+  // Auto-fetch and apply defaultTemplate when a ComponentInstance lands with no children.
+  // This handles the case where the stored DS component has no defaultTemplate (applied
+  // before v0.10.4 was shipped). Runs asynchronously so the node is on canvas immediately.
+  function autoApplyTemplate(node: Node) {
+    if (node.type !== "ComponentInstance") return;
+    if (node.children && node.children.length > 0) return;
+    const componentName = (node.props as Record<string, unknown>)?.componentName as string | undefined;
+    if (!componentName) return;
+
+    const importPath = (node.props as Record<string, unknown>)?.importPath as string | undefined;
+    const params = new URLSearchParams({ component: componentName });
+    if (importPath?.startsWith("studio:")) {
+      // studio:* is a virtual path — no starter has a matching packageName.
+      // The studio-minimal-web starter owns all studio:shadcn components.
+      params.set("starter", "studio-minimal-web");
+    } else if (importPath) {
+      // Real npm package: let the API scope by packageName.
+      params.set("importPath", importPath);
+    }
+    // No importPath → fall through to "search all starters" (rare, legacy nodes).
+
+    fetch(`/api/studio/ds-starters?${params.toString()}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { defaultTemplate?: { children?: Node[] }; defaultNodeStyle?: Record<string, unknown> } | null) => {
+        const children = data?.defaultTemplate?.children;
+        const nodeStyle = data?.defaultNodeStyle;
+        const updates: Partial<Node> = {};
+
+        if (children && children.length > 0) {
+          updates.children = (children as Node[]).map((n) =>
+            cloneWithNewIds({ id: n.id ?? generateId(), ...n } as Node)
+          );
+        }
+
+        if (nodeStyle && typeof nodeStyle === "object") {
+          // Merge defaultNodeStyle into the node's existing style (never overwrite user overrides)
+          const existing = (node.style as Record<string, unknown> | undefined) ?? {};
+          updates.style = { ...nodeStyle, ...existing };
+        }
+
+        if (Object.keys(updates).length > 0) {
+          updateNode(node.id, updates);
+        }
+      })
+      .catch(() => { /* silently ignore — user can still restore manually */ });
+  }
 
   return (
     <div
@@ -1390,12 +1591,14 @@ export function EditorLayout({
         onPreview={() => {
           if (!spec) return;
           const fw = useEditorStore.getState().projectFramework;
+          const dsId = useEditorStore.getState().dsId;
           const qs = new URLSearchParams({
             route: spec.route,
             screen: screenName,
             returnTo: `/studio/${screenName}${projectId ? `?project=${projectId}` : ""}`,
             ...(fw ? { framework: fw } : {}),
             ...(projectId ? { projectId } : {}),
+            ...(dsId ? { dsId } : {}),
           });
           router.push(`/preview?${qs.toString()}`);
         }}
@@ -1478,7 +1681,9 @@ export function EditorLayout({
                 )}
               </div>
             )}
-            <CanvasErrorBoundary>
+            <div className="relative flex-1 min-h-0">
+              {!previewMode && <FloatingAlignBar />}
+              <CanvasErrorBoundary>
               <EditorCanvas
                 isDragging={!previewMode && (!!draggedType || !!draggedNodeId || !!draggedAssetUrl || !!draggedComposite)}
                 previewMode={previewMode}
@@ -1504,12 +1709,13 @@ export function EditorLayout({
                 }}
               />
             </CanvasErrorBoundary>
+            </div>
           </div>
 
           {/* Right sidebar -- Property panel (hidden in preview mode) */}
           {!previewMode && <ResizeHandle onMouseDown={startRightResize} />}
           {!previewMode && (
-            <div data-guide="properties" className="shrink-0 overflow-hidden [background:var(--s-bg-panel)]" style={{ width: rightPanelWidth }}>
+            <div data-guide="properties" data-property-panel className="shrink-0 overflow-hidden [background:var(--s-bg-panel)]" style={{ width: rightPanelWidth }}>
               <PropertyPanel />
             </div>
           )}
@@ -1556,18 +1762,6 @@ export function EditorLayout({
       {/* Right-click context menu */}
       {ctxMenu && (
         <ContextMenu x={ctxMenu.x} y={ctxMenu.y} onClose={() => setCtxMenu(null)} />
-      )}
-
-      {/* AI Generate modal */}
-      {showAIModal && (
-        <AIGenerateModal
-          screenName={screenName}
-          onGenerated={(newSpec) => {
-            // Load the AI-generated spec into the editor
-            setSpec(newSpec as import("@/lib/studio/types").ScreenSpec, screenName);
-          }}
-          onClose={() => setShowAIModal(false)}
-        />
       )}
 
       {/* Command palette */}
@@ -1709,6 +1903,79 @@ export function EditorLayout({
 
       {/* Promote suggestion toast */}
       <PromoteSuggestionToast />
+
+      {/* Shortcut reference overlay (? key) */}
+      {showShortcutRef && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowShortcutRef(false)}
+        >
+          <div
+            className="bg-popover border rounded-xl shadow-2xl w-[580px] max-h-[80vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold">Keyboard Shortcuts</h2>
+              <button
+                className="text-muted-foreground hover:text-foreground text-sm"
+                onClick={() => setShowShortcutRef(false)}
+              >
+                Esc to close
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-0.5 text-[12px]">
+              {[
+                { section: "Tools" },
+                { key: "V", label: "Select" },
+                { key: "A / F", label: "Frame" },
+                { key: "R", label: "Rectangle" },
+                { key: "T", label: "Text" },
+                { key: "H", label: "Pan" },
+                { key: "Esc", label: "Deselect / cancel tool" },
+                { section: "Node Operations" },
+                { key: "⌘D", label: "Duplicate" },
+                { key: "⌘X", label: "Cut" },
+                { key: "⌘C / ⌘V", label: "Copy / Paste" },
+                { key: "Del / ⌫", label: "Delete" },
+                { key: "⌘Z / ⌘⇧Z", label: "Undo / Redo" },
+                { section: "Layer Ordering" },
+                { key: "⌘]", label: "Bring forward" },
+                { key: "⌘[", label: "Send backward" },
+                { key: "⌘⇧]", label: "Bring to front" },
+                { key: "⌘⇧[", label: "Send to back" },
+                { section: "Nudge" },
+                { key: "↑ ↓ ← →", label: "Nudge 1px" },
+                { key: "⇧ + Arrow", label: "Nudge 10px" },
+                { section: "Grouping" },
+                { key: "⌘G", label: "Group into frame" },
+                { key: "⌘⇧G", label: "Ungroup" },
+                { key: "⌘↵", label: "Enter group" },
+                { section: "Canvas" },
+                { key: "D", label: "Design mode" },
+                { key: "B", label: "Build mode" },
+                { key: "E", label: "Focus properties" },
+                { key: "⌘S", label: "Save" },
+                { key: "⌘P", label: "Preview" },
+                { key: "/", label: "Command palette" },
+                { key: "?", label: "Shortcut reference" },
+              ].map((item, i) =>
+                item.section ? (
+                  <div key={i} className="col-span-2 mt-3 mb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b pb-1">
+                    {item.section}
+                  </div>
+                ) : (
+                  <div key={i} className="flex items-center justify-between py-0.5">
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <kbd className="ml-4 font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded border border-border">
+                      {item.key}
+                    </kbd>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -74,6 +74,8 @@ export interface DesignSystem {
   tokens: Record<string, unknown>;
   themes: Record<string, unknown>;
   components: Record<string, unknown>;
+  packageName?: string | null;
+  packageNameNative?: string | null;
   created_at: string;
   updated_at: string;
 }

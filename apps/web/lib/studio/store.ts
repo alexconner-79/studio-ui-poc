@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { produce, enableMapSet } from "immer";
-import type { Node, NodeStyle, ScreenSpec, DesignTokens, ResponsiveOverrides } from "./types";
+import type { Node, NodeStyle, ScreenSpec, DesignTokens, ResponsiveOverrides, DesignChange } from "./types";
 import type { ComponentDef } from "./component-system";
 import { resolveAllRefs, isComponentRef, resetToComponent } from "./component-system";
 import type { GuideLine, DistanceIndicator } from "./geometry";
@@ -142,7 +142,7 @@ type EditorState = {
   activeThemeId: string | null;
 
   // DS component definitions available for insertion
-  dsComponents: Array<{ name: string; category?: string; description?: string; variants?: unknown[]; states?: unknown[]; props?: unknown[] }>;
+  dsComponents: Array<{ name: string; category?: string; description?: string; variants?: unknown[]; states?: unknown[]; props?: unknown[]; importPath?: string; defaultTemplate?: unknown }>;
 
   // Linked DS metadata (set on project load, used by Insert panel empty state)
   dsId: string | null;
@@ -157,7 +157,7 @@ type EditorState = {
   canvasMode: "design" | "build";
 
   // Drawing tool (v0.8.5)
-  currentTool: "select" | "frame" | "rectangle" | "ellipse" | "text" | "line";
+  currentTool: "select" | "frame" | "rectangle" | "ellipse" | "text" | "line" | "pan";
 
   // Smart guides (v0.8.5)
   smartGuides: GuideLine[];
@@ -192,6 +192,9 @@ type EditorState = {
   // History (undo/redo)
   history: ScreenSpec[];
   historyIndex: number;
+
+  // Design change log (v0.10.11)
+  designChanges: DesignChange[];
 
   // Actions
   setSpec: (spec: ScreenSpec, screenName: string) => void;
@@ -256,6 +259,9 @@ type EditorState = {
 
   // Drawing tool (v0.8.5)
   setCurrentTool: (tool: EditorState["currentTool"]) => void;
+  // v0.10.6: canvas pan offset (used by pan tool)
+  panOffset: { x: number; y: number };
+  setPanOffset: (offset: { x: number; y: number }) => void;
 
   // Smart guides (v0.8.5)
   setSmartGuides: (guides: GuideLine[], distances: DistanceIndicator[]) => void;
@@ -278,9 +284,14 @@ type EditorState = {
 
   copyNode: () => void;
   pasteNode: () => void;
+  cutNode: () => void;
   duplicateNode: () => void;
   moveNodeUp: () => void;
   moveNodeDown: () => void;
+  moveNodeToFront: () => void;
+  moveNodeToBack: () => void;
+  nudgeNode: (dx: number, dy: number) => void;
+  ungroupNode: () => void;
 
   undo: () => void;
   redo: () => void;
@@ -306,6 +317,9 @@ type EditorState = {
   createInstanceOfComponent: (defId: string, parentId: string, index?: number) => void;
   resetInstanceToComponent: (nodeId: string) => void;
   resolvedTree: () => Node | null;
+
+  // External spec reload (v0.10.11 — AI-Ready Codebase)
+  externalSpecChanged: (spec: ScreenSpec) => void;
 };
 
 function pushHistory(state: EditorState): void {
@@ -318,6 +332,25 @@ function pushHistory(state: EditorState): void {
   }
   state.history = newHistory;
   state.historyIndex = newHistory.length - 1;
+}
+
+const MAX_CHANGES = 100;
+
+function pushDesignChange(
+  state: EditorState,
+  action: DesignChange["action"],
+  description: string,
+  nodeId?: string,
+): void {
+  const entry: DesignChange = {
+    id: `chg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+    timestamp: new Date().toISOString(),
+    action,
+    description,
+    nodeId,
+    screenName: state.screenName ?? undefined,
+  };
+  state.designChanges = [entry, ...state.designChanges].slice(0, MAX_CHANGES);
 }
 
 // Module-level timer for debouncing artboard width persistence
@@ -351,6 +384,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   renamingNodeId: null,
   canvasMode: "build",
   currentTool: "select",
+  panOffset: { x: 0, y: 0 },
   promoteSuggestion: null,
   smartGuides: [],
   smartDistances: [],
@@ -365,6 +399,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   currentProjectId: null,
   history: [],
   historyIndex: -1,
+  designChanges: [],
 
   setSpec: (spec, screenName) =>
     set((state) => {
@@ -460,6 +495,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         }
         state.dirty = true;
         state.selectedNodeId = node.id;
+        pushDesignChange(state, "added", `Added ${node.type} "${node.name ?? node.id}" to ${parent.name ?? parent.id}`, node.id);
       })
     ),
 
@@ -467,16 +503,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set(
       produce((state: EditorState) => {
         if (!state.spec) return;
-        // Don't allow removing the root node
         if (state.spec.tree.id === nodeId) return;
-        // Lock guard
         if (state.lockedNodeIds.has(nodeId)) return;
+        const node = findNode(state.spec.tree, nodeId);
+        const nodeName = node?.name ?? node?.type ?? nodeId;
         pushHistory(state);
         removeNodeFromTree(state.spec.tree, nodeId);
         if (state.selectedNodeId === nodeId) {
           state.selectedNodeId = null;
         }
         state.dirty = true;
+        pushDesignChange(state, "removed", `Removed ${nodeName}`, nodeId);
       })
     ),
 
@@ -487,7 +524,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         const node = findNode(state.spec.tree, nodeId);
         if (!node) return;
         pushHistory(state);
-        // Clone the node before removing
         const clone = JSON.parse(JSON.stringify(node));
         removeNodeFromTree(state.spec.tree, nodeId);
         const newParent = findNode(state.spec.tree, newParentId);
@@ -495,6 +531,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         if (!newParent.children) newParent.children = [];
         newParent.children.splice(newIndex, 0, clone);
         state.dirty = true;
+        pushDesignChange(state, "moved", `Moved ${node.name ?? node.type} to ${newParent.name ?? newParent.id}`, nodeId);
       })
     ),
 
@@ -539,9 +576,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         if (!trimmed) return;
         const node = findNode(state.spec.tree, id);
         if (!node) return;
+        const oldName = node.name ?? node.id;
         pushHistory(state);
         node.name = trimmed;
         state.dirty = true;
+        pushDesignChange(state, "renamed", `Renamed "${oldName}" to "${trimmed}"`, id);
       })
     ),
 
@@ -674,10 +713,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           props: { direction: "column", gap: "4" },
           children: [JSON.parse(JSON.stringify(node))],
         };
-        // Replace the node in the parent with the wrapper
         parentInfo.parent.children![parentInfo.index] = wrapper;
         state.selectedNodeId = stackId;
         state.dirty = true;
+        pushDesignChange(state, "grouped", `Grouped ${node.name ?? node.type} into Stack`, stackId);
       })
     ),
 
@@ -751,7 +790,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         const node = findNode(state.spec.tree, nodeId);
         if (!node) return;
         node.style = { ...(node.style ?? {}), ...style };
-        // Remove undefined/null values
         const s = node.style as Record<string, unknown>;
         for (const key of Object.keys(s)) {
           if (s[key] === undefined || s[key] === null || s[key] === "") {
@@ -762,6 +800,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           delete node.style;
         }
         state.dirty = true;
+        const changedKeys = Object.keys(style).filter((k) => (style as Record<string, unknown>)[k] !== undefined);
+        if (changedKeys.length > 0) {
+          pushDesignChange(state, "styled", `Styled ${node.name ?? node.type}: ${changedKeys.join(", ")}`, nodeId);
+        }
       })
     ),
 
@@ -810,7 +852,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         const hasTokens = Object.keys(tokens).length > 0;
         const themes = data.themes ?? {};
         const raw = data.components ?? {};
-        const components = Array.isArray(raw) ? raw : Object.values(raw as Record<string, unknown>);
+        const packageName = (data.packageName as string | null) ?? null;
+        const rawList = Array.isArray(raw) ? raw : Object.values(raw as Record<string, unknown>);
+        // Enrich components that lack importPath using the top-level packageName
+        const components = packageName
+          ? rawList.map((c) => {
+              const comp = c as Record<string, unknown>;
+              return comp.importPath ? comp : { ...comp, importPath: packageName };
+            })
+          : rawList;
         if (hasTokens || components.length > 0 || data.dsId) {
           set({
             designTokens: hasTokens ? { ...tokens, raw: tokens } : null,
@@ -833,7 +883,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
               const dsTokens = ds.tokens ?? {};
               const themes = ds.themes ?? {};
               const rawDs = ds.components ?? {};
-              const components = Array.isArray(rawDs) ? rawDs : Object.values(rawDs as Record<string, unknown>);
+              const dsPackageName = (ds.packageName as string | null) ?? null;
+              const rawDsList = Array.isArray(rawDs) ? rawDs : Object.values(rawDs as Record<string, unknown>);
+              const components = dsPackageName
+                ? rawDsList.map((c) => {
+                    const comp = c as Record<string, unknown>;
+                    return comp.importPath ? comp : { ...comp, importPath: dsPackageName };
+                  })
+                : rawDsList;
               set({
                 designTokens: Object.keys(dsTokens).length > 0 ? { ...dsTokens, raw: dsTokens } : null,
                 dsThemes: themes,
@@ -857,6 +914,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setCanvasMode: (mode) => set({ canvasMode: mode }),
   setCurrentTool: (tool) => set({ currentTool: tool }),
+  setPanOffset: (offset) => set({ panOffset: offset }),
 
   toggleNodeCompile: (nodeId) =>
     set(
@@ -989,6 +1047,89 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         state.dirty = true;
       })
     ),
+
+  moveNodeToFront: () =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec || !state.selectedNodeId) return;
+        if (state.selectedNodeId === state.spec.tree.id) return;
+        const info = findParent(state.spec.tree, state.selectedNodeId);
+        if (!info || !info.parent.children) return;
+        if (info.index === info.parent.children.length - 1) return;
+        pushHistory(state);
+        const [node] = info.parent.children.splice(info.index, 1);
+        info.parent.children.push(node);
+        state.dirty = true;
+      })
+    ),
+
+  moveNodeToBack: () =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec || !state.selectedNodeId) return;
+        if (state.selectedNodeId === state.spec.tree.id) return;
+        const info = findParent(state.spec.tree, state.selectedNodeId);
+        if (!info || info.index === 0) return;
+        pushHistory(state);
+        const [node] = info.parent.children!.splice(info.index, 1);
+        info.parent.children!.unshift(node);
+        state.dirty = true;
+      })
+    ),
+
+  nudgeNode: (dx, dy) =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec || !state.selectedNodeId) return;
+        const node = findNode(state.spec.tree, state.selectedNodeId);
+        if (!node) return;
+        if (!node.style) node.style = {};
+        const left = parseFloat(String(node.style.left ?? "0")) || 0;
+        const top = parseFloat(String(node.style.top ?? "0")) || 0;
+        pushHistory(state);
+        node.style.left = `${left + dx}px`;
+        node.style.top = `${top + dy}px`;
+        state.dirty = true;
+      })
+    ),
+
+  ungroupNode: () =>
+    set(
+      produce((state: EditorState) => {
+        if (!state.spec || !state.selectedNodeId) return;
+        const nodeId = state.selectedNodeId;
+        const node = findNode(state.spec.tree, nodeId);
+        if (!node || !node.children || node.children.length === 0) return;
+        const info = findParent(state.spec.tree, nodeId);
+        if (!info || !info.parent.children) return;
+        pushHistory(state);
+        const groupLeft = parseFloat(String(node.style?.left ?? "0")) || 0;
+        const groupTop = parseFloat(String(node.style?.top ?? "0")) || 0;
+        const promoted = node.children.map((child) => {
+          const childLeft = parseFloat(String(child.style?.left ?? "0")) || 0;
+          const childTop = parseFloat(String(child.style?.top ?? "0")) || 0;
+          return {
+            ...child,
+            style: {
+              ...(child.style ?? {}),
+              left: `${groupLeft + childLeft}px`,
+              top: `${groupTop + childTop}px`,
+            },
+          } as typeof child;
+        });
+        info.parent.children.splice(info.index, 1, ...promoted);
+        state.selectedNodeId = null;
+        state.dirty = true;
+        pushDesignChange(state, "ungrouped", `Ungrouped ${node.name ?? node.type} (${promoted.length} children)`, nodeId);
+      })
+    ),
+
+  cutNode: () => {
+    const { spec, selectedNodeId } = get();
+    if (!spec || !selectedNodeId || selectedNodeId === spec.tree.id) return;
+    get().copyNode();
+    get().removeNode(selectedNodeId);
+  },
 
   undo: () =>
     set(
@@ -1192,4 +1333,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!spec) return null;
     return resolveAllRefs(spec.tree, componentDefs);
   },
+
+  externalSpecChanged: (newSpec) =>
+    set(
+      produce((state: EditorState) => {
+        state.spec = JSON.parse(JSON.stringify(newSpec));
+        pushHistory(state);
+        state.dirty = false;
+      })
+    ),
 }));

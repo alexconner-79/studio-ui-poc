@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
+import { LiveNode } from "@/components/studio/live-node";
 import { toast } from "@/lib/studio/toast";
 
 // ─────────────────────────────────────────────────────────────
@@ -25,17 +26,30 @@ interface VariantGroup {
 
 type ComponentState = "default" | "hover" | "pressed" | "focus" | "disabled";
 
+interface TemplateNode {
+  id: string;
+  type: string;
+  props: Record<string, string | number | boolean>;
+  children: TemplateNode[];
+}
+
 interface ComponentDef {
   name: string;
   description?: string;
+  importPath?: string;
   variants: VariantGroup[];
   states: ComponentState[];
   props: ComponentProp[];
+  defaultTemplate?: { type: string; props: Record<string, unknown>; children: TemplateNode[] } | null;
 }
 
 type ComponentStore = Record<string, ComponentDef>;
 
 const ALL_STATES: ComponentState[] = ["default", "hover", "pressed", "focus", "disabled"];
+
+function tplId() {
+  return Math.random().toString(36).slice(2, 9);
+}
 
 // ─────────────────────────────────────────────────────────────
 // Category map
@@ -606,51 +620,123 @@ function GenericPreview({ name }: { name: string }) {
   );
 }
 
-function ComponentPreview({ def, tokens, selectedVariants, previewState }: PreviewProps) {
+/** Catches render errors from components that require a parent context (e.g. ResizablePanel). */
+class PreviewErrorBoundary extends React.Component<
+  { children: React.ReactNode; name: string },
+  { error: string | null }
+> {
+  constructor(props: { children: React.ReactNode; name: string }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(err: unknown) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-1 py-6 text-center">
+          <p className="text-xs font-medium text-muted-foreground">{this.props.name}</p>
+          <p className="text-[10px] text-muted-foreground/50">Must be placed inside its parent component</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Props that make a component "controlled" — if passed as static values with no
+// change handler, the component locks and can't be interacted with in the preview.
+const CONTROLLED_STATE_PROPS = new Set(["checked", "value", "pressed", "selected", "indeterminate"]);
+
+// Overlay components should always be forced closed so they don't block the preview.
+const OVERLAY_COMPONENTS = new Set(["Dialog","Sheet","Popover","Tooltip","HoverCard","DropdownMenu","ContextMenu","AlertDialog","Command","Menubar","Drawer"]);
+
+/**
+ * Build a clean props object for a component preview. Applies all known
+ * Radix/shadcn-specific coercions in one place so no scattered per-component
+ * patches are needed elsewhere.
+ */
+function normalizePreviewProps(
+  def: ComponentDef,
+  selectedVariants: Record<string, string>
+): Record<string, unknown> {
+  const base: Record<string, unknown> = {};
+
+  for (const prop of def.props ?? []) {
+    if (prop.default !== undefined && !CONTROLLED_STATE_PROPS.has(prop.name)) {
+      base[prop.name] = prop.default;
+    }
+  }
+
+  // Radix Slider expects number[] — coerce a bare number just in case the
+  // token definition ever stores it as a scalar.
+  if (def.name === "Slider" && typeof base.defaultValue === "number") {
+    base.defaultValue = [base.defaultValue as number];
+  }
+
+  if (OVERLAY_COMPONENTS.has(def.name)) base.open = false;
+
+  Object.assign(base, selectedVariants);
+  return base;
+}
+
+/** Live preview using the real React component via LiveNode. */
+function LiveNodePreview({ def, selectedVariants }: { def: ComponentDef; selectedVariants: Record<string, string> }) {
+  const importPath = def.importPath ?? "studio:shadcn";
+
+  const componentProps = useMemo(
+    () => normalizePreviewProps(def, selectedVariants),
+    [def, selectedVariants]
+  );
+
+  // studio:template components have rich built-in mock content — injecting
+  // template tree children overrides that and produces broken partial renders.
+  // Only pass template children for shadcn/external components that need their
+  // compound sub-components (Accordion → AccordionItem, Alert → AlertTitle, etc.)
+  const templateChildren = importPath !== "studio:template"
+    ? def.defaultTemplate?.children
+    : undefined;
+
+  return (
+    <div style={{ minWidth: 200, maxWidth: "100%" }}>
+      <LiveNode importPath={importPath} componentName={def.name} componentProps={componentProps} previewMode={true}>
+        {templateChildren?.map((child, i) => {
+          const cp = (child.props ?? {}) as Record<string, unknown>;
+          const childPath = (cp.importPath as string | undefined) ?? importPath;
+          const childName = (cp.componentName as string | undefined) ?? child.type;
+          const childCompProps = (cp.componentProps as Record<string, unknown> | undefined) ?? {};
+          const grandChildren = (child as { children?: typeof templateChildren }).children;
+          return (
+            <LiveNode key={i} importPath={childPath} componentName={childName} componentProps={childCompProps} previewMode={true}>
+              {grandChildren?.map((gc, j) => {
+                const gcp = (gc.props ?? {}) as Record<string, unknown>;
+                const gcPath = (gcp.importPath as string | undefined) ?? childPath;
+                const gcName = (gcp.componentName as string | undefined) ?? gc.type;
+                const gcProps = (gcp.componentProps as Record<string, unknown> | undefined) ?? {};
+                return <LiveNode key={j} importPath={gcPath} componentName={gcName} componentProps={gcProps} previewMode={true} />;
+              })}
+            </LiveNode>
+          );
+        })}
+      </LiveNode>
+    </div>
+  );
+}
+
+function ComponentPreview({ def, tokens, selectedVariants }: PreviewProps) {
   const cssVars = useMemo(() => buildCssVars(tokens), [tokens]);
-  const name = def.name.toLowerCase().replace(/[^a-z]/g, "");
-
-  // Resolve selected variant for a given group
-  const variantValue = (groupName: string) => selectedVariants[groupName] ?? def.variants.find(v => v.name === groupName)?.default ?? "";
-
-  const mainVariant = variantValue("variant") || variantValue("mode") || variantValue("type") || variantValue("size") || "";
-
-  const renderMockup = () => {
-    if (["button","iconbutton"].includes(name)) return <ButtonPreview variant={mainVariant} state={previewState} />;
-    if (["input","textfield","textinput"].includes(name)) return <InputPreview variant={mainVariant} state={previewState} />;
-    if (["textarea"].includes(name)) return <TextareaPreview state={previewState} />;
-    if (["select","picker","autocomplete","cascader"].includes(name)) return <SelectPreview state={previewState} />;
-    if (["checkbox"].includes(name)) return <CheckboxPreview state={previewState} />;
-    if (["radio","radiogroup","radiobutton"].includes(name)) return <RadioPreview state={previewState} />;
-    if (["switch","toggle"].includes(name)) return <SwitchPreview state={previewState} />;
-    if (["slider"].includes(name)) return <SliderPreview state={previewState} />;
-    if (["badge","chip","tag"].includes(name)) return <BadgePreview variant={mainVariant} state={previewState} />;
-    if (["alert"].includes(name)) return <AlertPreview variant={mainVariant} state={previewState} />;
-    if (["progress","progressbar","progressview","linearprogress","circularprogress"].includes(name)) return <ProgressPreview variant={mainVariant} state={previewState} />;
-    if (["skeleton"].includes(name)) return <SkeletonPreview />;
-    if (["spinner","activityindicator","spin"].includes(name)) return <SpinnerPreview state={previewState} />;
-    if (["avatar"].includes(name)) return <AvatarPreview variant={mainVariant} state={previewState} />;
-    if (["card"].includes(name)) return <CardPreview variant={mainVariant} state={previewState} />;
-    if (["tabs","tabview","tabbar"].includes(name)) return <TabsPreview variant={mainVariant} state={previewState} />;
-    if (["breadcrumb","breadcrumbs"].includes(name)) return <BreadcrumbPreview />;
-    if (["pagination"].includes(name)) return <PaginationPreview state={previewState} />;
-    if (["table","datatable"].includes(name)) return <TablePreview />;
-    if (["list","flatlist","sectionlist"].includes(name)) return <ListPreview />;
-    if (["dialog","modal","alertdialog"].includes(name)) return <ModalPreview />;
-    if (["drawer","sheet","bottomsheet"].includes(name)) return <DrawerPreview />;
-    if (["tooltip"].includes(name)) return <TooltipPreview />;
-    if (["fab"].includes(name)) return <FABPreview state={previewState} />;
-    return <GenericPreview name={def.name} />;
-  };
 
   return (
     <div style={{ ["--"] : cssVars } as React.CSSProperties} className="relative">
       <style>{`:root { ${cssVars} }`}</style>
-      <div className="flex items-center justify-center min-h-[120px] rounded-xl bg-white dark:bg-zinc-900 border">
-        {renderMockup()}
+      <div className="flex items-center justify-center min-h-[120px] p-4 rounded-xl bg-white dark:bg-zinc-900 border overflow-hidden">
+        <PreviewErrorBoundary name={def.name}>
+          <LiveNodePreview def={def} selectedVariants={selectedVariants} />
+        </PreviewErrorBoundary>
       </div>
       <p className="text-[9px] text-muted-foreground text-center mt-1.5">
-        Static CSS mockup · uses current DS token values
+        Live preview · uses real component
       </p>
     </div>
   );
@@ -899,6 +985,265 @@ function PropEditor({ props, onChange }: { props: ComponentProp[]; onChange: (p:
 }
 
 // ─────────────────────────────────────────────────────────────
+// Template editor
+// ─────────────────────────────────────────────────────────────
+
+const TEMPLATE_NODE_TYPES = [
+  { type: "Heading",   label: "Heading",   defaultProps: { text: "Heading", level: 2 } },
+  { type: "Text",      label: "Text",       defaultProps: { text: "Body text goes here." } },
+  { type: "Image",     label: "Image",      defaultProps: { src: "", alt: "Image" } },
+  { type: "Stack",     label: "Stack",      defaultProps: { direction: "vertical" } },
+  { type: "Button",    label: "Button",     defaultProps: { text: "Button" } },
+  { type: "Divider",   label: "Divider",    defaultProps: {} },
+  { type: "Spacer",    label: "Spacer",     defaultProps: {} },
+  { type: "Badge",     label: "Badge",      defaultProps: { text: "Badge" } },
+  { type: "Avatar",    label: "Avatar",     defaultProps: { fallback: "AB" } },
+] as const;
+
+function TemplateNodeRow({
+  node,
+  onUpdate,
+  onRemove,
+  dragging,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: {
+  node: TemplateNode;
+  onUpdate: (id: string, props: Record<string, string | number | boolean>) => void;
+  onRemove: (id: string) => void;
+  dragging: string | null;
+  onDragStart: (id: string) => void;
+  onDragOver: (id: string) => void;
+  onDrop: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const editableProps = Object.entries(node.props).filter(([, v]) => typeof v === "string" || typeof v === "number");
+
+  return (
+    <div
+      draggable
+      onDragStart={() => onDragStart(node.id)}
+      onDragOver={(e) => { e.preventDefault(); onDragOver(node.id); }}
+      onDrop={(e) => { e.preventDefault(); onDrop(node.id); }}
+      className={`rounded-lg border transition-colors ${dragging === node.id ? "opacity-40" : "opacity-100"}`}
+    >
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        {/* drag handle */}
+        <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor" className="text-muted-foreground/30 shrink-0 cursor-grab">
+          <circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/>
+          <circle cx="2" cy="6" r="1.2"/><circle cx="6" cy="6" r="1.2"/>
+          <circle cx="2" cy="10" r="1.2"/><circle cx="6" cy="10" r="1.2"/>
+        </svg>
+
+        <span className="text-[11px] font-semibold text-foreground flex-1">{node.type}</span>
+
+        {/* Quick text preview */}
+        {typeof node.props.text === "string" && node.props.text && (
+          <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">{node.props.text as string}</span>
+        )}
+
+        {editableProps.length > 0 && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[10px] text-muted-foreground hover:text-foreground px-1"
+            title={expanded ? "Collapse" : "Edit props"}
+          >
+            {expanded ? "▲" : "▼"}
+          </button>
+        )}
+
+        <button
+          onClick={() => onRemove(node.id)}
+          className="text-[10px] text-muted-foreground hover:text-destructive px-1"
+          title="Remove"
+        >
+          ×
+        </button>
+      </div>
+
+      {expanded && editableProps.length > 0 && (
+        <div className="px-3 pb-2.5 space-y-1.5 border-t bg-muted/20">
+          {editableProps.map(([key, val]) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-muted-foreground w-16 shrink-0">{key}</span>
+              <input
+                type={typeof val === "number" ? "number" : "text"}
+                value={String(val)}
+                onChange={(e) => onUpdate(node.id, {
+                  ...node.props,
+                  [key]: typeof val === "number" ? Number(e.target.value) : e.target.value,
+                })}
+                className="flex-1 px-2 py-1 text-[11px] bg-background border rounded focus:outline-none focus:ring-1 focus:ring-[var(--s-accent)]"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TemplateEditor({
+  initialTemplate,
+  onSave,
+  onClose,
+}: {
+  initialTemplate: ComponentDef["defaultTemplate"];
+  onSave: (tpl: ComponentDef["defaultTemplate"]) => void;
+  onClose: () => void;
+}) {
+  const [nodes, setNodes] = useState<TemplateNode[]>(() => {
+    if (initialTemplate && Array.isArray(initialTemplate.children)) {
+      return initialTemplate.children.map((n) => ({
+        id: tplId(),
+        type: n.type ?? "Text",
+        props: (n.props ?? {}) as Record<string, string | number | boolean>,
+        children: [],
+      }));
+    }
+    return [];
+  });
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [addType, setAddType] = useState<string>(TEMPLATE_NODE_TYPES[0].type);
+
+  const handleAdd = () => {
+    const meta = TEMPLATE_NODE_TYPES.find((t) => t.type === addType);
+    const newNode: TemplateNode = {
+      id: tplId(),
+      type: addType,
+      props: (meta?.defaultProps ?? {}) as Record<string, string | number | boolean>,
+      children: [],
+    };
+    setNodes((prev) => [...prev, newNode]);
+  };
+
+  const handleUpdate = (id: string, props: Record<string, string | number | boolean>) => {
+    setNodes((prev) => prev.map((n) => n.id === id ? { ...n, props } : n));
+  };
+
+  const handleRemove = (id: string) => {
+    setNodes((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleDrop = (toId: string) => {
+    if (!dragId || dragId === toId) return;
+    setNodes((prev) => {
+      const from = prev.find((n) => n.id === dragId);
+      if (!from) return prev;
+      const without = prev.filter((n) => n.id !== dragId);
+      const toIdx = without.findIndex((n) => n.id === toId);
+      const result = [...without];
+      result.splice(toIdx, 0, from);
+      return result;
+    });
+    setDragId(null);
+    setOverId(null);
+  };
+
+  const handleSave = () => {
+    if (nodes.length === 0) {
+      onSave(null);
+    } else {
+      onSave({
+        type: "ComponentInstance",
+        props: {},
+        children: nodes,
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border bg-muted/10 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b">
+        <div>
+          <span className="text-[11px] font-semibold">Default Template</span>
+          <p className="text-[9px] text-muted-foreground mt-0.5">
+            Nodes dropped here appear as children when this component is placed on the canvas
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-[10px] text-muted-foreground hover:text-foreground px-1"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="p-3 space-y-2">
+        {/* Node list */}
+        {nodes.length === 0 ? (
+          <div className="border border-dashed border-muted-foreground/30 rounded-lg p-5 text-center">
+            <p className="text-[11px] text-muted-foreground">
+              No child nodes yet. Add nodes below to define the default structure.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {nodes.map((node) => (
+              <TemplateNodeRow
+                key={node.id}
+                node={node}
+                onUpdate={handleUpdate}
+                onRemove={handleRemove}
+                dragging={dragId}
+                onDragStart={setDragId}
+                onDragOver={setOverId}
+                onDrop={handleDrop}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Add node row */}
+        <div className="flex items-center gap-2 pt-1">
+          <select
+            value={addType}
+            onChange={(e) => setAddType(e.target.value)}
+            className="flex-1 px-2 py-1.5 text-[11px] bg-background border rounded focus:outline-none"
+          >
+            {TEMPLATE_NODE_TYPES.map((t) => (
+              <option key={t.type} value={t.type}>{t.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-1 px-3 py-1.5 text-[11px] bg-[var(--s-accent)] text-white rounded hover:opacity-90 whitespace-nowrap"
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+            Add node
+          </button>
+        </div>
+
+        {/* Footer actions */}
+        <div className="flex justify-end gap-2 pt-1 border-t mt-2">
+          {nodes.length > 0 && (
+            <button
+              onClick={() => { if (confirm("Clear all template nodes?")) setNodes([]); }}
+              className="px-3 py-1.5 text-[11px] text-destructive hover:bg-destructive/10 rounded"
+            >
+              Clear
+            </button>
+          )}
+          <button onClick={onClose} className="px-3 py-1.5 text-[11px] hover:bg-accent rounded">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-3 py-1.5 text-[11px] bg-[var(--s-accent)] text-white rounded hover:opacity-90 font-medium"
+          >
+            Save template
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Create component modal
 // ─────────────────────────────────────────────────────────────
 
@@ -958,6 +1303,7 @@ export function DSComponentsTab({
   const importInputRef = React.useRef<HTMLInputElement>(null);
   const [dragCompKey, setDragCompKey] = useState<string | null>(null);
   const [dropCompKey, setDropCompKey] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState(false);
 
   // Preview controls
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
@@ -972,6 +1318,7 @@ export function DSComponentsTab({
     setSelected(key);
     setSelectedVariants({});
     setPreviewState("default");
+    setEditingTemplate(false);
   };
 
   // Categorised, filtered list
@@ -1311,12 +1658,58 @@ export function DSComponentsTab({
               </div>
 
               {/* Props */}
-              <div className="pb-6">
+              <div>
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
                   Props
                   <span className="normal-case font-normal ml-1 text-muted-foreground/70">— click a row to edit</span>
                 </label>
                 <PropEditor props={currentDef.props} onChange={(p) => updateSelected({ props: p })} />
+              </div>
+
+              {/* Default template */}
+              <div className="pb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Default Template
+                    <span className="normal-case font-normal ml-1 text-muted-foreground/70">— child nodes on drop</span>
+                  </label>
+                  {!editingTemplate && (
+                    <button
+                      onClick={() => setEditingTemplate(true)}
+                      className="text-[10px] text-[var(--s-accent)] hover:underline"
+                    >
+                      {currentDef.defaultTemplate ? "Edit template" : "Add template"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Summary when not editing */}
+                {!editingTemplate && (
+                  <div className="rounded-lg border bg-muted/10 px-3 py-2.5">
+                    {currentDef.defaultTemplate && Array.isArray(currentDef.defaultTemplate.children) && currentDef.defaultTemplate.children.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {(currentDef.defaultTemplate.children as TemplateNode[]).map((n, i) => (
+                          <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border bg-muted text-muted-foreground font-mono">
+                            {n.type}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground/60 italic">
+                        No template — component drops as empty instance
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Inline template editor */}
+                {editingTemplate && (
+                  <TemplateEditor
+                    initialTemplate={currentDef.defaultTemplate}
+                    onSave={(tpl) => updateSelected({ defaultTemplate: tpl })}
+                    onClose={() => setEditingTemplate(false)}
+                  />
+                )}
               </div>
             </div>
           </div>

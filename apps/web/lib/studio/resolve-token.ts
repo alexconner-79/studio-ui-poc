@@ -77,6 +77,7 @@ export function resolvedStyleToCSS(
   const r = (v: StyleValue | undefined) => resolveStyleValue(v, tokens);
 
   // Typography
+  if (style.fontFamily !== undefined) css.fontFamily = String(r(style.fontFamily) ?? "");
   if (style.fontSize !== undefined) css.fontSize = r(style.fontSize);
   if (style.fontWeight !== undefined) css.fontWeight = r(style.fontWeight) as React.CSSProperties["fontWeight"];
   if (style.fontStyle !== undefined) css.fontStyle = style.fontStyle;
@@ -134,7 +135,102 @@ export function resolvedStyleToCSS(
 
   // Effects
   if (style.opacity !== undefined) css.opacity = style.opacity;
-  if (style.boxShadow !== undefined) css.boxShadow = String(r(style.boxShadow) ?? "");
+
+  // Effects stack (takes priority over legacy boxShadow when present)
+  if (style.effects && style.effects.length > 0) {
+    const shadows: string[] = [];
+    const filters: string[] = [];
+    const backdropFilters: string[] = [];
+    for (const effect of style.effects) {
+      if (effect.enabled === false) continue;
+      if (effect.type === "drop-shadow") {
+        shadows.push(`${effect.x}px ${effect.y}px ${effect.blur}px ${effect.spread}px ${effect.color}`);
+      } else if (effect.type === "inner-shadow") {
+        shadows.push(`inset ${effect.x}px ${effect.y}px ${effect.blur}px ${effect.spread}px ${effect.color}`);
+      } else if (effect.type === "layer-blur") {
+        filters.push(`blur(${effect.radius}px)`);
+      } else if (effect.type === "background-blur") {
+        backdropFilters.push(`blur(${effect.radius}px)`);
+      } else if (effect.type === "glass") {
+        backdropFilters.push(`blur(${effect.blurRadius}px)`);
+        if (!css.backgroundColor) {
+          css.backgroundColor = `rgba(255,255,255,${effect.backgroundOpacity})`;
+        }
+      }
+    }
+    if (shadows.length > 0) css.boxShadow = shadows.join(", ");
+    if (filters.length > 0) css.filter = filters.join(" ");
+    if (backdropFilters.length > 0) (css as Record<string, unknown>).backdropFilter = backdropFilters.join(" ");
+  } else if (style.boxShadow !== undefined) {
+    css.boxShadow = String(r(style.boxShadow) ?? "");
+  }
+
+  // Multiple fills (takes priority over backgroundColor when present)
+  if (style.fills && style.fills.length > 0) {
+    const bgLayers: string[] = [];
+    for (const fill of [...style.fills].reverse()) {
+      if (fill.type === "solid") {
+        bgLayers.push(fill.color);
+      } else if (fill.type === "linear-gradient") {
+        const stops = fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(", ");
+        bgLayers.push(`linear-gradient(${fill.angle}deg, ${stops})`);
+      } else if (fill.type === "radial-gradient") {
+        const stops = fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(", ");
+        bgLayers.push(`radial-gradient(circle, ${stops})`);
+      } else if (fill.type === "image") {
+        bgLayers.push(`url(${fill.src})`);
+      }
+    }
+    if (bgLayers.length > 0) (css as Record<string, unknown>).background = bgLayers.join(", ");
+  }
+
+  // Multiple strokes (box-shadow based, on top of any effects shadows)
+  if (style.strokes && style.strokes.length > 0) {
+    const innerShadows: string[] = [];
+    const outerShadows: string[] = [];
+    let centerStroke: (typeof style.strokes)[0] | undefined;
+    for (const stroke of style.strokes) {
+      if (stroke.position === "center") { centerStroke = stroke; }
+      else if (stroke.position === "inside") { innerShadows.push(`inset 0 0 0 ${stroke.width}px ${stroke.color}`); }
+      else if (stroke.position === "outside") { outerShadows.push(`0 0 0 ${stroke.width}px ${stroke.color}`); }
+    }
+    if (centerStroke) {
+      css.borderWidth = centerStroke.width;
+      css.borderColor = centerStroke.color;
+      css.borderStyle = css.borderStyle ?? "solid";
+    }
+    const allShadows = [...innerShadows, ...outerShadows];
+    if (allShadows.length > 0) {
+      const existing = css.boxShadow as string | undefined;
+      css.boxShadow = existing ? `${existing}, ${allShadows.join(", ")}` : allShadows.join(", ");
+    }
+  }
+
+  // Blend mode
+  if (style.mixBlendMode !== undefined) (css as Record<string, unknown>).mixBlendMode = style.mixBlendMode;
+
+  // Transform (rotation, scale, skew → single transform string)
+  {
+    const transformParts: string[] = [];
+    if (style.rotation !== undefined) transformParts.push(`rotate(${style.rotation}deg)`);
+    if (style.scaleX !== undefined) transformParts.push(`scaleX(${style.scaleX})`);
+    if (style.scaleY !== undefined) transformParts.push(`scaleY(${style.scaleY})`);
+    if (style.skewX !== undefined) transformParts.push(`skewX(${style.skewX}deg)`);
+    if (style.skewY !== undefined) transformParts.push(`skewY(${style.skewY}deg)`);
+    if (transformParts.length > 0) {
+      const existing = css.transform as string | undefined;
+      css.transform = existing ? `${existing} ${transformParts.join(" ")}` : transformParts.join(" ");
+    }
+  }
+
+  // CSS Filters
+  if (style.cssFilters && style.cssFilters.length > 0) {
+    const parts = style.cssFilters.map((f) =>
+      f.type === "hue-rotate" ? `hue-rotate(${f.value}deg)` : `${f.type}(${f.value}%)`
+    );
+    const existing = css.filter as string | undefined;
+    css.filter = existing ? `${existing} ${parts.join(" ")}` : parts.join(" ");
+  }
 
   // Layout
   if (style.flexDirection !== undefined) css.flexDirection = style.flexDirection;

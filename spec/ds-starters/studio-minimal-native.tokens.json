@@ -193,10 +193,13 @@
       }
     }
   },
+  "category": "boilerplate",
   "components": {
     "Button": {
       "name": "Button",
       "description": "RN Paper button",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -256,6 +259,8 @@
     "TextInput": {
       "name": "TextInput",
       "description": "RN Paper text field",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -310,6 +315,8 @@
     "Switch": {
       "name": "Switch",
       "description": "RN toggle",
+      "category": "Primitives",
+      "importPath": "react-native",
       "variants": [],
       "states": [
         "default",
@@ -338,6 +345,8 @@
     "Checkbox": {
       "name": "Checkbox",
       "description": "RN Paper checkbox",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "status",
@@ -376,6 +385,8 @@
     "Slider": {
       "name": "Slider",
       "description": "RN range slider",
+      "category": "Primitives",
+      "importPath": "react-native",
       "variants": [],
       "states": [
         "default",
@@ -408,7 +419,9 @@
     },
     "Picker": {
       "name": "Picker",
-      "description": "iOS wheel picker",
+      "description": "iOS wheel / Android dropdown picker",
+      "category": "Forms",
+      "importPath": "react-native",
       "variants": [
         {
           "name": "mode",
@@ -441,6 +454,8 @@
     "Modal": {
       "name": "Modal",
       "description": "Native modal sheet",
+      "category": "Overlays",
+      "importPath": "react-native",
       "variants": [
         {
           "name": "presentationStyle",
@@ -484,6 +499,8 @@
     "BottomSheet": {
       "name": "BottomSheet",
       "description": "Slide-up panel",
+      "category": "Overlays",
+      "importPath": "@gorhom/bottom-sheet",
       "variants": [
         {
           "name": "snapPoints",
@@ -523,6 +540,8 @@
     "ActivityIndicator": {
       "name": "ActivityIndicator",
       "description": "Spinner (RN)",
+      "category": "Primitives",
+      "importPath": "react-native",
       "variants": [
         {
           "name": "size",
@@ -551,6 +570,8 @@
     "ProgressBar": {
       "name": "ProgressBar",
       "description": "Linear progress (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "indeterminate",
@@ -580,6 +601,8 @@
     "Snackbar": {
       "name": "Snackbar",
       "description": "Brief notification",
+      "category": "Overlays",
+      "importPath": "react-native-paper",
       "variants": [],
       "states": [
         "default"
@@ -611,7 +634,9 @@
     },
     "Alert": {
       "name": "Alert",
-      "description": "iOS alert",
+      "description": "Native system alert",
+      "category": "Overlays",
+      "importPath": "react-native",
       "variants": [
         {
           "name": "type",
@@ -642,7 +667,9 @@
     },
     "Appbar": {
       "name": "Appbar",
-      "description": "Top nav bar (RN Paper)",
+      "description": "Top navigation bar (RN Paper)",
+      "category": "Navigation",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -687,7 +714,9 @@
     },
     "BottomNavigation": {
       "name": "BottomNavigation",
-      "description": "Bottom tab bar (RN Paper)",
+      "description": "Bottom navigation bar (RN Paper)",
+      "category": "Navigation",
+      "importPath": "react-native-paper",
       "variants": [],
       "states": [
         "default"
@@ -710,6 +739,8 @@
     "TabView": {
       "name": "TabView",
       "description": "Swipeable tabs (RN)",
+      "category": "Navigation",
+      "importPath": "react-native-tab-view",
       "variants": [],
       "states": [
         "default"
@@ -732,6 +763,8 @@
     "FlatList": {
       "name": "FlatList",
       "description": "Virtualised list",
+      "category": "Layout",
+      "importPath": "react-native",
       "variants": [
         {
           "name": "horizontal",
@@ -781,6 +814,8 @@
     "Card": {
       "name": "Card",
       "description": "Material card (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -810,6 +845,8 @@
     "Badge": {
       "name": "Badge",
       "description": "Notification badge (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "size",
@@ -839,6 +876,8 @@
     "Avatar": {
       "name": "Avatar",
       "description": "User avatar (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "type",
@@ -880,6 +919,8 @@
     "Chip": {
       "name": "Chip",
       "description": "Compact label (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -925,6 +966,8 @@
     "Divider": {
       "name": "Divider",
       "description": "Separator (RN Paper)",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "bold",
@@ -948,6 +991,8 @@
     "Surface": {
       "name": "Surface",
       "description": "Elevated container (RN Paper)",
+      "category": "Layout",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "mode",
@@ -983,6 +1028,8 @@
     "FAB": {
       "name": "FAB",
       "description": "Floating action button",
+      "category": "Layout",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "variant",
@@ -1033,7 +1080,9 @@
     },
     "Icon": {
       "name": "Icon",
-      "description": "SF Symbol / icon",
+      "description": "SF Symbol / Material icon",
+      "category": "Layout",
+      "importPath": "react-native-paper",
       "variants": [
         {
           "name": "size",
@@ -1070,27 +1119,408 @@
     "SafeAreaView": {
       "name": "SafeAreaView",
       "description": "Safe area container",
+      "category": "Layout",
+      "importPath": "react-native-safe-area-context",
       "variants": [
         {
           "name": "edges",
-          "options": [
-            "all",
-            "top",
-            "bottom",
-            "left",
-            "right"
-          ],
+          "options": ["all", "top", "bottom", "left", "right"],
           "default": "all"
         }
       ],
-      "states": [
-        "default"
-      ],
+      "states": ["default"],
       "props": [
-        {
-          "name": "children",
-          "type": "node"
-        }
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "RadioButton": {
+      "name": "RadioButton",
+      "description": "RN Paper radio button",
+      "category": "Primitives",
+      "importPath": "react-native-paper",
+      "variants": [
+        { "name": "status", "options": ["checked", "unchecked"], "default": "unchecked" }
+      ],
+      "states": ["default", "hover", "focus", "active", "disabled"],
+      "props": [
+        { "name": "value", "type": "string" },
+        { "name": "status", "type": "string", "default": "unchecked" },
+        { "name": "onPress", "type": "function" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ]
+    },
+
+    "Skeleton": {
+      "name": "Skeleton",
+      "description": "Loading placeholder shimmer",
+      "category": "Primitives",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["rectangular", "circular", "text"], "default": "rectangular" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "width", "type": "number" },
+        { "name": "height", "type": "number" }
+      ]
+    },
+
+    "DateTimePicker": {
+      "name": "DateTimePicker",
+      "description": "Native date and time picker",
+      "category": "Forms",
+      "importPath": "@react-native-community/datetimepicker",
+      "variants": [
+        { "name": "mode", "options": ["date", "time", "datetime"], "default": "date" },
+        { "name": "display", "options": ["default", "spinner", "calendar", "clock"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "value", "type": "string" },
+        { "name": "minimumDate", "type": "string" },
+        { "name": "maximumDate", "type": "string" },
+        { "name": "onChange", "type": "function" }
+      ]
+    },
+
+    "MultiSelect": {
+      "name": "MultiSelect",
+      "description": "Multiple item selection via bottom sheet",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "placeholder", "type": "string", "default": "Select items…" },
+        { "name": "items", "type": "node" },
+        { "name": "selectedItems", "type": "node" },
+        { "name": "onSelectionChange", "type": "function" }
+      ]
+    },
+
+    "OTPInput": {
+      "name": "OTPInput",
+      "description": "One-time password input",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "length", "options": ["4", "6"], "default": "6" }
+      ],
+      "states": ["default", "focus", "filled"],
+      "props": [
+        { "name": "length", "type": "number", "default": 6 },
+        { "name": "onComplete", "type": "function" }
+      ]
+    },
+
+    "ActionSheet": {
+      "name": "ActionSheet",
+      "description": "iOS action sheet with options",
+      "category": "Overlays",
+      "importPath": "react-native",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "title", "type": "string" },
+        { "name": "message", "type": "string" },
+        { "name": "options", "type": "node" },
+        { "name": "destructiveButtonIndex", "type": "number" },
+        { "name": "cancelButtonIndex", "type": "number" }
+      ]
+    },
+
+    "Tooltip": {
+      "name": "Tooltip",
+      "description": "Long-press tooltip hint",
+      "category": "Overlays",
+      "importPath": "react-native-paper",
+      "variants": [],
+      "states": ["default", "visible"],
+      "props": [
+        { "name": "title", "type": "string" },
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "Dialog": {
+      "name": "Dialog",
+      "description": "RN Paper modal dialog",
+      "category": "Overlays",
+      "importPath": "react-native-paper",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "visible", "type": "boolean", "default": false },
+        { "name": "title", "type": "string" },
+        { "name": "children", "type": "node" },
+        { "name": "onDismiss", "type": "function" }
+      ]
+    },
+
+    "TabBar": {
+      "name": "TabBar",
+      "description": "Bottom tab bar (React Navigation)",
+      "category": "Navigation",
+      "importPath": "@react-navigation/bottom-tabs",
+      "variants": [
+        { "name": "position", "options": ["bottom", "top"], "default": "bottom" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "tabs", "type": "node" },
+        { "name": "activeTab", "type": "string" }
+      ]
+    },
+
+    "NavigationStack": {
+      "name": "NavigationStack",
+      "description": "Stack navigator container",
+      "category": "Navigation",
+      "importPath": "@react-navigation/native-stack",
+      "variants": [
+        { "name": "presentation", "options": ["card", "modal", "fullScreenModal", "transparentModal"], "default": "card" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "initialRouteName", "type": "string" },
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "Drawer": {
+      "name": "Drawer",
+      "description": "Side navigation drawer",
+      "category": "Navigation",
+      "importPath": "@react-navigation/drawer",
+      "variants": [
+        { "name": "drawerType", "options": ["front", "back", "slide", "permanent"], "default": "front" },
+        { "name": "drawerPosition", "options": ["left", "right"], "default": "left" }
+      ],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "KeyboardAvoidingView": {
+      "name": "KeyboardAvoidingView",
+      "description": "Adjusts layout when keyboard appears",
+      "category": "Layout",
+      "importPath": "react-native",
+      "variants": [
+        { "name": "behavior", "options": ["height", "position", "padding"], "default": "padding" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "keyboardVerticalOffset", "type": "number", "default": 0 }
+      ]
+    },
+
+    "ScrollView": {
+      "name": "ScrollView",
+      "description": "Scrollable container",
+      "category": "Layout",
+      "importPath": "react-native",
+      "variants": [
+        { "name": "horizontal", "options": ["false", "true"], "default": "false" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "showsVerticalScrollIndicator", "type": "boolean", "default": true },
+        { "name": "refreshControl", "type": "node" }
+      ]
+    },
+
+    "SectionList": {
+      "name": "SectionList",
+      "description": "Grouped virtualised list",
+      "category": "Layout",
+      "importPath": "react-native",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "sections", "type": "node" },
+        { "name": "renderItem", "type": "function" },
+        { "name": "renderSectionHeader", "type": "function" },
+        { "name": "keyExtractor", "type": "function" },
+        { "name": "refreshing", "type": "boolean", "default": false }
+      ]
+    },
+
+    "MetricCard": {
+      "name": "MetricCard",
+      "description": "Single metric display card for dashboards",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "trend", "options": ["none", "up", "down"], "default": "none" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "label", "type": "string", "default": "Total Users" },
+        { "name": "value", "type": "string", "default": "12,400" },
+        { "name": "change", "type": "string" },
+        { "name": "description", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Surface",
+        "props": { "mode": "elevated", "elevation": "1" },
+        "children": [
+          { "type": "Stack", "props": { "gap": 8 }, "children": [
+            { "type": "Text", "props": { "size": "sm", "color": "muted-foreground", "children": "Total Users" } },
+            { "type": "Text", "props": { "size": "2xl", "weight": "bold", "children": "12,400" } },
+            { "type": "Text", "props": { "size": "xs", "color": "muted-foreground", "children": "+8% this month" } }
+          ]}
+        ]
+      }
+    },
+
+    "DataList": {
+      "name": "DataList",
+      "description": "Typed item list with dividers and right-side actions",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "inset"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "items", "type": "node" },
+        { "name": "title", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Surface",
+        "props": {},
+        "children": [
+          { "type": "FlatList", "props": { "renderItem": null } }
+        ]
+      }
+    },
+
+    "ActivityFeed": {
+      "name": "ActivityFeed",
+      "description": "Timestamped event list",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "items", "type": "node" }
+      ]
+    },
+
+    "StatusBadge": {
+      "name": "StatusBadge",
+      "description": "Semantic status indicator with dot and label",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "status", "options": ["active", "inactive", "pending", "success", "error", "warning"], "default": "active" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "label", "type": "string", "default": "Active" },
+        { "name": "showDot", "type": "boolean", "default": true }
+      ]
+    },
+
+    "EmptyState": {
+      "name": "EmptyState",
+      "description": "Zero-data placeholder with optional action",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "action"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string", "default": "Nothing here yet" },
+        { "name": "description", "type": "string" },
+        { "name": "action", "type": "node" }
+      ]
+    },
+
+    "SearchBar": {
+      "name": "SearchBar",
+      "description": "Search input with cancel button",
+      "category": "App Blocks",
+      "importPath": "react-native-paper",
+      "variants": [],
+      "states": ["default", "focus", "active"],
+      "props": [
+        { "name": "placeholder", "type": "string", "default": "Search…" },
+        { "name": "value", "type": "string" },
+        { "name": "onChangeText", "type": "function" },
+        { "name": "onClear", "type": "function" }
+      ]
+    },
+
+    "FilterSheet": {
+      "name": "FilterSheet",
+      "description": "Bottom-sheet filter panel for list/grid views",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "title", "type": "string", "default": "Filters" },
+        { "name": "children", "type": "node" },
+        { "name": "onApply", "type": "function" },
+        { "name": "onClear", "type": "function" }
+      ]
+    },
+
+    "UserRow": {
+      "name": "UserRow",
+      "description": "User avatar, name, subtitle, and optional action row",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default", "pressed"],
+      "props": [
+        { "name": "name", "type": "string", "default": "Jane Doe" },
+        { "name": "subtitle", "type": "string" },
+        { "name": "avatarSrc", "type": "string" },
+        { "name": "action", "type": "node" },
+        { "name": "onPress", "type": "function" }
+      ],
+      "defaultTemplate": {
+        "type": "Surface",
+        "props": {},
+        "children": [
+          { "type": "Stack", "props": { "direction": "horizontal", "align": "center", "gap": 12 }, "children": [
+            { "type": "Avatar", "props": { "type": "text", "label": "JD" } },
+            { "type": "Stack", "props": { "gap": 2 }, "children": [
+              { "type": "Text", "props": { "weight": "medium", "children": "Jane Doe" } },
+              { "type": "Text", "props": { "size": "sm", "color": "muted-foreground", "children": "jane@example.com" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "NotificationItem": {
+      "name": "NotificationItem",
+      "description": "Notification list row with icon, title, and timestamp",
+      "category": "App Blocks",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "read", "options": ["false", "true"], "default": "false" }
+      ],
+      "states": ["default", "pressed"],
+      "props": [
+        { "name": "title", "type": "string", "default": "New message" },
+        { "name": "body", "type": "string" },
+        { "name": "timestamp", "type": "string" },
+        { "name": "read", "type": "boolean", "default": false },
+        { "name": "onPress", "type": "function" }
       ]
     }
   }

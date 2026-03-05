@@ -247,10 +247,13 @@
       }
     }
   },
+  "category": "boilerplate",
   "components": {
     "Button": {
       "name": "Button",
       "description": "Trigger actions",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "variant",
@@ -268,9 +271,12 @@
           "name": "size",
           "options": [
             "default",
+            "xs",
             "sm",
             "lg",
-            "icon"
+            "icon",
+            "icon-sm",
+            "icon-lg"
           ],
           "default": "default"
         }
@@ -285,21 +291,12 @@
       "props": [
         {
           "name": "children",
+          "label": "Label",
           "type": "string",
-          "default": "Button"
+          "default": "Label"
         },
         {
           "name": "disabled",
-          "type": "boolean",
-          "default": false
-        },
-        {
-          "name": "loading",
-          "type": "boolean",
-          "default": false
-        },
-        {
-          "name": "asChild",
           "type": "boolean",
           "default": false
         }
@@ -308,17 +305,9 @@
     "Input": {
       "name": "Input",
       "description": "Single-line text input",
-      "variants": [
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default",
-            "lg"
-          ],
-          "default": "default"
-        }
-      ],
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [],
       "states": [
         "default",
         "focus",
@@ -349,6 +338,8 @@
     "Textarea": {
       "name": "Textarea",
       "description": "Multi-line text input",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [],
       "states": [
         "default",
@@ -376,17 +367,9 @@
     "Select": {
       "name": "Select",
       "description": "Dropdown selection",
-      "variants": [
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default",
-            "lg"
-          ],
-          "default": "default"
-        }
-      ],
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [],
       "states": [
         "default",
         "focus",
@@ -396,6 +379,7 @@
       "props": [
         {
           "name": "placeholder",
+          "label": "Placeholder",
           "type": "string",
           "default": "Select…"
         },
@@ -403,16 +387,36 @@
           "name": "disabled",
           "type": "boolean",
           "default": false
-        },
-        {
-          "name": "value",
-          "type": "string"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Select", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "SelectTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "SelectValue", "importPath": "studio:shadcn", "componentProps": { "placeholder": "Select an option" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "SelectContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "SelectItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-1", "children": "Option 1" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "SelectItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-2", "children": "Option 2" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "SelectItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-3", "children": "Option 3" } } }
+            ]
+          }
+        ]
+      }
     },
     "Checkbox": {
       "name": "Checkbox",
       "description": "Boolean checkbox",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [],
       "states": [
         "default",
@@ -441,6 +445,8 @@
     "Radio": {
       "name": "RadioGroup",
       "description": "Exclusive radio group",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "orientation",
@@ -456,19 +462,52 @@
       ],
       "props": [
         {
-          "name": "value",
-          "type": "string"
+          "name": "defaultValue",
+          "type": "string",
+          "default": "option-1"
         },
         {
           "name": "disabled",
           "type": "boolean",
           "default": false
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "RadioGroup", "importPath": "studio:shadcn", "componentProps": { "defaultValue": "option-1" } },
+        "children": [
+          {
+            "type": "Stack",
+            "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "RadioGroupItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-1", "id": "option-1" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "Label", "importPath": "studio:shadcn", "componentProps": { "htmlFor": "option-1", "children": "Option 1" } } }
+            ]
+          },
+          {
+            "type": "Stack",
+            "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "RadioGroupItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-2", "id": "option-2" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "Label", "importPath": "studio:shadcn", "componentProps": { "htmlFor": "option-2", "children": "Option 2" } } }
+            ]
+          },
+          {
+            "type": "Stack",
+            "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "RadioGroupItem", "importPath": "studio:shadcn", "componentProps": { "value": "option-3", "id": "option-3" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "Label", "importPath": "studio:shadcn", "componentProps": { "htmlFor": "option-3", "children": "Option 3" } } }
+            ]
+          }
+        ]
+      }
     },
     "Switch": {
       "name": "Switch",
       "description": "Toggle on/off",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [],
       "states": [
         "default",
@@ -496,7 +535,9 @@
     },
     "Alert": {
       "name": "Alert",
-      "description": "Contextual feedback",
+      "description": "Contextual inline feedback",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "variant",
@@ -510,32 +551,40 @@
       "states": [
         "default"
       ],
-      "props": [
-        {
-          "name": "title",
-          "type": "string"
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Alert",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "variant": "default" }
         },
-        {
-          "name": "description",
-          "type": "string"
-        }
-      ]
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": {
+              "componentName": "AlertTitle",
+              "importPath": "studio:shadcn",
+              "componentProps": { "children": "Heads up!" }
+            }
+          },
+          {
+            "type": "ComponentInstance",
+            "props": {
+              "componentName": "AlertDescription",
+              "importPath": "studio:shadcn",
+              "componentProps": { "children": "You can add components to your app using the CLI." }
+            }
+          }
+        ]
+      }
     },
     "Dialog": {
       "name": "Dialog",
       "description": "Modal dialog",
-      "variants": [
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default",
-            "lg",
-            "full"
-          ],
-          "default": "default"
-        }
-      ],
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
       "states": [
         "default"
       ],
@@ -544,43 +593,46 @@
           "name": "open",
           "type": "boolean",
           "default": false
-        },
-        {
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "name": "children",
-          "type": "node"
-        },
-        {
-          "name": "onOpenChange",
-          "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Dialog", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DialogTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "default" }, "componentProps": { "children": "Open dialog" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DialogContent", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "DialogHeader", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "DialogTitle", "importPath": "studio:shadcn", "componentProps": { "children": "Dialog Title" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "DialogDescription", "importPath": "studio:shadcn", "componentProps": { "children": "Dialog description goes here." } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     "Drawer": {
       "name": "Drawer",
       "description": "Slide-in panel",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
       "variants": [
         {
-          "name": "side",
-          "options": [
-            "top",
-            "bottom",
-            "left",
-            "right"
-          ],
-          "default": "right"
-        },
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default",
-            "lg"
-          ],
-          "default": "default"
+          "name": "direction",
+          "options": ["top", "bottom", "left", "right"],
+          "default": "bottom"
         }
       ],
       "states": [
@@ -591,20 +643,49 @@
           "name": "open",
           "type": "boolean",
           "default": false
-        },
-        {
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "name": "onOpenChange",
-          "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Drawer", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DrawerTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline" }, "componentProps": { "children": "Open drawer" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DrawerContent", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "DrawerHeader", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "DrawerTitle", "importPath": "studio:shadcn", "componentProps": { "children": "Drawer Title" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "DrawerDescription", "importPath": "studio:shadcn", "componentProps": { "children": "Drawer description goes here." } } }
+                ]
+              },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "DrawerFooter", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "default" }, "componentProps": { "children": "Submit" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "DrawerClose", "importPath": "studio:shadcn" }, "children": [{ "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline" }, "componentProps": { "children": "Cancel" } } }] }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     "Tooltip": {
       "name": "Tooltip",
       "description": "Hover hint",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "side",
@@ -622,23 +703,37 @@
       ],
       "props": [
         {
-          "name": "content",
-          "type": "string"
-        },
-        {
-          "name": "children",
-          "type": "node"
-        },
-        {
           "name": "delayDuration",
           "type": "number",
           "default": 400
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "TooltipProvider", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "Tooltip", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "TooltipTrigger", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline", "size": "default" }, "componentProps": { "children": "Hover me" } } }
+                ]
+              },
+              { "type": "ComponentInstance", "props": { "componentName": "TooltipContent", "importPath": "studio:shadcn", "componentProps": { "children": "This is a tooltip" } } }
+            ]
+          }
+        ]
+      }
     },
     "Tabs": {
       "name": "Tabs",
       "description": "Tab content switcher",
+      "category": "Navigation",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "variant",
@@ -663,40 +758,66 @@
       "props": [
         {
           "name": "defaultValue",
-          "type": "string"
-        },
-        {
-          "name": "value",
-          "type": "string"
-        },
-        {
-          "name": "onValueChange",
-          "type": "function"
+          "label": "Active tab",
+          "type": "string",
+          "default": "tab1"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Tabs",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "variant": "default", "orientation": "horizontal" },
+          "componentProps": { "defaultValue": "tab1" }
+        },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "TabsList", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "TabsTrigger", "importPath": "studio:shadcn", "componentProps": { "value": "tab1", "children": "Account" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "TabsTrigger", "importPath": "studio:shadcn", "componentProps": { "value": "tab2", "children": "Password" } } }
+            ]
+          },
+          { "type": "ComponentInstance", "props": { "componentName": "TabsContent", "importPath": "studio:shadcn", "componentProps": { "value": "tab1", "children": "Make changes to your account here." } } },
+          { "type": "ComponentInstance", "props": { "componentName": "TabsContent", "importPath": "studio:shadcn", "componentProps": { "value": "tab2", "children": "Change your password here." } } }
+        ]
+      }
     },
     "Breadcrumb": {
       "name": "Breadcrumb",
       "description": "Navigation trail",
+      "category": "Navigation",
+      "importPath": "studio:shadcn",
       "variants": [],
       "states": [
         "default"
       ],
-      "props": [
-        {
-          "name": "items",
-          "type": "node"
-        },
-        {
-          "name": "separator",
-          "type": "string",
-          "default": "/"
-        }
-      ]
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Breadcrumb", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "BreadcrumbList", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "BreadcrumbItem", "importPath": "studio:shadcn" }, "children": [{ "type": "ComponentInstance", "props": { "componentName": "BreadcrumbLink", "importPath": "studio:shadcn", "componentProps": { "href": "/", "children": "Home" } } }] },
+              { "type": "ComponentInstance", "props": { "componentName": "BreadcrumbSeparator", "importPath": "studio:shadcn" } },
+              { "type": "ComponentInstance", "props": { "componentName": "BreadcrumbItem", "importPath": "studio:shadcn" }, "children": [{ "type": "ComponentInstance", "props": { "componentName": "BreadcrumbLink", "importPath": "studio:shadcn", "componentProps": { "href": "/components", "children": "Components" } } }] },
+              { "type": "ComponentInstance", "props": { "componentName": "BreadcrumbSeparator", "importPath": "studio:shadcn" } },
+              { "type": "ComponentInstance", "props": { "componentName": "BreadcrumbItem", "importPath": "studio:shadcn" }, "children": [{ "type": "ComponentInstance", "props": { "componentName": "BreadcrumbPage", "importPath": "studio:shadcn", "componentProps": { "children": "Breadcrumb" } } }] }
+            ]
+          }
+        ]
+      }
     },
     "Pagination": {
       "name": "Pagination",
       "description": "Page navigation",
+      "category": "Navigation",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "size",
@@ -735,80 +856,104 @@
     "Table": {
       "name": "Table",
       "description": "Tabular data",
-      "variants": [
-        {
-          "name": "variant",
-          "options": [
-            "default",
-            "striped",
-            "bordered"
-          ],
-          "default": "default"
-        },
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default",
-            "lg"
-          ],
-          "default": "default"
-        }
-      ],
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [],
       "states": [
         "default"
       ],
-      "props": [
-        {
-          "name": "columns",
-          "type": "node"
-        },
-        {
-          "name": "data",
-          "type": "node"
-        }
-      ]
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Table", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "TableHeader", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "TableRow", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "TableHead", "importPath": "studio:shadcn", "componentProps": { "children": "Name" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableHead", "importPath": "studio:shadcn", "componentProps": { "children": "Status" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableHead", "importPath": "studio:shadcn", "componentProps": { "children": "Amount" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "TableBody", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "TableRow", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "Alex Smith" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "Active" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "$250.00" } } }
+                ]
+              },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "TableRow", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "Jordan Lee" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "Pending" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "TableCell", "importPath": "studio:shadcn", "componentProps": { "children": "$150.00" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     "Card": {
       "name": "Card",
       "description": "Content container",
-      "variants": [
-        {
-          "name": "variant",
-          "options": [
-            "elevated",
-            "outlined",
-            "filled"
-          ],
-          "default": "elevated"
-        }
-      ],
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [],
       "states": [
         "default",
         "hover"
       ],
-      "props": [
-        {
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "children",
-          "type": "node"
-        },
-        {
-          "name": "footer",
-          "type": "node"
-        }
-      ]
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Card", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "CardHeader", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "CardTitle", "importPath": "studio:shadcn", "componentProps": { "children": "Card Title" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "CardDescription", "importPath": "studio:shadcn", "componentProps": { "children": "Card description text goes here." } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "CardContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "Text", "props": { "children": "Card content goes here." } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "CardFooter", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "default" }, "componentProps": { "children": "Action" } } }
+            ]
+          }
+        ]
+      }
     },
     "Badge": {
       "name": "Badge",
       "description": "Status label",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "variant",
@@ -817,16 +962,8 @@
             "secondary",
             "destructive",
             "outline",
-            "success",
-            "warning"
-          ],
-          "default": "default"
-        },
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "default"
+            "ghost",
+            "link"
           ],
           "default": "default"
         }
@@ -837,6 +974,7 @@
       "props": [
         {
           "name": "children",
+          "label": "Label",
           "type": "string",
           "default": "Badge"
         }
@@ -845,6 +983,8 @@
     "Avatar": {
       "name": "Avatar",
       "description": "User image/initials",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "size",
@@ -872,13 +1012,25 @@
         },
         {
           "name": "fallback",
-          "type": "string"
+          "label": "Fallback text",
+          "type": "string",
+          "default": "AB"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Avatar", "importPath": "studio:shadcn" },
+        "children": [
+          { "type": "ComponentInstance", "props": { "componentName": "AvatarImage", "importPath": "studio:shadcn", "componentProps": { "src": "", "alt": "Avatar" } } },
+          { "type": "ComponentInstance", "props": { "componentName": "AvatarFallback", "importPath": "studio:shadcn", "componentProps": { "children": "AB" } } }
+        ]
+      }
     },
     "Accordion": {
       "name": "Accordion",
       "description": "Collapsible sections",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "type",
@@ -894,23 +1046,43 @@
       ],
       "props": [
         {
-          "name": "items",
-          "type": "node"
-        },
-        {
           "name": "defaultValue",
           "type": "string"
-        },
-        {
-          "name": "collapsible",
-          "type": "boolean",
-          "default": true
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Accordion",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "type": "single" },
+          "componentProps": { "defaultValue": "item-1" }
+        },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "AccordionItem", "importPath": "studio:shadcn", "componentProps": { "value": "item-1" } },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "AccordionTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "Is it accessible?" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "AccordionContent", "importPath": "studio:shadcn", "componentProps": { "children": "Yes. It adheres to the WAI-ARIA design pattern." } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "AccordionItem", "importPath": "studio:shadcn", "componentProps": { "value": "item-2" } },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "AccordionTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "Is it styled?" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "AccordionContent", "importPath": "studio:shadcn", "componentProps": { "children": "Yes. It comes with default styles that match the other components." } } }
+            ]
+          }
+        ]
+      }
     },
     "Skeleton": {
       "name": "Skeleton",
       "description": "Loading placeholder",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
       "variants": [
         {
           "name": "variant",
@@ -939,6 +1111,8 @@
     "Spinner": {
       "name": "Spinner",
       "description": "Loading spinner",
+      "category": "Primitives",
+      "importPath": "studio:template",
       "variants": [
         {
           "name": "size",
@@ -970,38 +1144,25 @@
       ]
     },
     "ProgressBar": {
-      "name": "ProgressBar",
+      "name": "Progress",
       "description": "Progress bar",
-      "variants": [
-        {
-          "name": "variant",
-          "options": [
-            "default",
-            "striped"
-          ],
-          "default": "default"
-        },
-        {
-          "name": "size",
-          "options": [
-            "sm",
-            "md",
-            "lg"
-          ],
-          "default": "md"
-        }
-      ],
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "defaultNodeStyle": { "width": 300 },
+      "variants": [],
       "states": [
         "default"
       ],
       "props": [
         {
           "name": "value",
+          "label": "Value",
           "type": "number",
-          "default": 0
+          "default": 40
         },
         {
           "name": "max",
+          "label": "Max",
           "type": "number",
           "default": 100
         }
@@ -1010,6 +1171,8 @@
     "Heading": {
       "name": "Heading",
       "description": "Heading element",
+      "category": "Typography",
+      "importPath": "studio:template",
       "variants": [
         {
           "name": "level",
@@ -1050,6 +1213,8 @@
     "Text": {
       "name": "Text",
       "description": "Body text",
+      "category": "Typography",
+      "importPath": "studio:template",
       "variants": [
         {
           "name": "size",
@@ -1095,39 +1260,1638 @@
     "Link": {
       "name": "Link",
       "description": "Hyperlink",
+      "category": "Primitives",
+      "importPath": "studio:template",
       "variants": [
         {
           "name": "variant",
-          "options": [
-            "default",
-            "muted",
-            "underline"
-          ],
+          "options": ["default", "muted", "underline"],
           "default": "default"
         }
       ],
-      "states": [
-        "default",
-        "hover",
-        "focus",
-        "active",
-        "disabled"
-      ],
+      "states": ["default", "hover", "focus", "active", "disabled"],
       "props": [
-        {
-          "name": "href",
-          "type": "string"
-        },
-        {
-          "name": "children",
-          "type": "string"
-        },
-        {
-          "name": "external",
-          "type": "boolean",
-          "default": false
-        }
+        { "name": "href", "type": "string" },
+        { "name": "children", "label": "Label", "type": "string", "default": "Link" },
+        { "name": "external", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "Text",
+        "props": { "children": "Link", "style": { "color": "var(--primary)", "textDecoration": "underline", "cursor": "pointer" } }
+      }
+    },
+
+    "Slider": {
+      "name": "Slider",
+      "description": "Range input",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "defaultNodeStyle": { "width": 300 },
+      "variants": [
+        { "name": "orientation", "options": ["horizontal", "vertical"], "default": "horizontal" }
+      ],
+      "states": ["default", "hover", "focus", "disabled"],
+      "props": [
+        { "name": "defaultValue", "label": "Default value", "type": "number[]", "default": [50] },
+        { "name": "min", "label": "Min value", "type": "number", "default": 0 },
+        { "name": "max", "label": "Max value", "type": "number", "default": 100 },
+        { "name": "step", "label": "Step", "type": "number", "default": 1 },
+        { "name": "disabled", "type": "boolean", "default": false }
       ]
+    },
+
+    "Label": {
+      "name": "Label",
+      "description": "Form field label",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default", "disabled"],
+      "props": [
+        { "name": "children", "label": "Text", "type": "string", "default": "Label" },
+        { "name": "htmlFor", "type": "string" }
+      ]
+    },
+
+    "Separator": {
+      "name": "Separator",
+      "description": "Horizontal or vertical divider",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "orientation", "options": ["horizontal", "vertical"], "default": "horizontal" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "decorative", "type": "boolean", "default": true }
+      ]
+    },
+
+    "Toggle": {
+      "name": "Toggle",
+      "description": "Pressed/unpressed button",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "variant", "options": ["default", "outline"], "default": "default" },
+        { "name": "size", "options": ["default", "sm", "lg"], "default": "default" }
+      ],
+      "states": ["default", "hover", "focus", "active", "disabled"],
+      "props": [
+        { "name": "children", "label": "Label", "type": "string", "default": "Toggle" },
+        { "name": "pressed", "type": "boolean", "default": false },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ]
+    },
+
+    "Popover": {
+      "name": "Popover",
+      "description": "Click-triggered floating panel",
+      "category": "Primitives",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "side", "options": ["top", "bottom", "left", "right"], "default": "bottom" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "open", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Popover", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "PopoverTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline" }, "componentProps": { "children": "Open popover" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "PopoverContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "Text", "props": { "weight": "semibold", "children": "Popover title" } },
+              { "type": "Text", "props": { "color": "muted", "children": "Popover content goes here." } }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Toast": {
+      "name": "Toast",
+      "description": "Ephemeral notification (design-time mockup)",
+      "category": "Primitives",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "destructive", "success"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "title", "label": "Title", "type": "string", "default": "Notification" },
+        { "name": "description", "label": "Description", "type": "string", "default": "This is a toast message." }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.1", "padding": "spacing.4", "style": { "border": "1px solid var(--border)", "borderRadius": "var(--radius)", "background": "var(--card)", "maxWidth": "360px" } },
+        "children": [
+          { "type": "Text", "props": { "weight": "semibold", "children": "Notification" } },
+          { "type": "Text", "props": { "color": "muted", "children": "This is a toast message." } }
+        ]
+      }
+    },
+
+    "Form": {
+      "name": "Form",
+      "description": "React Hook Form wrapper with validation",
+      "category": "Forms",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "onSubmit", "type": "function" }
+      ]
+    },
+
+    "FormSection": {
+      "name": "FormSection",
+      "description": "Labelled group of related form fields",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "columns", "options": ["1", "2", "3"], "default": "1" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "title", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "children", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.4" },
+        "children": [
+          { "type": "Heading", "props": { "level": "h4", "children": "Section Title" } },
+          { "type": "Text", "props": { "color": "muted", "children": "Section description" } },
+          { "type": "Stack", "props": { "gap": "spacing.4" } }
+        ]
+      }
+    },
+
+    "DatePicker": {
+      "name": "DatePicker",
+      "description": "Single date selection",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default", "focus", "disabled"],
+      "props": [
+        { "name": "placeholder", "label": "Placeholder", "type": "string", "default": "Pick a date" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Button",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "variant": "outline", "size": "default" },
+          "componentProps": { "children": "📅  Pick a date" }
+        }
+      }
+    },
+
+    "DateRangePicker": {
+      "name": "DateRangePicker",
+      "description": "Start and end date range selection",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default", "focus", "disabled"],
+      "props": [
+        { "name": "placeholder", "label": "Placeholder", "type": "string", "default": "Pick a date range" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Button",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "variant": "outline", "size": "default" },
+          "componentProps": { "children": "📅  Jan 1 – Jan 31, 2025" }
+        }
+      }
+    },
+
+    "TimePicker": {
+      "name": "TimePicker",
+      "description": "Time selection",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "format", "options": ["12h", "24h"], "default": "12h" }
+      ],
+      "states": ["default", "focus", "disabled"],
+      "props": [
+        { "name": "placeholder", "type": "string", "default": "Select time" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ]
+    },
+
+    "InputOTP": {
+      "name": "InputOTP",
+      "description": "One-time password input",
+      "category": "Forms",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "length", "options": [4, 6, 8], "default": 6 }
+      ],
+      "states": ["default", "focus", "disabled"],
+      "props": [
+        { "name": "maxLength", "label": "Length", "type": "number", "default": 6 },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ]
+    },
+
+    "Combobox": {
+      "name": "Combobox",
+      "description": "Searchable select with type-ahead",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default", "open", "focus", "disabled"],
+      "props": [
+        { "name": "placeholder", "label": "Placeholder", "type": "string", "default": "Select…" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "Button",
+          "importPath": "studio:shadcn",
+          "selectedVariants": { "variant": "outline", "size": "default" },
+          "componentProps": { "children": "Select…  ↕" }
+        }
+      }
+    },
+
+    "MultiSelect": {
+      "name": "MultiSelect",
+      "description": "Multiple selection dropdown with chips",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default", "open", "focus", "disabled"],
+      "props": [
+        { "name": "placeholder", "type": "string", "default": "Select…" },
+        { "name": "maxItems", "type": "number" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ]
+    },
+
+    "FileUpload": {
+      "name": "FileUpload",
+      "description": "Drag-and-drop file input area",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" }
+      ],
+      "states": ["default", "dragover", "error", "disabled"],
+      "props": [
+        { "name": "accept", "type": "string" },
+        { "name": "multiple", "type": "boolean", "default": false },
+        { "name": "maxSize", "type": "string" },
+        { "name": "disabled", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "align": "center", "gap": "spacing.2" },
+        "children": [
+          { "type": "Text", "props": { "children": "Drag files here or click to upload" } },
+          { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "PNG, JPG, PDF up to 10MB" } }
+        ]
+      }
+    },
+
+    "ColorPicker": {
+      "name": "ColorPicker",
+      "description": "Hex/HSL colour input with swatch",
+      "category": "Forms",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "format", "options": ["hex", "hsl", "rgb"], "default": "hex" }
+      ],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "value", "type": "string" },
+        { "name": "showInput", "type": "boolean", "default": true }
+      ]
+    },
+
+    "AlertDialog": {
+      "name": "AlertDialog",
+      "description": "Confirmation dialog with cancel and confirm actions",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "open", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "AlertDialog", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "AlertDialogTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "destructive" }, "componentProps": { "children": "Delete" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "AlertDialogContent", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "AlertDialogHeader", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "AlertDialogTitle", "importPath": "studio:shadcn", "componentProps": { "children": "Are you absolutely sure?" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "AlertDialogDescription", "importPath": "studio:shadcn", "componentProps": { "children": "This action cannot be undone." } } }
+                ]
+              },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "AlertDialogFooter", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "AlertDialogCancel", "importPath": "studio:shadcn", "componentProps": { "children": "Cancel" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "AlertDialogAction", "importPath": "studio:shadcn", "componentProps": { "children": "Continue" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Sheet": {
+      "name": "Sheet",
+      "description": "Side or bottom sheet panel",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "side", "options": ["top", "bottom", "left", "right"], "default": "right" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "open", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Sheet", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "SheetTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline" }, "componentProps": { "children": "Open sheet" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "SheetContent", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "SheetHeader", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "SheetTitle", "importPath": "studio:shadcn", "componentProps": { "children": "Sheet Title" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "SheetDescription", "importPath": "studio:shadcn", "componentProps": { "children": "Sheet description goes here." } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "DropdownMenu": {
+      "name": "DropdownMenu",
+      "description": "Triggered dropdown menu",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "DropdownMenu", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DropdownMenuTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "outline" }, "componentProps": { "children": "Open menu" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "DropdownMenuContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "DropdownMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Profile" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "DropdownMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Settings" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "DropdownMenuSeparator", "importPath": "studio:shadcn" } },
+              { "type": "ComponentInstance", "props": { "componentName": "DropdownMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Sign out" } } }
+            ]
+          }
+        ]
+      }
+    },
+
+    "ContextMenu": {
+      "name": "ContextMenu",
+      "description": "Right-click / long-press menu",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "ContextMenu", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "ContextMenuTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "Right-click here" } }
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "ContextMenuContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "ContextMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Open" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "ContextMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Copy" } } },
+              { "type": "ComponentInstance", "props": { "componentName": "ContextMenuSeparator", "importPath": "studio:shadcn" } },
+              { "type": "ComponentInstance", "props": { "componentName": "ContextMenuItem", "importPath": "studio:shadcn", "componentProps": { "children": "Delete" } } }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Command": {
+      "name": "Command",
+      "description": "Command palette with search",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "placeholder", "label": "Placeholder", "type": "string", "default": "Type a command or search…" }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Command", "importPath": "studio:shadcn" },
+        "children": [
+          { "type": "ComponentInstance", "props": { "componentName": "CommandInput", "importPath": "studio:shadcn", "componentProps": { "placeholder": "Type a command or search…" } } },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "CommandList", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "CommandEmpty", "importPath": "studio:shadcn", "componentProps": { "children": "No results found." } } },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "CommandGroup", "importPath": "studio:shadcn", "componentProps": { "heading": "Suggestions" } },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "CommandItem", "importPath": "studio:shadcn", "componentProps": { "children": "Calendar" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "CommandItem", "importPath": "studio:shadcn", "componentProps": { "children": "Search Emoji" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "CommandItem", "importPath": "studio:shadcn", "componentProps": { "children": "Launch" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Menubar": {
+      "name": "Menubar",
+      "description": "Horizontal application menu bar",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default"],
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Menubar", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "MenubarMenu", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "MenubarTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "File" } } },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "MenubarContent", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarItem", "importPath": "studio:shadcn", "componentProps": { "children": "New Tab" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarItem", "importPath": "studio:shadcn", "componentProps": { "children": "New Window" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarSeparator", "importPath": "studio:shadcn" } },
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarItem", "importPath": "studio:shadcn", "componentProps": { "children": "Quit" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "MenubarMenu", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "MenubarTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "Edit" } } },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "MenubarContent", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarItem", "importPath": "studio:shadcn", "componentProps": { "children": "Undo" } } },
+                  { "type": "ComponentInstance", "props": { "componentName": "MenubarItem", "importPath": "studio:shadcn", "componentProps": { "children": "Redo" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "HoverCard": {
+      "name": "HoverCard",
+      "description": "Hover-triggered preview card",
+      "category": "Overlays",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "side", "options": ["top", "bottom", "left", "right"], "default": "bottom" }
+      ],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "openDelay", "type": "number", "default": 700 }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "HoverCard", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "HoverCardTrigger", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "link" }, "componentProps": { "children": "@username" } } }
+            ]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "HoverCardContent", "importPath": "studio:shadcn" },
+            "children": [
+              { "type": "Text", "props": { "weight": "semibold", "children": "@username" } },
+              { "type": "Text", "props": { "color": "muted", "children": "Joined December 2021" } }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Navbar": {
+      "name": "Navbar",
+      "description": "Top navigation bar with logo, links, and actions",
+      "category": "Navigation",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "bordered", "filled"], "default": "default" },
+        { "name": "sticky", "options": ["false", "true"], "default": "false" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "logo", "type": "node" },
+        { "name": "links", "type": "node" },
+        { "name": "actions", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "direction": "horizontal", "align": "center", "justify": "between", "padding": "spacing.4" },
+        "children": [
+          { "type": "Text", "props": { "weight": "semibold", "children": "Logo" } },
+          { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.6" } },
+          { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.2" } }
+        ]
+      }
+    },
+
+    "Sidebar": {
+      "name": "Sidebar",
+      "description": "Vertical navigation panel with grouped sections",
+      "category": "Navigation",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" },
+        { "name": "collapsed", "options": ["false", "true"], "default": "false" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "sections", "type": "node" },
+        { "name": "footer", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "direction": "vertical", "gap": "spacing.1", "padding": "spacing.4" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.1" } },
+          { "type": "Separator" },
+          { "type": "Stack", "props": { "gap": "spacing.1" } }
+        ]
+      }
+    },
+
+    "NavigationMenu": {
+      "name": "NavigationMenu",
+      "description": "Mega-nav link group with submenus",
+      "category": "Navigation",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default"],
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "NavigationMenu", "importPath": "studio:shadcn" },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "NavigationMenuList", "importPath": "studio:shadcn" },
+            "children": [
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "NavigationMenuItem", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "NavigationMenuTrigger", "importPath": "studio:shadcn", "componentProps": { "children": "Getting started" } } },
+                  {
+                    "type": "ComponentInstance",
+                    "props": { "componentName": "NavigationMenuContent", "importPath": "studio:shadcn" },
+                    "children": [
+                      { "type": "ComponentInstance", "props": { "componentName": "NavigationMenuLink", "importPath": "studio:shadcn", "componentProps": { "children": "Introduction" } } }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "NavigationMenuItem", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "NavigationMenuLink", "importPath": "studio:shadcn", "componentProps": { "children": "Components" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "Stepper": {
+      "name": "Stepper",
+      "description": "Step progress indicator for multi-step flows",
+      "category": "Navigation",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "orientation", "options": ["horizontal", "vertical"], "default": "horizontal" },
+        { "name": "variant", "options": ["default", "numbered", "icon"], "default": "numbered" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "currentStep", "type": "number", "default": 1 },
+        { "name": "steps", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2" },
+        "children": [
+          { "type": "Badge", "props": { "variant": "default", "children": "1" } },
+          { "type": "Text", "props": { "children": "Step one" } },
+          { "type": "Separator", "props": { "orientation": "horizontal" } },
+          { "type": "Badge", "props": { "variant": "secondary", "children": "2" } },
+          { "type": "Text", "props": { "color": "muted", "children": "Step two" } }
+        ]
+      }
+    },
+
+    "CommandBar": {
+      "name": "CommandBar",
+      "description": "Global search and quick-launch bar",
+      "category": "Navigation",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["inline", "modal"], "default": "inline" }
+      ],
+      "states": ["default", "open", "focus"],
+      "props": [
+        { "name": "placeholder", "type": "string", "default": "Search or type a command…" },
+        { "name": "shortcut", "type": "string", "default": "⌘K" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2", "padding": "spacing.2" },
+        "children": [
+          { "type": "Input", "props": { "placeholder": "Search or type a command…" } },
+          { "type": "Badge", "props": { "variant": "outline", "children": "⌘K" } }
+        ]
+      }
+    },
+
+    "PageHeader": {
+      "name": "PageHeader",
+      "description": "Top-of-page title row with breadcrumb and actions",
+      "category": "Layout",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "title", "type": "string", "default": "Page Title" },
+        { "name": "description", "type": "string" },
+        { "name": "breadcrumb", "type": "node" },
+        { "name": "actions", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.1" },
+        "children": [
+          { "type": "Breadcrumb" },
+          { "type": "Stack", "props": { "direction": "horizontal", "align": "center", "justify": "between" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.1" }, "children": [
+              { "type": "Heading", "props": { "level": "h1", "children": "Page Title" } },
+              { "type": "Text", "props": { "color": "muted", "children": "Page description" } }
+            ]},
+            { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.2" } }
+          ]}
+        ]
+      }
+    },
+
+    "Section": {
+      "name": "Section",
+      "description": "Content section with optional heading and description",
+      "category": "Layout",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "muted", "accent"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "children", "type": "node" },
+        { "name": "maxWidth", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.8", "padding": "spacing.16" },
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.2" }, "children": [
+            { "type": "Heading", "props": { "level": "h2", "children": "Section Heading" } },
+            { "type": "Text", "props": { "color": "muted", "children": "Section description" } }
+          ]},
+          { "type": "Stack", "props": { "gap": "spacing.4" } }
+        ]
+      }
+    },
+
+    "Grid": {
+      "name": "Grid",
+      "description": "Responsive CSS grid container",
+      "category": "Layout",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "columns", "options": ["1", "2", "3", "4", "6", "12"], "default": "3" },
+        { "name": "gap", "options": ["sm", "md", "lg"], "default": "md" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "Stack": {
+      "name": "Stack",
+      "description": "Flexbox stack — vertical or horizontal",
+      "category": "Layout",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "direction", "options": ["vertical", "horizontal"], "default": "vertical" },
+        { "name": "align", "options": ["start", "center", "end", "stretch"], "default": "start" },
+        { "name": "justify", "options": ["start", "center", "end", "between", "around"], "default": "start" },
+        { "name": "gap", "options": ["none", "sm", "md", "lg", "xl"], "default": "md" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "wrap", "type": "boolean", "default": false }
+      ]
+    },
+
+    "ScrollArea": {
+      "name": "ScrollArea",
+      "description": "Scrollable container with styled scrollbar",
+      "category": "Layout",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "orientation", "options": ["vertical", "horizontal", "both"], "default": "vertical" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "maxHeight", "type": "string" }
+      ]
+    },
+
+    "ResizablePanel": {
+      "name": "ResizablePanelGroup",
+      "description": "Drag-to-resize panel group",
+      "category": "Layout",
+      "importPath": "studio:shadcn",
+      "variants": [
+        { "name": "direction", "options": ["horizontal", "vertical"], "default": "horizontal" }
+      ],
+      "states": ["default"],
+      "props": [],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": {
+          "componentName": "ResizablePanelGroup",
+          "importPath": "studio:shadcn",
+          "componentProps": { "direction": "horizontal" }
+        },
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "ResizablePanel", "importPath": "studio:shadcn", "componentProps": { "defaultSize": 50 } },
+            "children": [{ "type": "Text", "props": { "children": "Panel A" } }]
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "ResizableHandle", "importPath": "studio:shadcn" }
+          },
+          {
+            "type": "ComponentInstance",
+            "props": { "componentName": "ResizablePanel", "importPath": "studio:shadcn", "componentProps": { "defaultSize": 50 } },
+            "children": [{ "type": "Text", "props": { "children": "Panel B" } }]
+          }
+        ]
+      }
+    },
+
+    "AspectRatio": {
+      "name": "AspectRatio",
+      "description": "Fixed-ratio wrapper for images and media",
+      "category": "Layout",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default"],
+      "props": [
+        { "name": "ratio", "type": "number", "default": 1.778 },
+        { "name": "children", "type": "node" }
+      ]
+    },
+
+    "Collapsible": {
+      "name": "Collapsible",
+      "description": "Expand/collapse content wrapper",
+      "category": "Layout",
+      "importPath": "studio:shadcn",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "defaultOpen", "label": "Open by default", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "props": { "componentName": "Collapsible", "importPath": "studio:shadcn", "componentProps": { "defaultOpen": true } },
+        "children": [
+          {
+            "type": "Stack",
+            "props": { "direction": "horizontal", "align": "center", "justify": "between" },
+            "children": [
+              { "type": "Text", "props": { "weight": "semibold", "children": "Can I use this?" } },
+              {
+                "type": "ComponentInstance",
+                "props": { "componentName": "CollapsibleTrigger", "importPath": "studio:shadcn" },
+                "children": [
+                  { "type": "ComponentInstance", "props": { "componentName": "Button", "importPath": "studio:shadcn", "selectedVariants": { "variant": "ghost", "size": "icon-sm" }, "componentProps": { "children": "↕" } } }
+                ]
+              }
+            ]
+          },
+          { "type": "ComponentInstance", "props": { "componentName": "CollapsibleContent", "importPath": "studio:shadcn" }, "children": [{ "type": "Text", "props": { "children": "Collapsible content goes here." } }] }
+        ]
+      }
+    },
+
+    "DataGrid": {
+      "name": "DataGrid",
+      "description": "Filterable, sortable, selectable data table",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "bordered", "striped"], "default": "default" },
+        { "name": "size", "options": ["sm", "default", "lg"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "selectable", "type": "boolean", "default": false },
+        { "name": "sortable", "type": "boolean", "default": true },
+        { "name": "filterable", "type": "boolean", "default": true },
+        { "name": "pagination", "type": "boolean", "default": true }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.4" },
+        "children": [
+          { "type": "Stack", "props": { "direction": "horizontal", "justify": "between", "align": "center" }, "children": [
+            { "type": "Input", "props": { "placeholder": "Filter…" } },
+            { "type": "Button", "props": { "variant": "outline", "children": "Columns" } }
+          ]},
+          { "type": "Table" },
+          { "type": "Pagination" }
+        ]
+      }
+    },
+
+    "FilterBar": {
+      "name": "FilterBar",
+      "description": "Inline filter controls row for data views",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" },
+        { "name": "onClear", "type": "function" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "direction": "horizontal", "align": "center", "gap": "spacing.2" },
+        "children": [
+          { "type": "Input", "props": { "placeholder": "Search…" } },
+          { "type": "Select", "props": { "placeholder": "Status" } },
+          { "type": "Select", "props": { "placeholder": "Date range" } },
+          { "type": "Button", "props": { "variant": "ghost", "children": "Clear" } }
+        ]
+      }
+    },
+
+    "KPICard": {
+      "name": "KPICard",
+      "description": "Single metric display with trend indicator",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "trend", "options": ["none", "up", "down", "neutral"], "default": "none" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "label", "type": "string", "default": "Total Revenue" },
+        { "name": "value", "type": "string", "default": "$45,231" },
+        { "name": "change", "type": "string" },
+        { "name": "description", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "elevated" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+            { "type": "Stack", "props": { "direction": "horizontal", "justify": "between" }, "children": [
+              { "type": "Text", "props": { "size": "sm", "color": "muted", "children": "Total Revenue" } }
+            ]},
+            { "type": "Heading", "props": { "level": "h3", "children": "$45,231" } },
+            { "type": "Text", "props": { "size": "sm", "color": "muted", "children": "+20.1% from last month" } }
+          ]}
+        ]
+      }
+    },
+
+    "ActivityFeed": {
+      "name": "ActivityFeed",
+      "description": "Timestamped event list",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "items", "type": "node" },
+        { "name": "showTimestamps", "type": "boolean", "default": true }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.4" },
+        "children": [
+          { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.3", "align": "start" }, "children": [
+            { "type": "Avatar", "props": { "size": "sm", "fallback": "JD" } },
+            { "type": "Stack", "props": { "gap": "spacing.1" }, "children": [
+              { "type": "Text", "props": { "weight": "medium", "children": "Jane Doe" } },
+              { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "Created project — 2 minutes ago" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "StatusBadge": {
+      "name": "StatusBadge",
+      "description": "Semantic status indicator with icon and label",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "status", "options": ["active", "inactive", "pending", "success", "error", "warning"], "default": "active" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "label", "type": "string", "default": "Active" },
+        { "name": "showDot", "type": "boolean", "default": true }
+      ]
+    },
+
+    "UserMenu": {
+      "name": "UserMenu",
+      "description": "Account dropdown triggered from avatar/name in navbar",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "side", "options": ["top", "bottom"], "default": "bottom" }
+      ],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "name", "type": "string", "default": "Jane Doe" },
+        { "name": "email", "type": "string", "default": "jane@example.com" },
+        { "name": "avatarSrc", "type": "string" }
+      ]
+    },
+
+    "NotificationBell": {
+      "name": "NotificationBell",
+      "description": "Bell icon with unread count badge and notification dropdown",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [],
+      "states": ["default", "open"],
+      "props": [
+        { "name": "count", "type": "number", "default": 0 },
+        { "name": "items", "type": "node" }
+      ]
+    },
+
+    "BoardCard": {
+      "name": "BoardCard",
+      "description": "Kanban-style draggable task card",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "priority", "options": ["none", "low", "medium", "high"], "default": "none" }
+      ],
+      "states": ["default", "dragging"],
+      "props": [
+        { "name": "title", "type": "string", "default": "Task title" },
+        { "name": "description", "type": "string" },
+        { "name": "assignee", "type": "node" },
+        { "name": "labels", "type": "node" },
+        { "name": "dueDate", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "elevated" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+            { "type": "Text", "props": { "weight": "medium", "children": "Task title" } },
+            { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "Task description" } },
+            { "type": "Stack", "props": { "direction": "horizontal", "justify": "between", "align": "center" }, "children": [
+              { "type": "Avatar", "props": { "size": "xs", "fallback": "JD" } },
+              { "type": "Badge", "props": { "variant": "secondary", "size": "sm", "children": "Design" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "ChartCard": {
+      "name": "ChartCard",
+      "description": "Metric chart card (line/bar/donut wrapper)",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "chartType", "options": ["line", "bar", "donut", "area"], "default": "line" }
+      ],
+      "states": ["default", "loading"],
+      "props": [
+        { "name": "title", "type": "string", "default": "Chart Title" },
+        { "name": "description", "type": "string" },
+        { "name": "value", "type": "string" },
+        { "name": "change", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "elevated" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.4" }, "children": [
+            { "type": "Stack", "props": { "direction": "horizontal", "justify": "between" }, "children": [
+              { "type": "Stack", "props": { "gap": "spacing.1" }, "children": [
+                { "type": "Text", "props": { "size": "sm", "color": "muted", "children": "Chart Title" } },
+                { "type": "Heading", "props": { "level": "h3", "children": "—" } }
+              ]}
+            ]},
+            { "type": "Skeleton", "props": { "height": "200px" } }
+          ]}
+        ]
+      }
+    },
+
+    "EmptyState": {
+      "name": "EmptyState",
+      "description": "Zero-data placeholder with optional action",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "action"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "icon", "type": "node" },
+        { "name": "heading", "type": "string", "default": "Nothing here yet" },
+        { "name": "description", "type": "string" },
+        { "name": "action", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "align": "center", "gap": "spacing.4", "padding": "spacing.16" },
+        "children": [
+          { "type": "Skeleton", "props": { "variant": "circular", "width": "48px", "height": "48px" } },
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.1" }, "children": [
+            { "type": "Heading", "props": { "level": "h3", "children": "Nothing here yet" } },
+            { "type": "Text", "props": { "color": "muted", "children": "Get started by adding your first item." } }
+          ]},
+          { "type": "Button", "props": { "children": "Get started" } }
+        ]
+      }
+    },
+
+    "FormWizard": {
+      "name": "FormWizard",
+      "description": "Multi-step form container with stepper",
+      "category": "SaaS",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "layout", "options": ["default", "sidebar"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "currentStep", "type": "number", "default": 1 },
+        { "name": "totalSteps", "type": "number", "default": 3 },
+        { "name": "children", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.8" },
+        "children": [
+          { "type": "Stepper", "props": { "currentStep": 1 } },
+          { "type": "Card", "props": { "variant": "outlined" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.6" } }
+          ]},
+          { "type": "Stack", "props": { "direction": "horizontal", "justify": "between" }, "children": [
+            { "type": "Button", "props": { "variant": "outline", "children": "Back" } },
+            { "type": "Button", "props": { "children": "Continue" } }
+          ]}
+        ]
+      }
+    },
+
+    "Hero": {
+      "name": "Hero",
+      "description": "Full-width hero section with heading, subheading, and CTA",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["centered", "split", "with-image"], "default": "centered" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string", "default": "The fastest way to build" },
+        { "name": "subheading", "type": "string", "default": "Start for free, scale to millions." },
+        { "name": "cta", "type": "node" },
+        { "name": "image", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": { "variant": "default" },
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.6" }, "children": [
+            { "type": "Heading", "props": { "level": "h1", "size": "3xl", "children": "The fastest way to build" } },
+            { "type": "Text", "props": { "size": "lg", "color": "muted", "children": "Start for free, scale to millions." } },
+            { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.3" }, "children": [
+              { "type": "Button", "props": { "size": "lg", "children": "Get started" } },
+              { "type": "Button", "props": { "variant": "outline", "size": "lg", "children": "Learn more" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "FeatureGrid": {
+      "name": "FeatureGrid",
+      "description": "Feature highlights in a responsive grid",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "columns", "options": ["2", "3", "4"], "default": "3" },
+        { "name": "variant", "options": ["default", "icon-list"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "features", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": {},
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.2" }, "children": [
+            { "type": "Heading", "props": { "level": "h2", "children": "Everything you need" } },
+            { "type": "Text", "props": { "color": "muted", "children": "No extra tools. No complexity." } }
+          ]},
+          { "type": "Grid", "props": { "columns": "3", "gap": "lg" }, "children": [
+            { "type": "Card", "props": { "variant": "outlined" }, "children": [
+              { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+                { "type": "Heading", "props": { "level": "h4", "children": "Feature one" } },
+                { "type": "Text", "props": { "color": "muted", "children": "Feature description" } }
+              ]}
+            ]},
+            { "type": "Card", "props": { "variant": "outlined" }, "children": [
+              { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+                { "type": "Heading", "props": { "level": "h4", "children": "Feature two" } },
+                { "type": "Text", "props": { "color": "muted", "children": "Feature description" } }
+              ]}
+            ]},
+            { "type": "Card", "props": { "variant": "outlined" }, "children": [
+              { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+                { "type": "Heading", "props": { "level": "h4", "children": "Feature three" } },
+                { "type": "Text", "props": { "color": "muted", "children": "Feature description" } }
+              ]}
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "CTABanner": {
+      "name": "CTABanner",
+      "description": "Full-width call-to-action stripe",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "accent", "dark"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string", "default": "Ready to get started?" },
+        { "name": "subheading", "type": "string" },
+        { "name": "actions", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": { "variant": "muted" },
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.6" }, "children": [
+            { "type": "Heading", "props": { "level": "h2", "children": "Ready to get started?" } },
+            { "type": "Text", "props": { "color": "muted", "children": "Join thousands of teams already using Studio." } },
+            { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.3" }, "children": [
+              { "type": "Button", "props": { "size": "lg", "children": "Start for free" } },
+              { "type": "Button", "props": { "variant": "outline", "size": "lg", "children": "Contact sales" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "PricingCard": {
+      "name": "PricingCard",
+      "description": "Pricing tier card",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "highlighted"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "tier", "type": "string", "default": "Pro" },
+        { "name": "price", "type": "string", "default": "$29" },
+        { "name": "period", "type": "string", "default": "/month" },
+        { "name": "features", "type": "node" },
+        { "name": "cta", "type": "node" },
+        { "name": "highlighted", "type": "boolean", "default": false }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "outlined" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.6" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.1" }, "children": [
+              { "type": "Text", "props": { "weight": "medium", "children": "Pro" } },
+              { "type": "Stack", "props": { "direction": "horizontal", "align": "end", "gap": "spacing.1" }, "children": [
+                { "type": "Heading", "props": { "level": "h2", "children": "$29" } },
+                { "type": "Text", "props": { "color": "muted", "children": "/month" } }
+              ]}
+            ]},
+            { "type": "Separator" },
+            { "type": "Stack", "props": { "gap": "spacing.2" } },
+            { "type": "Button", "props": { "children": "Get started" } }
+          ]}
+        ]
+      }
+    },
+
+    "TestimonialCard": {
+      "name": "TestimonialCard",
+      "description": "Customer quote card",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "large"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "quote", "type": "string", "default": "This product changed how we work." },
+        { "name": "author", "type": "string", "default": "Jane Doe" },
+        { "name": "role", "type": "string", "default": "CEO, Acme Inc." },
+        { "name": "avatar", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "outlined" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.4" }, "children": [
+            { "type": "Text", "props": { "children": "\"This product changed how we work.\"" } },
+            { "type": "Stack", "props": { "direction": "horizontal", "align": "center", "gap": "spacing.3" }, "children": [
+              { "type": "Avatar", "props": { "fallback": "JD" } },
+              { "type": "Stack", "props": { "gap": "spacing.1" }, "children": [
+                { "type": "Text", "props": { "weight": "medium", "children": "Jane Doe" } },
+                { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "CEO, Acme Inc." } }
+              ]}
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "LogoCloud": {
+      "name": "LogoCloud",
+      "description": "Trusted-by logo strip",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "scrolling"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "label", "type": "string", "default": "Trusted by teams at" },
+        { "name": "logos", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": {},
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.6" }, "children": [
+            { "type": "Text", "props": { "color": "muted", "children": "Trusted by teams at" } },
+            { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.10", "align": "center", "justify": "center" }, "children": [
+              { "type": "Skeleton", "props": { "width": "80px", "height": "24px" } },
+              { "type": "Skeleton", "props": { "width": "80px", "height": "24px" } },
+              { "type": "Skeleton", "props": { "width": "80px", "height": "24px" } },
+              { "type": "Skeleton", "props": { "width": "80px", "height": "24px" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "FAQ": {
+      "name": "FAQ",
+      "description": "Frequently asked questions section",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "layout", "options": ["stack", "two-column"], "default": "stack" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string", "default": "Frequently asked questions" },
+        { "name": "items", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": {},
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.8" }, "children": [
+            { "type": "Heading", "props": { "level": "h2", "children": "Frequently asked questions" } },
+            { "type": "Accordion", "props": { "type": "single" } }
+          ]}
+        ]
+      }
+    },
+
+    "BlogCard": {
+      "name": "BlogCard",
+      "description": "Article preview card with image, title, and excerpt",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "horizontal", "compact"], "default": "default" }
+      ],
+      "states": ["default", "hover"],
+      "props": [
+        { "name": "title", "type": "string", "default": "Article title" },
+        { "name": "excerpt", "type": "string" },
+        { "name": "category", "type": "string" },
+        { "name": "readTime", "type": "string" },
+        { "name": "publishedAt", "type": "string" },
+        { "name": "href", "type": "string" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "outlined" },
+        "children": [
+          { "type": "AspectRatio", "props": { "ratio": 1.7 }, "children": [
+            { "type": "Skeleton", "props": { "variant": "rectangular" } }
+          ]},
+          { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+            { "type": "Badge", "props": { "variant": "secondary", "children": "Category" } },
+            { "type": "Heading", "props": { "level": "h4", "children": "Article title" } },
+            { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "Short excerpt from the article…" } },
+            { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "5 min read · Jan 2025" } }
+          ]}
+        ]
+      }
+    },
+
+    "TeamCard": {
+      "name": "TeamCard",
+      "description": "Team member profile card",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "compact"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "name", "type": "string", "default": "Jane Doe" },
+        { "name": "role", "type": "string", "default": "CEO" },
+        { "name": "bio", "type": "string" },
+        { "name": "avatar", "type": "node" },
+        { "name": "socials", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Card",
+        "props": { "variant": "outlined" },
+        "children": [
+          { "type": "Stack", "props": { "align": "center", "gap": "spacing.4" }, "children": [
+            { "type": "Avatar", "props": { "size": "xl", "fallback": "JD" } },
+            { "type": "Stack", "props": { "align": "center", "gap": "spacing.1" }, "children": [
+              { "type": "Text", "props": { "weight": "semibold", "children": "Jane Doe" } },
+              { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "CEO" } }
+            ]},
+            { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "Short bio goes here." } }
+          ]}
+        ]
+      }
+    },
+
+    "Footer": {
+      "name": "Footer",
+      "description": "Page footer with nav links and legal",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "minimal", "dark"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "logo", "type": "node" },
+        { "name": "columns", "type": "node" },
+        { "name": "legal", "type": "string", "default": "© 2025 Company. All rights reserved." },
+        { "name": "socials", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Section",
+        "props": { "variant": "muted" },
+        "children": [
+          { "type": "Stack", "props": { "gap": "spacing.10" }, "children": [
+            { "type": "Grid", "props": { "columns": "4" } },
+            { "type": "Separator" },
+            { "type": "Stack", "props": { "direction": "horizontal", "justify": "between", "align": "center" }, "children": [
+              { "type": "Text", "props": { "size": "sm", "color": "muted", "children": "© 2025 Company. All rights reserved." } },
+              { "type": "Stack", "props": { "direction": "horizontal", "gap": "spacing.4" } }
+            ]}
+          ]}
+        ]
+      }
+    },
+
+    "ContactForm": {
+      "name": "ContactForm",
+      "description": "Pre-composed contact form with name, email, message",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "variant", "options": ["default", "card"], "default": "default" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "heading", "type": "string", "default": "Contact us" },
+        { "name": "submitLabel", "type": "string", "default": "Send message" }
+      ],
+      "defaultTemplate": {
+        "type": "Stack",
+        "props": { "gap": "spacing.6" },
+        "children": [
+          { "type": "Heading", "props": { "level": "h3", "children": "Contact us" } },
+          { "type": "Stack", "props": { "gap": "spacing.4" }, "children": [
+            { "type": "Grid", "props": { "columns": "2", "gap": "md" }, "children": [
+              { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+                { "type": "Label", "props": { "children": "First name" } },
+                { "type": "Input", "props": { "placeholder": "Jane" } }
+              ]},
+              { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+                { "type": "Label", "props": { "children": "Last name" } },
+                { "type": "Input", "props": { "placeholder": "Doe" } }
+              ]}
+            ]},
+            { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+              { "type": "Label", "props": { "children": "Email" } },
+              { "type": "Input", "props": { "type": "email", "placeholder": "jane@example.com" } }
+            ]},
+            { "type": "Stack", "props": { "gap": "spacing.2" }, "children": [
+              { "type": "Label", "props": { "children": "Message" } },
+              { "type": "Textarea", "props": { "placeholder": "How can we help?", "rows": 5 } }
+            ]},
+            { "type": "Button", "props": { "children": "Send message" } }
+          ]}
+        ]
+      }
+    },
+
+    "BentoGrid": {
+      "name": "BentoGrid",
+      "description": "Asymmetric feature grid with varying card sizes",
+      "category": "Website",
+      "importPath": "studio:template",
+      "variants": [
+        { "name": "layout", "options": ["2-1", "1-2", "2-2-1", "3-col"], "default": "2-1" }
+      ],
+      "states": ["default"],
+      "props": [
+        { "name": "children", "type": "node" }
+      ],
+      "defaultTemplate": {
+        "type": "Grid",
+        "props": { "columns": "3", "gap": "md" },
+        "children": [
+          { "type": "Card", "props": { "variant": "outlined" }, "style": { "gridColumn": "span 2" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.4", "padding": "spacing.8" }, "children": [
+              { "type": "Heading", "props": { "level": "h3", "children": "Main feature" } },
+              { "type": "Text", "props": { "color": "muted", "children": "The primary callout for your most important feature." } }
+            ]}
+          ]},
+          { "type": "Card", "props": { "variant": "outlined" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.3", "padding": "spacing.6" }, "children": [
+              { "type": "Heading", "props": { "level": "h4", "children": "Side feature" } },
+              { "type": "Text", "props": { "color": "muted", "size": "sm", "children": "Supporting feature detail." } }
+            ]}
+          ]},
+          { "type": "Card", "props": { "variant": "outlined" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.3", "padding": "spacing.6" } }
+          ]},
+          { "type": "Card", "props": { "variant": "outlined" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.3", "padding": "spacing.6" } }
+          ]},
+          { "type": "Card", "props": { "variant": "outlined" }, "children": [
+            { "type": "Stack", "props": { "gap": "spacing.3", "padding": "spacing.6" } }
+          ]}
+        ]
+      }
     }
   }
 }

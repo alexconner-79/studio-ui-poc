@@ -7,27 +7,17 @@ import { Separator } from "@/components/ui/separator";
 
 export function BlankTest() {
   return (
-    <div className="flex-col flex gap-4 p-8">
+    <div className="flex-col flex gap-[1rem] p-[2rem]">
       <div style={{ fontSize: "38px", fontWeight: "600", lineHeight: "1.23" }}>
         <h1 className="text-3xl font-bold">Blank Test</h1>
       </div>
       <div style={{ gap: "8px", display: "flex", padding: "8px" }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "var(--space-4, 0.5rem)",
-          }}
-        ></div>
+        <div style={{ display: "flex", flexDirection: "row", gap: "var(--space-[1rem], 0.5rem)" }}></div>
       </div>
       <Button>Button</Button>
       <Button>Button</Button>
-      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-zinc-900 text-white">
-        Badge
-      </span>
-      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-zinc-900 text-white">
-        Badge
-      </span>
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-zinc-900 text-white">Badge</span>
+      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-zinc-900 text-white">Badge</span>
       <img src={undefined} alt="" style={{ objectFit: "cover" }} />
       <div style={{ marginRight: "4px" }}>
         <Input type="text" />
@@ -39,92 +29,92 @@ export function BlankTest() {
       <ul className="list-disc pl-4">
         <li>List item 1 in here</li>
       </ul>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-[1rem]">
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Starter</h3>
-              <h2 className="text-2xl font-semibold">$9/mo</h2>
-              <p>Perfect for individuals and small projects.</p>
-              <Separator />
-              <p>5 projects</p>
-              <p>1 GB storage</p>
-              <p>Email support</p>
-              <Button variant="outline">Get Started</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Starter</h3>
+                <h2 className="text-2xl font-semibold">$9/mo</h2>
+                <p>Perfect for individuals and small projects.</p>
+                <Separator />
+                <p>5 projects</p>
+                <p>1 GB storage</p>
+                <p>Email support</p>
+                <Button variant="outline">Get Started</Button>
+              </div>
             </div>
-          </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Pro</h3>
-              <h2 className="text-2xl font-semibold">$29/mo</h2>
-              <p>For growing teams and businesses.</p>
-              <Separator />
-              <p>Unlimited projects</p>
-              <p>10 GB storage</p>
-              <p>Priority support</p>
-              <Button variant="default">Upgrade to Pro</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Pro</h3>
+                <h2 className="text-2xl font-semibold">$29/mo</h2>
+                <p>For growing teams and businesses.</p>
+                <Separator />
+                <p>Unlimited projects</p>
+                <p>10 GB storage</p>
+                <p>Priority support</p>
+                <Button variant="default">Upgrade to Pro</Button>
+              </div>
             </div>
-          </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Enterprise</h3>
-              <h2 className="text-2xl font-semibold">Custom</h2>
-              <p>Tailored solutions for large organisations.</p>
-              <Separator />
-              <p>Unlimited everything</p>
-              <p>SSO &amp; SAML</p>
-              <p>Dedicated account manager</p>
-              <Button variant="outline">Contact Sales</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Enterprise</h3>
+                <h2 className="text-2xl font-semibold">Custom</h2>
+                <p>Tailored solutions for large organisations.</p>
+                <Separator />
+                <p>Unlimited everything</p>
+                <p>SSO &amp; SAML</p>
+                <p>Dedicated account manager</p>
+                <Button variant="outline">Contact Sales</Button>
+              </div>
             </div>
-          </div>
         </Card>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-[1rem]">
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Starter</h3>
-              <h2 className="text-2xl font-semibold">$9/mo</h2>
-              <p>Perfect for individuals and small projects.</p>
-              <Separator />
-              <p>5 projects</p>
-              <p>1 GB storage</p>
-              <p>Email support</p>
-              <Button variant="outline">Get Started</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Starter</h3>
+                <h2 className="text-2xl font-semibold">$9/mo</h2>
+                <p>Perfect for individuals and small projects.</p>
+                <Separator />
+                <p>5 projects</p>
+                <p>1 GB storage</p>
+                <p>Email support</p>
+                <Button variant="outline">Get Started</Button>
+              </div>
             </div>
-          </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Pro</h3>
-              <h2 className="text-2xl font-semibold">$29/mo</h2>
-              <p>For growing teams and businesses.</p>
-              <Separator />
-              <p>Unlimited projects</p>
-              <p>10 GB storage</p>
-              <p>Priority support</p>
-              <Button variant="default">Upgrade to Pro</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Pro</h3>
+                <h2 className="text-2xl font-semibold">$29/mo</h2>
+                <p>For growing teams and businesses.</p>
+                <Separator />
+                <p>Unlimited projects</p>
+                <p>10 GB storage</p>
+                <p>Priority support</p>
+                <Button variant="default">Upgrade to Pro</Button>
+              </div>
             </div>
-          </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex-col flex gap-4">
-              <h3 className="text-xl font-semibold">Enterprise</h3>
-              <h2 className="text-2xl font-semibold">Custom</h2>
-              <p>Tailored solutions for large organisations.</p>
-              <Separator />
-              <p>Unlimited everything</p>
-              <p>SSO &amp; SAML</p>
-              <p>Dedicated account manager</p>
-              <Button variant="outline">Contact Sales</Button>
+              <div className="flex-col flex gap-[1rem]">
+                <h3 className="text-xl font-semibold">Enterprise</h3>
+                <h2 className="text-2xl font-semibold">Custom</h2>
+                <p>Tailored solutions for large organisations.</p>
+                <Separator />
+                <p>Unlimited everything</p>
+                <p>SSO &amp; SAML</p>
+                <p>Dedicated account manager</p>
+                <Button variant="outline">Contact Sales</Button>
+              </div>
             </div>
-          </div>
         </Card>
       </div>
     </div>

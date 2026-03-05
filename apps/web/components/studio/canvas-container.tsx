@@ -7,6 +7,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
+import { useEditorStore } from "@/lib/studio/store";
 
 export type CanvasTransform = {
   scale: number;
@@ -48,7 +49,7 @@ export function CanvasContainerWithControls({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<CanvasTransform>({
-    scale: 0.7,
+    scale: 1,
     translateX: 0,
     translateY: 0,
   });
@@ -56,6 +57,8 @@ export function CanvasContainerWithControls({
   const isPanningRef = useRef(false);
   const isSpacebarRef = useRef(false);
   const lastPointerRef = useRef({ x: 0, y: 0 });
+  const currentTool = useEditorStore((s) => s.currentTool);
+  const isPanTool = currentTool === "pan";
 
   const applyTransform = useCallback(() => {
     forceUpdate((n) => n + 1);
@@ -129,14 +132,14 @@ export function CanvasContainerWithControls({
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (isSpacebarRef.current || e.button === 1) {
+    if (isSpacebarRef.current || e.button === 1 || isPanTool) {
       isPanningRef.current = true;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       if (containerRef.current)
         containerRef.current.style.cursor = "grabbing";
       e.preventDefault();
     }
-  }, []);
+  }, [isPanTool]);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -213,7 +216,7 @@ export function CanvasContainerWithControls({
       "[data-device-frame]"
     );
     if (frames.length === 0) {
-      transformRef.current = { scale: 0.7, translateX: 0, translateY: 0 };
+      transformRef.current = { scale: 1, translateX: 0, translateY: 0 };
       applyTransform();
       return;
     }
@@ -286,6 +289,7 @@ export function CanvasContainerWithControls({
         className="relative w-full h-full overflow-hidden"
         style={{
           background: `var(--s-canvas-bg)`,
+          cursor: isPanTool ? "grab" : undefined,
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

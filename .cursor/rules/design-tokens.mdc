@@ -1,0 +1,84 @@
+---
+description: Design token conventions for Studio UI
+globs: ["tokens/**", "spec/ds-starters/**"]
+alwaysApply: false
+---
+
+# Design Tokens
+
+Tokens are the design system's source of truth for colours, spacing, typography, and other visual constants.
+
+## Active Project Tokens
+
+Live at `tokens/design-tokens.json` (path configured in `studio.config.json`).
+
+## Token Categories
+
+```json
+{
+  "color": {
+    "primary": { "value": "#6366f1" },
+    "secondary": { "value": "#8b5cf6" },
+    "background": { "value": "#ffffff" },
+    "foreground": { "value": "#09090b" },
+    "muted": { "value": "#f4f4f5" },
+    "border": { "value": "#e4e4e7" }
+  },
+  "spacing": {
+    "xs": { "value": "4px" },
+    "sm": { "value": "8px" },
+    "md": { "value": "16px" },
+    "lg": { "value": "24px" },
+    "xl": { "value": "32px" }
+  },
+  "typography": {
+    "heading": { "fontSize": { "value": "24px" }, "fontWeight": { "value": "700" } },
+    "body": { "fontSize": { "value": "16px" }, "fontWeight": { "value": "400" } }
+  },
+  "borderRadius": {
+    "sm": { "value": "4px" },
+    "md": { "value": "8px" },
+    "lg": { "value": "12px" }
+  },
+  "shadow": {
+    "sm": { "value": "0 1px 2px rgba(0,0,0,0.05)" },
+    "md": { "value": "0 4px 6px -1px rgba(0,0,0,0.1)" }
+  }
+}
+```
+
+## Referencing Tokens in Specs
+
+In node `style` objects, use `$` prefix:
+- `"$color.primary"` → resolves to `#6366f1`
+- `"$spacing.md"` → resolves to `16px`
+- `"$borderRadius.lg"` → resolves to `12px`
+
+## DS Starter Presets
+
+Pre-built token sets live in `spec/ds-starters/`:
+- `shadcn.tokens.json` — shadcn/ui defaults
+- `material3-web.tokens.json` — Material Design 3
+- `ant-design.tokens.json` — Ant Design
+- `ios-hig.tokens.json` — Apple HIG
+
+## Theme Structure
+
+The DS supports multiple themes. Each theme is a complete set of token overrides:
+
+```json
+{
+  "themes": {
+    "light": { "color": { "background": { "value": "#ffffff" } } },
+    "dark": { "color": { "background": { "value": "#09090b" } } }
+  }
+}
+```
+
+## Token → CSS Variable Bridge
+
+At runtime, tokens are converted to CSS custom properties:
+- `$color.primary` → `var(--color-primary)`
+- `$spacing.md` → `var(--spacing-md)`
+
+The compiler emits these variables at build time.

@@ -16,9 +16,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 // Icons are loaded lazily to avoid pulling all ~1500 icons at startup
 import { DropIndicator } from "./drop-indicator";
-import { useA11yIssues, type A11yIssue } from "./a11y-panel";
 import { resolveAllRefs } from "@/lib/studio/component-system";
 import { CanvasControlsContext } from "./canvas-container";
+import { LiveNode, NativeFallbackChip, StructuralInstance } from "./live-node";
+import { SUPPORTED_WEB_PATHS, NATIVE_PATHS, buildLiveProps } from "@/lib/studio/component-registry";
 
 // -------------------------------------------------------------------------
 // Lazy Lucide icon renderer -- defers loading the full lucide-react module
@@ -105,6 +106,25 @@ type RenderNodeProps = {
 // Node overlay wrapper -- adds click-to-select, drag, and visual feedback
 // -------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Merge utility: combine multiple refs into a single callback ref
+// ---------------------------------------------------------------------------
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mergeRefs(...refs: Array<React.Ref<any> | ((el: any) => void) | null | undefined>) {
+  return (el: HTMLElement | null) => {
+    refs.forEach((ref) => {
+      if (typeof ref === "function") ref(el);
+      else if (ref && typeof ref === "object") (ref as React.MutableRefObject<HTMLElement | null>).current = el;
+    });
+  };
+}
+
+// ---------------------------------------------------------------------------
+// NodeWrapper -- wrapper-free: merges editor props onto the content element
+// via cloneElement. No synthetic wrapper divs. Badges live in NodeChromeOverlay.
+// ---------------------------------------------------------------------------
+
 function NodeWrapper({
   node,
   selectedId,
@@ -122,8 +142,6 @@ function NodeWrapper({
 }) {
   const isSelected = !previewMode && selectedId === node.id;
   const isMultiSelected = useEditorStore((s) => !previewMode && s.selectedNodeIds.has(node.id));
-  const { scale } = React.useContext(CanvasControlsContext);
-  const inv = 1 / (scale || 1);
   const toggleSelectNode = useEditorStore((s) => s.toggleSelectNode);
   const isHidden = useEditorStore((s) => s.hiddenNodeIds.has(node.id));
   const isLocked = useEditorStore((s) => s.lockedNodeIds.has(node.id));
@@ -136,10 +154,6 @@ function NodeWrapper({
   const isDesignOnly = node.compile === false;
   const isInlineEditing = inlineEditingNodeId === node.id;
   const isAbsoluteInDesign = !previewMode && !isRoot && !isLocked && canvasMode === "design" && node.style?.position === "absolute";
-  const a11yIssues = useA11yIssues();
-  const nodeIssues = previewMode ? [] : a11yIssues.filter((i: A11yIssue) => i.nodeId === node.id);
-  const hasA11yError = nodeIssues.some((i: A11yIssue) => i.severity === "error");
-  const hasA11yWarning = nodeIssues.length > 0;
 
   // Check visibleWhen condition
   const visibleWhen = node.interactions?.visibleWhen;
@@ -156,11 +170,10 @@ function NodeWrapper({
     if (!visible) return null;
   }
 
-  // Check interaction-based visibility toggle
   const visToggleKey = `visibility_${node.id}`;
   if (interactionState[visToggleKey] === false) return null;
 
-  // Draggable only in edit mode; absolute nodes in Design Mode use raw pointer events instead
+  // dnd-kit drag
   const disableDrag = !!previewMode || !!isRoot || isLocked || !!isAbsoluteInDesign;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `canvas-${node.id}`,
@@ -168,9 +181,8 @@ function NodeWrapper({
     disabled: disableDrag,
   });
 
-  // Free-form drag for absolute-positioned nodes in Design Mode
+  // Free-form drag for absolute-positioned nodes
   const [isFreeDragging, setIsFreeDragging] = React.useState(false);
-  const [freeDragPos, setFreeDragPos] = React.useState<{ x: number; y: number } | null>(null);
   const spec = useEditorStore((s) => s.spec);
   const setSmartGuides = useEditorStore((s) => s.setSmartGuides);
   const clearSmartGuides = useEditorStore((s) => s.clearSmartGuides);
@@ -195,7 +207,6 @@ function NodeWrapper({
     const GRID = 8;
     let activated = false;
 
-    // Cache snap targets once at drag start
     const canvasEl = el.closest("[data-canvas-root]") as HTMLElement | null;
     let targets: BBox[] = [];
     if (canvasEl) {
@@ -218,7 +229,6 @@ function NodeWrapper({
       let newLeft = Math.round((startLeft + dx) / GRID) * GRID;
       let newTop = Math.round((startTop + dy) / GRID) * GRID;
 
-      // Smart snap (gated by snapEnabled)
       if (snapEnabled && targets.length > 0 && canvasEl) {
         const canvasRect = canvasEl.getBoundingClientRect();
         const boxLeft = (elRect.left - canvasRect.left) / scale + (newLeft - startLeft);
@@ -236,7 +246,6 @@ function NodeWrapper({
         clearSmartGuides();
       }
 
-      setFreeDragPos({ x: newLeft, y: newTop });
       updateNodeStyle(node.id, { top: `${newTop}px`, left: `${newLeft}px` });
     };
 
@@ -245,7 +254,6 @@ function NodeWrapper({
       window.removeEventListener("pointerup", onUp);
       if (activated) {
         setIsFreeDragging(false);
-        setFreeDragPos(null);
         clearSmartGuides();
       }
     };
@@ -276,11 +284,10 @@ function NodeWrapper({
     );
   }
 
-  // Handle onClick interactions
+  // Interaction click handler
   const handleInteractionClick = (e: React.MouseEvent) => {
     const onClick = node.interactions?.onClick;
     if (!onClick) return;
-
     if (onClick.action === "toggleVisibility" && onClick.target) {
       e.stopPropagation();
       const key = `visibility_${onClick.target}`;
@@ -290,7 +297,6 @@ function NodeWrapper({
       if (previewMode) {
         window.location.href = `/studio/${onClick.target}`;
       }
-      // In edit mode, navigation is indicated by the badge -- no action needed
     }
   };
 
@@ -303,44 +309,28 @@ function NodeWrapper({
     setInlineEditingNodeId(node.id);
   }, [previewMode, isTextEditable, isLocked, node.id, setInlineEditingNodeId]);
 
-  // In preview mode, render without any editor chrome
-  if (previewMode) {
-    return (
-      <div
-        data-studio-node={node.id}
-        data-studio-type={node.type}
-        onClick={(e) => {
-          handleInteractionClick(e);
-        }}
-        className={node.interactions?.onClick ? "cursor-pointer" : ""}
-      >
-        {children}
-      </div>
-    );
-  }
+  // --- Build merged props for cloneElement ---
 
-  const designOnlyOpacity = isDesignOnly && canvasMode === "build" ? 0.5 : 1;
+  const handleClick = React.useCallback((e: React.MouseEvent) => {
+    if (isFreeDragging || isInlineEditing) return;
+    e.stopPropagation();
+    if (previewMode) {
+      handleInteractionClick(e);
+      return;
+    }
+    if (e.shiftKey) {
+      toggleSelectNode(node.id);
+    } else {
+      onSelect?.(node.id);
+    }
+    handleInteractionClick(e);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFreeDragging, isInlineEditing, previewMode, node.id, onSelect, toggleSelectNode]);
 
-  // Size heuristic for design-only badge: parse px values from node style
-  const parseStylePx = (v: unknown) => {
-    if (typeof v !== "string") return null;
-    const m = v.match(/^([\d.]+)px$/);
-    return m ? parseFloat(m[1]) : null;
-  };
-  const nodeStyleW = parseStylePx(node.style?.width);
-  const nodeStyleH = parseStylePx(node.style?.height);
-  const isTinyNode = (nodeStyleW !== null && nodeStyleW < 40) || (nodeStyleH !== null && nodeStyleH < 40);
-
-  const anyDragging = isDragging || isFreeDragging;
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...(isRoot || isLocked || isAbsoluteInDesign ? {} : listeners)}
-      {...(isRoot || isLocked || isAbsoluteInDesign ? {} : attributes)}
-      data-studio-node={node.id}
-      data-studio-type={node.type}
-      className={`relative ${
+  // Compute editor className additions
+  const editorClasses = previewMode
+    ? (node.interactions?.onClick ? "cursor-pointer" : "")
+    : [
         isFreeDragging
           ? ""
           : isDragging
@@ -349,147 +339,73 @@ function NodeWrapper({
           ? ""
           : isMultiSelected
           ? "ring-2 ring-[var(--s-accent)]/60 ring-offset-1 ring-dashed"
-          : hasA11yError
-          ? "ring-2 ring-red-400/60 ring-offset-1 hover:ring-red-500"
-          : hasA11yWarning
-          ? "ring-2 ring-amber-400/40 ring-offset-1 hover:ring-amber-500"
-          : "hover:outline hover:outline-1 hover:outline-[var(--s-accent)]/50 hover:outline-offset-0"
-      } transition-shadow ${isRoot || isLocked ? "cursor-default" : isAbsoluteInDesign && isSelected ? "cursor-move" : "cursor-default"}`}
-      style={{
-        opacity: isFreeDragging ? 0.6 : isDragging ? undefined : designOnlyOpacity,
-        boxShadow: isFreeDragging ? "0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)" : undefined,
-        outline: isFreeDragging ? `2px solid var(--s-accent)` : undefined,
-        outlineOffset: isFreeDragging ? "1px" : undefined,
-        ...(isDesignOnly && !previewMode
-          ? { outline: "1.5px dashed rgba(234,179,8,0.7)", outlineOffset: "-1px", borderRadius: 2 }
-          : {}),
-      }}
-      onPointerDown={isAbsoluteInDesign ? handleFreePointerDown : undefined}
-      onClick={(e) => {
-        if (isFreeDragging || isInlineEditing) return;
-        e.stopPropagation();
-        if (e.shiftKey) {
-          toggleSelectNode(node.id);
-        } else {
-          onSelect?.(node.id);
-        }
-        handleInteractionClick(e);
-      }}
-      onDoubleClick={isTextEditable ? handleDoubleClick : undefined}
-    >
-      {/* Diagonal stripe overlay for design-only nodes */}
-      {isDesignOnly && !previewMode && (
-        <div
-          className="absolute inset-0 pointer-events-none z-[1]"
-          style={{
-            borderRadius: 2,
-            background: "repeating-linear-gradient(135deg, transparent, transparent 5px, rgba(234,179,8,0.1) 5px, rgba(234,179,8,0.1) 6px)",
-          }}
-        />
-      )}
-      {/* Persistent "Design only" badge — visible even when not selected */}
-      {isDesignOnly && !previewMode && !isSelected && !anyDragging && (
-        isTinyNode ? (
-          // Tiny node: just a small amber corner dot
-          <div
-            className="absolute top-0 right-0 pointer-events-none z-[9]"
-            style={{
-              width: 6,
-              height: 6,
-              background: "rgba(234,179,8,0.9)",
-              borderRadius: "0 2px 0 2px",
-            }}
-          />
-        ) : (
-          // Normal node: "Design only" text pill at top-right
-          <div
-            className="absolute pointer-events-none z-[9] flex items-center gap-0.5"
-            style={{
-              top: -18,
-              right: 0,
-              background: "rgba(234,179,8,0.92)",
-              color: "#78350f",
-              fontSize: 9,
-              fontWeight: 600,
-              padding: "2px 5px",
-              borderRadius: "3px 3px 0 3px",
-              whiteSpace: "nowrap",
-              lineHeight: 1.2,
-            }}
-          >
-            <svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2L2 12h12Z"/><line x1="8" y1="7" x2="8" y2="9"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor"/></svg>
-            Design only
-          </div>
-        )
-      )}
-      {isSelected && !anyDragging && (
-        <div
-          className="absolute left-0 text-white font-mono z-10 flex items-center"
-          style={{
-            bottom: "100%",
-            background: isDesignOnly ? "var(--s-warning)" : "var(--s-accent)",
-            fontSize: `${11 * inv}px`,
-            padding: `${2.5 * inv}px ${5 * inv}px`,
-            borderRadius: `${3 * inv}px ${3 * inv}px 0 0`,
-            gap: `${4 * inv}px`,
-            lineHeight: 1.4,
-            whiteSpace: "nowrap",
-            transformOrigin: "bottom left",
-          }}
-        >
-          {isDesignOnly && <span style={{ fontSize: `${9 * inv}px`, opacity: 0.85 }}>Design</span>}
-          {node.name ?? node.type}
-          {isLocked && (
-            <svg xmlns="http://www.w3.org/2000/svg" width={`${10 * inv}`} height={`${10 * inv}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          )}
-        </div>
-      )}
-      {/* Position pill during free-form drag */}
-      {isFreeDragging && freeDragPos && (
-        <div
-          className="absolute font-mono z-20 pointer-events-none"
-          style={{
-            top: -26,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.8)",
-            color: "#fff",
-            fontSize: 10,
-            padding: "3px 8px",
-            borderRadius: 4,
-            whiteSpace: "nowrap",
-            letterSpacing: "0.02em",
-          }}
-        >
-          X: {freeDragPos.x}&nbsp;&nbsp;Y: {freeDragPos.y}
-        </div>
-      )}
-      {isLocked && !isSelected && (
-        <div className="absolute top-0 right-0 bg-orange-500 text-white text-[8px] px-1 py-0.5 rounded-bl-sm z-10">
-          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-        </div>
-      )}
-      {hasA11yWarning && !isDragging && (
-        <div
-          className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold z-10 ${
-            hasA11yError ? "bg-red-500" : "bg-amber-500"
-          }`}
-          title={nodeIssues.map((i: A11yIssue) => i.message).join("; ")}
-        >
-          !
-        </div>
-      )}
-      <div style={isInlineEditing ? { visibility: "hidden" } : undefined}>
+          : "hover:outline hover:outline-1 hover:outline-[var(--s-accent)]/50 hover:outline-offset-0",
+        "transition-shadow",
+        isRoot || isLocked ? "cursor-default" : isAbsoluteInDesign && isSelected ? "cursor-move" : "cursor-default",
+      ].filter(Boolean).join(" ");
+
+  // Compute editor style additions
+  const designOnlyOpacity = isDesignOnly && canvasMode === "build" ? 0.5 : 1;
+  const isComponentNode =
+    node.type === "ComponentInstance" || (node.type as string) === "ExternalComponent";
+  const hasExplicitWidth = !!(node.style?.width);
+  const componentNodeDisplay: React.CSSProperties =
+    isComponentNode && !hasExplicitWidth
+      ? { display: "inline-block", alignSelf: "flex-start" }
+      : {};
+
+  const editorStyle: React.CSSProperties = {
+    ...componentNodeDisplay,
+    ...(isFreeDragging
+      ? { opacity: 0.6, boxShadow: "0 8px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)", outline: "2px solid var(--s-accent)", outlineOffset: "1px" }
+      : isDragging
+      ? {}
+      : { opacity: designOnlyOpacity }),
+    ...(isDesignOnly && !previewMode
+      ? { outline: "1.5px dashed rgba(234,179,8,0.7)", outlineOffset: "-1px", borderRadius: 2 }
+      : {}),
+    ...(isInlineEditing ? { visibility: "hidden" as const } : {}),
+  };
+
+  // dnd-kit props (only in edit mode for non-root, non-locked, non-absolute nodes)
+  const dndProps = disableDrag ? {} : { ...listeners, ...attributes };
+
+  // --- cloneElement onto the content element ---
+
+  const contentElement = React.Children.toArray(children).find(React.isValidElement);
+
+  if (!contentElement || !React.isValidElement(contentElement)) {
+    return (
+      <div
+        ref={setNodeRef}
+        data-studio-node={node.id}
+        data-studio-type={node.type}
+        className={editorClasses}
+        style={editorStyle}
+        onClick={handleClick}
+        {...dndProps}
+      >
         {children}
       </div>
-    </div>
-  );
+    );
+  }
+
+  const existingProps = contentElement.props as Record<string, unknown>;
+  const existingClassName = (existingProps.className as string) || "";
+  const existingStyle = (existingProps.style as React.CSSProperties) || {};
+  const existingRef = (contentElement as unknown as { ref?: React.Ref<unknown> }).ref;
+
+  return React.cloneElement(contentElement as React.ReactElement<Record<string, unknown>>, {
+    ref: mergeRefs(setNodeRef, existingRef ?? null),
+    "data-studio-node": node.id,
+    "data-studio-type": node.type,
+    className: `${existingClassName} ${editorClasses}`.trim(),
+    style: { ...existingStyle, ...editorStyle },
+    onClick: handleClick,
+    onDoubleClick: isTextEditable ? handleDoubleClick : (existingProps.onDoubleClick as React.MouseEventHandler | undefined),
+    onPointerDown: isAbsoluteInDesign ? handleFreePointerDown : (existingProps.onPointerDown as React.PointerEventHandler | undefined),
+    ...dndProps,
+  });
 }
 
 // -------------------------------------------------------------------------
@@ -513,9 +429,9 @@ function renderChildren(
   }
 
   if (!showDropIndicators || !parentId || previewMode) {
-    return children.map((child) => (
+    return children.map((child, i) => (
       <RenderNode
-        key={child.id}
+        key={child.id ?? `child-${parentId ?? "root"}-${i}`}
         node={child}
         selectedId={selectedId}
         onSelect={onSelect}
@@ -532,7 +448,7 @@ function renderChildren(
   children.forEach((child, i) => {
     result.push(
       <RenderNode
-        key={child.id}
+        key={child.id ?? `child-${parentId}-${i}`}
         node={child}
         selectedId={selectedId}
         onSelect={onSelect}
@@ -582,7 +498,16 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     return base;
   }, [node.style, node.responsive, frameWidth]);
 
-  const nodeStyleCSS = resolvedStyleToCSS(resolvedStyle, effectiveTokens);
+  const TEXT_AUTO_SIZE_TYPES = new Set(["Heading", "Text"]);
+  const bridgedStyle = React.useMemo(() => {
+    const base = resolvedStyle;
+    if (TEXT_AUTO_SIZE_TYPES.has(type) && !base.widthMode && !base.width) {
+      return { ...base, widthMode: "hug" as const };
+    }
+    return base;
+  }, [type, props, resolvedStyle]);
+
+  const nodeStyleCSS = resolvedStyleToCSS(bridgedStyle, effectiveTokens);
   const hasNodeStyle = Object.keys(nodeStyleCSS).length > 0;
 
   let content: React.ReactNode;
@@ -590,8 +515,8 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
   switch (type) {
     // -- Layout primitives --
     case "Stack": {
-      const gap = resolveGap(props.gap);
-      const padding = props.padding ? ` p-${resolveSize(props.padding)}` : "";
+      const gap = resolveGap(props.gap, effectiveTokens);
+      const padding = props.padding ? ` p-${resolveSize(props.padding, effectiveTokens)}` : "";
       const direction = props.direction === "row" ? "flex-row" : "flex-col";
       content = (
         <div className={`${direction} flex gap-${gap}${padding}`}>
@@ -603,7 +528,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 
     case "Grid": {
       const columns = typeof props.columns === "number" ? props.columns : 2;
-      const gap = resolveGap(props.gap);
+      const gap = resolveGap(props.gap, effectiveTokens);
       content = (
         <div className={`grid grid-cols-${columns} gap-${gap}`}>
           {renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth)}
@@ -613,7 +538,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     }
 
     case "Section": {
-      const padding = props.padding ? ` p-${resolveSize(props.padding)}` : "";
+      const padding = props.padding ? ` p-${resolveSize(props.padding, effectiveTokens)}` : "";
       content = (
         <section className={`w-full${padding}`}>
           {renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth)}
@@ -634,7 +559,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     }
 
     case "Spacer": {
-      const size = resolveSize(props.size);
+      const size = resolveSize(props.size, effectiveTokens);
       content = <div className={`h-${size}`} />;
       break;
     }
@@ -645,7 +570,9 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const level = typeof props.level === "number" ? props.level : 1;
       const clampedLevel = Math.min(Math.max(level, 1), 6) as 1 | 2 | 3 | 4 | 5 | 6;
       const fontFamily = typeof props.fontFamily === "string" && props.fontFamily ? props.fontFamily : undefined;
+      const styleFontFamily = typeof resolvedStyle?.fontFamily === "string" ? resolvedStyle.fontFamily : undefined;
       if (fontFamily) ensureFontLoaded(fontFamily);
+      else if (styleFontFamily) ensureFontLoaded(styleFontFamily);
       const headingStyle = fontFamily ? { fontFamily } : undefined;
       const headingClasses: Record<1 | 2 | 3 | 4 | 5 | 6, string> = {
         1: "text-4xl font-bold",
@@ -655,9 +582,17 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
         5: "text-lg font-medium",
         6: "text-base font-medium",
       };
+      const variantOverrides: Record<string, string> = {
+        hero: "text-5xl font-extrabold tracking-tight",
+        title: "text-3xl font-bold",
+        subtitle: "text-xl font-medium text-muted-foreground",
+        section: "text-lg font-semibold uppercase tracking-wider",
+      };
+      const variant = typeof props.variant === "string" ? props.variant : "";
+      const className = variantOverrides[variant] ?? headingClasses[clampedLevel];
       content = React.createElement(
         `h${clampedLevel}`,
-        { className: headingClasses[clampedLevel], style: headingStyle },
+        { className, style: headingStyle },
         text
       );
       break;
@@ -666,7 +601,9 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     case "Text": {
       const text = String(props.text ?? "");
       const fontFamily = typeof props.fontFamily === "string" && props.fontFamily ? props.fontFamily : undefined;
+      const styleFontFamily = typeof resolvedStyle?.fontFamily === "string" ? resolvedStyle.fontFamily : undefined;
       if (fontFamily) ensureFontLoaded(fontFamily);
+      else if (styleFontFamily) ensureFontLoaded(styleFontFamily);
       const fontStyle = fontFamily ? { fontFamily } : undefined;
       if (props.variant === "muted") {
         content = (
@@ -720,6 +657,8 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       if (typeof props.type === "string") inputProps.type = props.type;
       if (typeof props.placeholder === "string")
         inputProps.placeholder = props.placeholder;
+      if (props.disabled === true) inputProps.disabled = true;
+      if (props.readOnly === true) inputProps.readOnly = true;
 
       if (typeof props.label === "string" && props.label) {
         content = (
@@ -773,14 +712,18 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const iconName = typeof props.name === "string" ? props.name : "Star";
       const iconSize = typeof props.size === "number" ? props.size : 24;
       const iconColor = typeof props.color === "string" && props.color ? props.color : undefined;
-      content = <LazyLucideIcon name={iconName} size={iconSize} color={iconColor} />;
+      content = (
+        <span style={{ display: "inline-flex" }}>
+          <LazyLucideIcon name={iconName} size={iconSize} color={iconColor} />
+        </span>
+      );
       break;
     }
 
     // -- Components --
     case "Card": {
       const padding = props.padding
-        ? `p-${resolveSize(props.padding)}`
+        ? `p-${resolveSize(props.padding, effectiveTokens)}`
         : "p-4";
       content = (
         <Card>
@@ -795,12 +738,14 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     case "Button": {
       const label = String(props.label ?? "Button");
       const buttonProps: Record<string, unknown> = {};
-      if (typeof props.intent === "string" && props.intent !== "primary") {
-        buttonProps.variant = props.intent;
+      const variant = props.variant ?? props.intent;
+      if (typeof variant === "string" && variant !== "default" && variant !== "primary") {
+        buttonProps.variant = variant;
       }
       if (typeof props.size === "string" && props.size !== "default") {
         buttonProps.size = props.size;
       }
+      if (props.disabled === true) buttonProps.disabled = true;
       content = <Button {...buttonProps}>{label}</Button>;
       break;
     }
@@ -1038,7 +983,8 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
           className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={taPlaceholder}
           rows={taRows}
-          readOnly
+          readOnly={props.readOnly === true}
+          disabled={props.disabled === true}
         />
       );
       content = taLabel ? (
@@ -1055,7 +1001,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const selPlaceholder = typeof props.placeholder === "string" ? props.placeholder : "Choose...";
       const selOptions = Array.isArray(props.options) ? props.options : [];
       const select = (
-        <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+        <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring" disabled={props.disabled === true}>
           <option value="" disabled>{selPlaceholder}</option>
           {selOptions.map((opt, i) => {
             const s = String(opt);
@@ -1077,7 +1023,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const cbLabel = typeof props.label === "string" ? props.label : "Checkbox";
       content = (
         <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox" defaultChecked={props.checked === true} className="h-4 w-4 rounded border-gray-300" readOnly />
+          <input type="checkbox" defaultChecked={props.checked === true} className="h-4 w-4 rounded border-gray-300" readOnly disabled={props.disabled === true} />
           {cbLabel}
         </label>
       );
@@ -1089,7 +1035,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const rgOptions = Array.isArray(props.options) ? props.options : [];
       const rgDefault = typeof props.defaultValue === "string" ? props.defaultValue : "";
       content = (
-        <fieldset className="space-y-2">
+        <fieldset className="space-y-2" disabled={props.disabled === true}>
           {rgLabel && <legend className="text-sm font-medium mb-1">{rgLabel}</legend>}
           {rgOptions.map((opt, i) => {
             const s = String(opt);
@@ -1109,8 +1055,9 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     case "Switch": {
       const swLabel = typeof props.label === "string" ? props.label : "Toggle";
       const swChecked = props.checked === true;
+      const swDisabled = props.disabled === true;
       content = (
-        <label className="flex items-center gap-3 text-sm cursor-pointer">
+        <label className={`flex items-center gap-3 text-sm ${swDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
           <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${swChecked ? "bg-blue-600" : "bg-gray-300"}`}>
             <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${swChecked ? "translate-x-4" : "translate-x-0.5"}`} />
           </div>
@@ -1127,7 +1074,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const slDefault = typeof props.defaultValue === "number" ? props.defaultValue : 50;
       const slLabel = typeof props.label === "string" ? props.label : undefined;
       const slider = (
-        <input type="range" min={slMin} max={slMax} step={slStep} defaultValue={slDefault} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" readOnly />
+        <input type="range" min={slMin} max={slMax} step={slStep} defaultValue={slDefault} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed" readOnly disabled={props.disabled === true} />
       );
       content = slLabel ? (
         <div className="space-y-1.5">
@@ -1143,7 +1090,8 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 
     case "Label": {
       const lbText = typeof props.text === "string" ? props.text : "Label";
-      content = <label className="text-sm font-medium leading-none">{lbText}</label>;
+      const lbFor = typeof props.htmlFor === "string" ? props.htmlFor : undefined;
+      content = <label className="text-sm font-medium leading-none" htmlFor={lbFor}>{lbText}</label>;
       break;
     }
 
@@ -1391,18 +1339,24 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 
     case "Sheet": {
       const shTitle = typeof props.title === "string" ? props.title : "Sheet";
+      const shSide = typeof props.side === "string" ? props.side : "right";
       const shOpen = props.open !== false;
       if (!shOpen) {
         content = !previewMode ? (
           <div className="border border-dashed rounded p-3 text-xs text-muted-foreground">
-            Sheet: {shTitle} (closed)
+            Sheet: {shTitle} ({shSide}, closed)
           </div>
         ) : null;
         break;
       }
+      const shSideClass: Record<string, string> = {
+        right: "border-l ml-auto h-full w-80",
+        left: "border-r mr-auto h-full w-80",
+        top: "border-b w-full",
+        bottom: "border-t w-full",
+      };
       content = (
-        <div className="border-t rounded-t-xl shadow-lg bg-background mx-auto max-w-lg w-full">
-          <div className="flex justify-center pt-2 pb-1"><div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" /></div>
+        <div className={`shadow-lg bg-background ${shSideClass[shSide] ?? shSideClass.right}`}>
           <div className="px-4 py-3 border-b"><span className="font-semibold text-sm">{shTitle}</span></div>
           <div className="p-4">
             {renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth)}
@@ -1546,7 +1500,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 
     case "Container": {
       const ctMaxWidth = typeof props.maxWidth === "string" ? props.maxWidth : "lg";
-      const ctPadding = props.padding ? ` p-${resolveSize(props.padding)}` : " px-4";
+      const ctPadding = props.padding ? ` p-${resolveSize(props.padding, effectiveTokens)}` : " px-4";
       const MW: Record<string, string> = { sm: "max-w-screen-sm", md: "max-w-screen-md", lg: "max-w-screen-lg", xl: "max-w-screen-xl", "2xl": "max-w-screen-2xl", full: "max-w-full" };
       content = (
         <div className={`mx-auto ${MW[ctMaxWidth] || "max-w-screen-lg"}${ctPadding}`}>
@@ -1572,13 +1526,16 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
 
     case "Accordion": {
       const acItems = Array.isArray(props.items) ? props.items : [];
+      const acType = typeof props.type === "string" ? props.type : "single";
+      const acDefault = typeof props.defaultValue === "string" ? props.defaultValue : "";
       content = (
         <div className="divide-y border rounded-lg">
           {acItems.map((item, i) => {
             const s = String(item);
             const [title, body] = s.includes("|") ? s.split("|") : [s, ""];
+            const isOpen = acDefault ? title === acDefault : (acType === "single" ? i === 0 : true);
             return (
-              <details key={i} className="group" open={i === 0}>
+              <details key={i} className="group" open={isOpen}>
                 <summary className="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-medium hover:bg-muted/50">
                   {title}
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180"><path d="m6 9 6 6 6-6"/></svg>
@@ -1641,7 +1598,7 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
         );
         break;
       }
-      content = <video src={viSrc} poster={viPoster} controls={viControls} className="w-full rounded-lg" />;
+      content = <video src={viSrc} poster={viPoster} controls={viControls} autoPlay={props.autoplay === true} loop={props.loop === true} muted={props.autoplay === true} className="w-full rounded-lg" />;
       break;
     }
 
@@ -1857,34 +1814,10 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       break;
     }
 
-    case "DSComponent": {
-      const compName = typeof props.dsComponentName === "string" ? props.dsComponentName : "DS Component";
-      const selVariants = props.selectedVariants as Record<string, string> | undefined;
-      const variantLabel = selVariants && Object.keys(selVariants).length > 0
-        ? Object.entries(selVariants).map(([k, v]) => `${k}=${v}`).join(", ")
-        : null;
-      content = (
-        <div style={{
-          border: "1.5px dashed #a855f7",
-          borderRadius: 6,
-          padding: "8px 12px",
-          minWidth: 80,
-          minHeight: 36,
-          display: "inline-flex",
-          flexDirection: "column",
-          gap: 2,
-          background: "rgba(168,85,247,0.06)",
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#a855f7", lineHeight: 1.3 }}>{compName}</span>
-          {variantLabel && <span style={{ fontSize: 10, color: "#888" }}>{variantLabel}</span>}
-          <span style={{ fontSize: 9, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.05em" }}>Design System</span>
-        </div>
-      );
-      break;
-    }
-
+    // Legacy compatibility — specs saved before DSComponent was removed treat this as Frame
+    case "DSComponent" as "Frame":
     case "Frame": {
-      // Backward-compat: legacy nodes typed as Frame but with dsComponentName should render as DSComponent
+      // Frame nodes with dsComponentName are DS component instances
       if (typeof props.dsComponentName === "string" && props.dsComponentName) {
         const compName = props.dsComponentName as string;
         content = (
@@ -1912,11 +1845,11 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       const clip = !!props.clip;
       const autoLayout = props.autoLayout !== false;
       const dir = props.direction === "row" ? "row" : "column";
-      const gap = props.gap ? resolveGap(props.gap) : "0";
+      const gap = props.gap ? resolveGap(props.gap, effectiveTokens) : "0";
       const frameStyle: React.CSSProperties = {
         display: autoLayout ? "flex" : "relative" as never,
         flexDirection: autoLayout ? dir : undefined,
-        gap: autoLayout ? `var(--space-${gap}, ${gap === "0" ? "0px" : "0.5rem"})` : undefined,
+        gap: autoLayout ? `var(--spacing-${gap}, var(--space-${gap}, ${gap === "0" ? "0px" : "0.5rem"}))` : undefined,
         position: autoLayout ? undefined : "relative",
         backgroundColor: fill,
         border: stroke && sw ? `${sw}px solid ${stroke}` : undefined,
@@ -1932,43 +1865,42 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       break;
     }
 
-    // -- External (brownfield) component placeholder (0.10.5) --
-    case "ExternalComponent": {
-      const compName = typeof props.componentName === "string" ? props.componentName : type;
-      const importPath = typeof props.importPath === "string" ? props.importPath : "";
-      const selVariants = props.selectedVariants as Record<string, string> | undefined;
-      const variantLabel = selVariants && Object.keys(selVariants).length > 0
-        ? Object.entries(selVariants).map(([k, v]) => `${k}=${v}`).join(", ")
-        : null;
-      content = (
-        <div
-          style={{
-            border: "1.5px dashed #6366f1",
-            borderRadius: 6,
-            padding: "8px 10px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            minHeight: 40,
-            minWidth: 80,
-            background: "rgba(99,102,241,0.04)",
-          }}
-        >
-          <span style={{ fontSize: 11, color: "#6366f1", fontWeight: 600, lineHeight: 1.3 }}>
-            {compName}
-          </span>
-          {importPath && (
-            <span style={{ fontSize: 9, color: "#9ca3af", fontFamily: "monospace" }}>
-              {importPath}
-            </span>
-          )}
-          {variantLabel && (
-            <span style={{ fontSize: 9, color: "#a5b4fc", fontFamily: "monospace" }}>
-              {variantLabel}
-            </span>
-          )}
-        </div>
-      );
+    // -- Component instance (DS component, brownfield, or legacy ExternalComponent) --
+    case "ComponentInstance" as "Frame":
+    case "ExternalComponent" as "Frame": {
+      const compName = typeof props.componentName === "string"
+        ? props.componentName
+        : (node.name ?? type);
+      const importPath = typeof props.importPath === "string" ? props.importPath : undefined;
+      const nodeFilePath = typeof props.filePath === "string" ? props.filePath : undefined;
+      const hasChildren = !!(node.children && node.children.length > 0);
+      const kids = renderChildren(node.children, selectedId, onSelect, node.id, showDropIndicators, previewMode, frameWidth);
+
+      if (importPath && NATIVE_PATHS.has(importPath)) {
+        content = <NativeFallbackChip name={compName} />;
+      } else if (importPath && SUPPORTED_WEB_PATHS.has(importPath)) {
+        const liveProps = buildLiveProps(props as Record<string, unknown>);
+        content = (
+          <LiveNode
+            importPath={importPath}
+            componentName={compName}
+            componentProps={liveProps}
+            previewMode={!!previewMode}
+            filePath={nodeFilePath}
+          >
+            {kids}
+          </LiveNode>
+        );
+      } else {
+        content = (
+          <StructuralInstance
+            name={compName}
+            hasChildren={hasChildren}
+          >
+            {kids}
+          </StructuralInstance>
+        );
+      }
       break;
     }
 
@@ -2001,10 +1933,6 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
     }
   }
 
-  // Interaction indicators for the editor (hidden in preview mode)
-  const hasInteractions = !previewMode && !!(node.interactions?.onClick || node.interactions?.onChange || node.interactions?.visibleWhen);
-  const hasDataSource = !previewMode && !!node.dataSource;
-
   return (
     <NodeWrapper
       node={node}
@@ -2014,28 +1942,6 @@ export function RenderNode({ node, selectedId, onSelect, showDropIndicators, isR
       previewMode={previewMode}
     >
       {content}
-      {/* Interaction badge */}
-      {hasInteractions && (
-        <div
-          className="absolute top-0 right-0 bg-purple-500 text-white text-[8px] px-1 py-0.5 rounded-bl-sm font-mono z-10 pointer-events-none"
-          title={[
-            node.interactions?.onClick ? `onClick: ${node.interactions.onClick.action}` : "",
-            node.interactions?.onChange ? `onChange: ${node.interactions.onChange.action}` : "",
-            node.interactions?.visibleWhen ? `visible when: ${node.interactions.visibleWhen.state}` : "",
-          ].filter(Boolean).join(", ")}
-        >
-          ⚡
-        </div>
-      )}
-      {/* Data source badge */}
-      {hasDataSource && (
-        <div
-          className="absolute bottom-0 right-0 bg-green-600 text-white text-[8px] px-1 py-0.5 rounded-tl-sm font-mono z-10 pointer-events-none"
-          title={`Data: ${node.dataSource?.type}${node.dataSource?.url ? ` (${node.dataSource.url})` : ""}`}
-        >
-          📊
-        </div>
-      )}
     </NodeWrapper>
   );
 }

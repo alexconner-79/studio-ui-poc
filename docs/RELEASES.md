@@ -20,33 +20,49 @@
 | [v0.10.0](releases/v0.10.0.md) | Design System Authoring | **Complete** | Two paths: connect existing React component library (brownfield) or start from a boilerplate (greenfield); semantic tokens, multi-theme, component variants/states/props, DS export |
 | [v0.10.1](releases/v0.10.1.md) | DS Workspace UX | **Complete** | Full IA and interaction quality pass: inline token/component editing, component preview, category browsing, theme diff view, export improvements |
 | [v0.10.2](releases/v0.10.2.md) | Editor UX & Platform Preview | **Complete** | UX sense-check fixes, artboard mode split (web vs Expo), inline project name, DS-to-project integration, clean RN phone frame preview |
-| [v0.10.3](releases/v0.10.3.md) | DS & Project Creation Flow | **Next** | Unified project+DS creation modal, dashboard layout improvements, DS summary in project settings, empty state guidance |
-| [v0.10.5](releases/v0.10.5.md) | AI Developer Bridge (MCP) | **Planned** | MCP server exposing screen specs, tokens, and components to Claude Code/Cursor; design change capture; bidirectional sync; auto-discovery config |
-| [v0.11.0](releases/v0.11.0.md) | Advanced Design | **Planned** | Multiple fills/strokes, effects stack, gradient editor |
-| [v0.11.5](releases/v0.11.5.md) | Real-Time Collaboration | **Planned** | Wire up presence, cursors, node selection highlights, spec broadcasting |
+| [v0.10.4](releases/v0.10.4.md) | Component Instances | **Complete** | ComponentInstance node type, default templates, editable slot children, live canvas rendering for antd/MUI/shadcn reference, compiler support |
+| [v0.10.5](releases/v0.10.5.md) | Studio Boilerplate & Starter Themes | **Complete** | Token → CSS variable bridge; 4 starter themes; extended component library; DS picker restructured; default zoom fix; preview token bridge |
+| [v0.10.6](releases/v0.10.6.md) | Canvas Design Fundamentals | **Complete** | Keyboard shortcuts; grouping; align & distribute; typography controls (font, size, weight, line height); spacing controls (padding/gap per side); layers panel interactions; properties panel keyboard nav |
+| [v0.10.7](releases/v0.10.7.md) | Advanced Design | **Complete** | Multiple fills/strokes, effects stack (drop shadow, blur), gradient editor, framework-aware style controls |
+| [v0.10.8](releases/v0.10.8.md) | Component Editability | **Complete** | Every boilerplate component gets designer-friendly property panel: proper labels, all variants as visual controls, grouped props, variant thumbnails in palette |
+| [v0.10.9](releases/v0.10.9.md) | Brownfield Canvas Rendering | **Complete** | Local module server for transpiling user-owned component files; live canvas rendering for scanned brownfield and customised shadcn components; auto-refresh on file change |
+| [v0.10.10](releases/v0.10.10.md) | DS & Project Creation Flow | **Planned** | Unified project+DS creation modal, dashboard layout improvements, DS summary in project settings, empty state guidance |
+| [v0.10.11](releases/v0.10.11.md) | AI-Ready Codebase | **Complete** | Spec file watching for external edits; Studio CLI; Cursor rules for AI agents; design change log |
+| [v0.10.12](releases/v0.10.12.md) | Canvas Rendering Overhaul | **Complete** | Style pipeline fix, props-to-style bridge, text auto-sizing, position panel context, renderer audit |
+| [v0.11.0](releases/v0.11.0.md) | Real-Time Collaboration | **Planned** | Lock-based co-editing, presence avatars, cursor tracking, node selection highlights, spec broadcasting |
 | [v1.0.0](releases/v1.0.0.md) | Public Release | **Future** | Launch gate -- all v0.x stable, docs complete, CI/CD green |
 | [v1.1.0](releases/v1.1.0.md) | AI & Automation | **Future** | AI-assisted layout, AI code review, auto-responsive |
 | [v1.2.0](releases/v1.2.0.md) | Ecosystem & Enterprise | **Future** | Plugin marketplace, API access, SSO, billing, desktop app |
-| [v1.3.0](releases/v1.3.0.md) | Advanced Vector Tools | **Future** | Boolean operations, pen tool, blend modes (deferred from v0.11.0) |
+| [v1.3.0](releases/v1.3.0.md) | Advanced Vector Tools | **Future** | Boolean operations, pen tool, blend modes (deferred from v0.10.7) |
 | [v1.4.0](releases/v1.4.0.md) | UX Refinement Pass | **Future** | Second pass on editor UX -- polish, edge cases, user feedback |
 
 ---
 
 ## Current Focus
 
-**v0.10.3 — DS & Project Creation Flow** is the next release. See [v0.10.3 release notes](releases/v0.10.3.md) for full details.
+**v0.10.12 — Canvas Rendering Overhaul** is the current focus. The canvas must reliably reflect every property the designer sets before workflow or platform features are added.
 
-The strategic sequence ahead:
-1. **Fix the creation flow** (v0.10.3) — unified project+DS creation, dashboard clarity, empty state guidance
-2. **Connect to AI developers** (v0.10.5) — MCP bridge exposing specs, tokens, and components to Claude Code and Cursor
-3. **Advanced design** (v0.11.0) — fills, effects, gradient editor
-4. **Real-time collaboration** (v0.11.5) — presence, cursors, live spec broadcasting
+Completed releases:
+1. ~~**v0.10.4** — Component Instances~~ ✓
+2. ~~**v0.10.5** — Studio Boilerplate & Starter Themes~~ ✓
+3. ~~**v0.10.6** — Canvas Design Fundamentals~~ ✓
+4. ~~**v0.10.7** — Advanced Design~~ ✓
+5. ~~**v0.10.8** — Component Editability~~ ✓
+6. ~~**v0.10.9** — Brownfield Canvas Rendering~~ ✓
+7. ~~**v0.10.11** — AI-Ready Codebase~~ ✓
+
+Up next:
+8. **v0.10.12** — Canvas Rendering Overhaul (current)
+9. **v0.10.10** — DS & Project Creation Flow (needs scoping — deferred)
+10. **v0.11.0** — Real-time collaboration
 
 ---
 
 ## Related Documents
 
+- [BACKLOG.md](BACKLOG.md) -- Deferred items from Known Limitations sections; reviewed at the start of each release planning cycle
 - [COLLAB_WIRING.md](COLLAB_WIRING.md) -- Detailed integration plan for real-time collaboration (v0.11.0 reference)
+- [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md) -- Component library scope and property definitions reference
 - [TECH_DEBT.md](TECH_DEBT.md) -- Technical debt log (addressed in v0.9.0)
 - [SAAS_ARCHITECTURE.md](SAAS_ARCHITECTURE.md) -- SaaS deployment and data architecture
 - [PHASE_A_SUMMARY.md](PHASE_A_SUMMARY.md) -- Historical: Phase A completion notes

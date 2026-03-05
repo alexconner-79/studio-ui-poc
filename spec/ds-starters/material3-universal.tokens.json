@@ -1,7 +1,7 @@
 {
   "id": "material3-universal",
   "name": "Material 3 Universal",
-  "description": "Material Design 3 with dual-value tokens — web uses CSS units, native uses numeric values. Perfect for React Native Web or Expo Router projects.",
+  "description": "Material Design 3 with dual-value tokens \u2014 web uses CSS units, native uses numeric values. Perfect for React Native Web or Expo Router projects.",
   "platform": "universal",
   "preview": [
     "#6750a4",
@@ -808,7 +808,19 @@
           "name": "onClose",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Alert",
+        "props": {
+          "componentName": "Alert",
+          "importPath": "@mui/material",
+          "type": "info",
+          "message": "This is an alert"
+        },
+        "style": {},
+        "children": []
+      }
     },
     "Snackbar": {
       "name": "Snackbar",
@@ -894,7 +906,37 @@
           "name": "onClose",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Dialog",
+        "props": {
+          "componentName": "Dialog",
+          "importPath": "@mui/material"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Dialog Title",
+            "props": {
+              "text": "Dialog Title",
+              "level": 3
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Dialog content.",
+            "props": {
+              "text": "Dialog content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Drawer": {
       "name": "Drawer",
@@ -937,7 +979,29 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Drawer",
+        "props": {
+          "componentName": "Drawer",
+          "importPath": "@mui/material",
+          "open": false,
+          "title": "Drawer Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Text",
+            "name": "Drawer content.",
+            "props": {
+              "text": "Drawer content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Tooltip": {
       "name": "Tooltip",
@@ -1017,7 +1081,30 @@
           "name": "onClose",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Popover",
+        "props": {
+          "componentName": "Popover",
+          "importPath": "@mui/material",
+          "content": "Popover content",
+          "title": "Popover Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "Button",
+            "props": {
+              "componentName": "Button",
+              "importPath": "@mui/material"
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Modal": {
       "name": "Modal",
@@ -1040,7 +1127,29 @@
           "name": "onClose",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Modal",
+        "props": {
+          "componentName": "Modal",
+          "importPath": "@mui/material",
+          "open": false,
+          "title": "Modal Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Text",
+            "name": "Modal body content.",
+            "props": {
+              "text": "Modal body content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "CircularProgress": {
       "name": "CircularProgress",
@@ -1249,7 +1358,37 @@
           "name": "items",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Tabs",
+        "props": {
+          "componentName": "Tabs",
+          "importPath": "@mui/material"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Tab Content",
+            "props": {
+              "text": "Tab Content",
+              "level": 5
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Select a tab to view its content.",
+            "props": {
+              "text": "Select a tab to view its content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Breadcrumbs": {
       "name": "Breadcrumbs",
@@ -1494,7 +1633,37 @@
           "type": "boolean",
           "default": false
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Card",
+        "props": {
+          "componentName": "Card",
+          "importPath": "@mui/material"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Card title",
+            "props": {
+              "text": "Card title",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Card content goes here.",
+            "props": {
+              "text": "Card content goes here."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Chip": {
       "name": "Chip",
@@ -1671,7 +1840,51 @@
           "name": "subheader",
           "type": "string"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "List",
+        "props": {
+          "componentName": "List",
+          "importPath": "@mui/material"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "ListItem",
+            "props": {
+              "componentName": "ListItem",
+              "importPath": "@mui/material",
+              "title": "Item one"
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "ListItem",
+            "props": {
+              "componentName": "ListItem",
+              "importPath": "@mui/material",
+              "title": "Item two"
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "ComponentInstance",
+            "name": "ListItem",
+            "props": {
+              "componentName": "ListItem",
+              "importPath": "@mui/material",
+              "title": "Item three"
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Accordion": {
       "name": "Accordion",
@@ -1708,7 +1921,48 @@
           "type": "boolean",
           "default": false
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Accordion",
+        "props": {
+          "componentName": "Accordion",
+          "importPath": "@mui/material"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "ComponentInstance",
+            "name": "AccordionItem",
+            "props": {
+              "componentName": "AccordionItem",
+              "importPath": "@mui/material"
+            },
+            "style": {},
+            "children": [
+              {
+                "type": "Heading",
+                "name": "Accordion Item",
+                "props": {
+                  "text": "Accordion Item",
+                  "level": 5
+                },
+                "style": {},
+                "children": []
+              },
+              {
+                "type": "Text",
+                "name": "Accordion content.",
+                "props": {
+                  "text": "Accordion content."
+                },
+                "style": {},
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
     },
     "Divider": {
       "name": "Divider",
@@ -1967,7 +2221,38 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Surface",
+        "props": {
+          "componentName": "Surface",
+          "importPath": "@mui/material",
+          "elevation": 1
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Surface",
+            "props": {
+              "text": "Surface",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Surface content.",
+            "props": {
+              "text": "Surface content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Searchbar": {
       "name": "Searchbar",
@@ -2004,5 +2289,7 @@
         }
       ]
     }
-  }
+  },
+  "packageName": "@mui/material",
+  "packageNameNative": "react-native-paper"
 }

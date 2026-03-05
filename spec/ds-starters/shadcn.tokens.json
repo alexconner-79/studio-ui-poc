@@ -3,6 +3,8 @@
   "name": "shadcn/ui",
   "description": "Default tokens for shadcn/ui — used by Radix UI-based component libraries with Tailwind CSS",
   "platform": "web",
+  "category": "hidden",
+  "packageName": "studio:shadcn",
   "preview": [
     "#18181b",
     "#f4f4f5",

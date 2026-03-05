@@ -1,0 +1,65 @@
+---
+description: Studio UI project structure and tooling overview
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Studio UI — Project Structure
+
+Studio UI is a visual design-to-code tool. Designers create screens in a browser canvas; the system compiles them to production React/Expo code.
+
+## Monorepo Layout
+
+```
+/
+├── apps/web/              Next.js app (the Studio editor)
+├── compiler/              Spec-to-code compiler (Next.js + Expo emitters)
+├── cli/                   Studio CLI (pnpm studio)
+├── spec/
+│   ├── screens/           Screen specs (*.screen.json) — the source of truth
+│   ├── ds-starters/       Design system token presets
+│   ├── schema/            JSON Schema for screen specs
+│   ├── templates/         Component templates
+│   └── page-templates/    Full-page templates
+├── tokens/                Active project tokens (design-tokens.json)
+├── studio.config.json     Project config (framework, paths, fonts)
+└── docs/                  Release notes and architecture docs
+```
+
+## Key Config: studio.config.json
+
+```json
+{
+  "framework": "nextjs",
+  "screensDir": "spec/screens",
+  "tokens": "tokens/design-tokens.json",
+  "generatedDir": "apps/web/components/generated",
+  "componentsDir": "apps/web/components/ui"
+}
+```
+
+## CLI Commands (from monorepo root)
+
+- `pnpm studio compile` — compile all screens to React components
+- `pnpm studio compile <name>` — compile a single screen
+- `pnpm studio lint` — lint all screen specs
+- `pnpm studio lint <name>` — lint a single screen
+- `pnpm studio list-screens` — list all screens with their routes
+- `pnpm studio get-screen <name>` — print a screen spec as JSON
+- `pnpm studio tokens` — print current design tokens
+
+## Dev Server
+
+The editor runs at `http://localhost:3000`. Start with:
+```bash
+cd apps/web && pnpm dev
+```
+
+API routes live at `/api/studio/*` (screens, tokens, compile, etc.).
+
+## How Screens Flow
+
+1. Designer creates/edits in the browser canvas
+2. Studio saves a `.screen.json` file to `spec/screens/`
+3. `pnpm studio compile` reads specs and emits React components to `apps/web/components/generated/`
+4. The generated code uses the project's component library (shadcn by default)

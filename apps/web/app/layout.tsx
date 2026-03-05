@@ -26,6 +26,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Receives DS token CSS variables from the Studio preview page via postMessage
+            and injects them as a <style> tag so the preview iframe renders with DS colours. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  window.addEventListener('message',function(e){
+    if(!e.data||e.data.type!=='studio:previewTokens'||typeof e.data.css!=='string')return;
+    var id='studio-preview-tokens';
+    var el=document.getElementById(id);
+    if(!el){el=document.createElement('style');el.id=id;document.head.appendChild(el);}
+    el.textContent=e.data.css;
+  });
+})();
+        `}} />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"

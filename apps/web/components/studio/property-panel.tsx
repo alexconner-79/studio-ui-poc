@@ -2,10 +2,11 @@
 
 import React, { useCallback, useState, useMemo } from "react";
 import NextImage from "next/image";
-import { useEditorStore } from "@/lib/studio/store";
-import { NODE_SCHEMAS, type PropDef } from "@/lib/studio/node-schemas";
+import { useEditorStore, generateId, cloneWithNewIds } from "@/lib/studio/store";
+import { NODE_SCHEMAS, type PropDef, type PropGroup } from "@/lib/studio/node-schemas";
 import type { Node, NodeInteractions, InteractionAction, InteractionChangeAction, VisibilityOperator, DataSource, DataSourceType } from "@/lib/studio/types";
 import { IconPicker } from "./icon-picker";
+import { toast } from "@/lib/studio/toast";
 import { StylePanel } from "./style-sections";
 import { ConstraintWidget } from "./spacing-overlay";
 import { lintTree, type LintWarning } from "@/lib/studio/structure-linter";
@@ -251,6 +252,277 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
+// -------------------------------------------------------------------------
+// findNodeById helper (local — avoids import from style-sections)
+// -------------------------------------------------------------------------
+
+function findNodeById(root: Node, id: string): Node | null {
+  if (root.id === id) return root;
+  if (root.children) {
+    for (const child of root.children) {
+      const found = findNodeById(child, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// -------------------------------------------------------------------------
+// PositionSizeWidget — compact X/Y/W/H grid shown near the top of the panel
+// -------------------------------------------------------------------------
+
+type SizeMode = "fixed" | "fill" | "hug";
+
+const HUG_WIDTH_TYPES = new Set([
+  "Button", "Badge", "Chip", "Icon", "Image", "Avatar", "Spinner",
+  "Switch", "Heading", "Text", "Link", "Label",
+  "ComponentInstance", "ExternalComponent",
+]);
+
+function inferDefaultSizeMode(
+  nodeType: string,
+  axis: "width" | "height",
+  isRoot: boolean,
+  style: Record<string, unknown>,
+): SizeMode {
+  if (isRoot) return "fixed";
+  const modeKey = axis === "width" ? "widthMode" : "heightMode";
+  if (style[modeKey]) return style[modeKey] as SizeMode;
+  const dimVal = style[axis];
+  if (dimVal != null && dimVal !== "") return "fixed";
+  if (axis === "height") return "hug";
+  return HUG_WIDTH_TYPES.has(nodeType) ? "hug" : "fill";
+}
+
+function SizeDimension({
+  label,
+  mode,
+  value,
+  onModeChange,
+  onValueChange,
+}: {
+  label: string;
+  mode: SizeMode;
+  value: number;
+  onModeChange: (m: SizeMode) => void;
+  onValueChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex flex-col [gap:3px]">
+      <div className="flex items-center justify-between">
+        <label className="[font-size:var(--s-text-xs)] [font-weight:var(--s-weight-medium)] [color:var(--s-text-sec)]">
+          {label}
+        </label>
+        <select
+          value={mode}
+          onChange={(e) => onModeChange(e.target.value as SizeMode)}
+          className="[font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] [background:transparent] border-none outline-none cursor-pointer"
+        >
+          <option value="fixed">Fixed</option>
+          <option value="fill">Fill</option>
+          <option value="hug">Hug</option>
+        </select>
+      </div>
+      {mode === "fixed" ? (
+        <input
+          type="number"
+          value={value}
+          min={1}
+          onChange={(e) => {
+            const n = parseFloat(e.target.value);
+            if (!isNaN(n) && n >= 1) onValueChange(n);
+          }}
+          className="w-full [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-pri)] outline-none focus:[border-color:var(--s-accent)]"
+        />
+      ) : (
+        <div className="w-full [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-ter)]">
+          {mode === "fill" ? "100%" : "auto"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PositionSizeWidget() {
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const spec = useEditorStore((s) => s.spec);
+  const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
+  const updateNodeProps = useEditorStore((s) => s.updateNodeProps);
+
+  if (!selectedNodeId || !spec) return null;
+  const node = findNodeById(spec.tree, selectedNodeId);
+  if (!node) return null;
+
+  const isRoot = selectedNodeId === spec.tree.id;
+  const style = node.style ?? {};
+  const isAbsolute = style.position === "absolute" || style.position === "fixed";
+
+  const pxVal = (v: unknown): number => {
+    const n = parseFloat(String(v ?? ""));
+    return isNaN(n) ? 0 : Math.round(n);
+  };
+
+  const setPos = (prop: string, raw: number) => {
+    updateNodeStyle(selectedNodeId, { [prop]: `${raw}px` } as Record<string, string>);
+  };
+
+  const handleModeChange = (axis: "width" | "height", m: SizeMode) => {
+    const modeKey = axis === "width" ? "widthMode" : "heightMode";
+    if (m === "fixed") {
+      const el = document.querySelector(`[data-studio-node="${selectedNodeId}"]`) as HTMLElement | null;
+      const rect = el?.getBoundingClientRect();
+      const t = el?.closest("[data-canvas-transform]") as HTMLElement | null;
+      const scaleMatch = t?.style.transform.match(/scale\(([\d.]+)\)/);
+      const scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+      const measured = axis === "width"
+        ? Math.round((rect?.width ?? 100) / scale)
+        : Math.round((rect?.height ?? 50) / scale);
+      updateNodeStyle(selectedNodeId, {
+        [modeKey]: undefined,
+        [axis]: `${measured}px`,
+      } as Record<string, string | undefined>);
+    } else {
+      updateNodeStyle(selectedNodeId, { [modeKey]: m, [axis]: undefined } as Record<string, string | undefined>);
+    }
+  };
+
+  const handleSizeChange = (axis: "width" | "height", v: number) => {
+    updateNodeStyle(selectedNodeId, { [axis]: `${v}px` } as Record<string, string>);
+  };
+
+  const wMode = inferDefaultSizeMode(node.type, "width", isRoot, style);
+  const hMode = inferDefaultSizeMode(node.type, "height", isRoot, style);
+
+  return (
+    <div className="[padding:10px_12px] [border-bottom:1px_solid_var(--s-border)]">
+      <div className="flex items-center justify-between [margin-bottom:8px]">
+        <span className="[font-size:var(--s-text-2xs)] [font-weight:var(--s-weight-semibold)] [color:var(--s-text-ter)] uppercase tracking-wider">
+          Position &amp; Size
+        </span>
+        {!isRoot && (
+          <span className={`[font-size:var(--s-text-2xs)] [padding:1px_6px] [border-radius:var(--s-r-sm)] ${isAbsolute ? "[background:var(--s-accent)] text-white" : "[background:var(--s-bg-subtle)] [color:var(--s-text-ter)]"}`}>
+            {style.position === "fixed" ? "Fixed" : isAbsolute ? "Absolute" : "Flow"}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {!isRoot && isAbsolute && (
+          <>
+            <NumberField label="X" value={pxVal(style.left)} onChange={(v) => setPos("left", v)} />
+            <NumberField label="Y" value={pxVal(style.top)} onChange={(v) => setPos("top", v)} />
+          </>
+        )}
+        {!isRoot && !isAbsolute && (
+          <div className="col-span-2 [font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] [padding:4px_0]">
+            Set position to Absolute to use X/Y
+          </div>
+        )}
+        <SizeDimension
+          label="W"
+          mode={wMode}
+          value={pxVal(style.width)}
+          onModeChange={(m) => handleModeChange("width", m)}
+          onValueChange={(v) => handleSizeChange("width", v)}
+        />
+        <SizeDimension
+          label="H"
+          mode={hMode}
+          value={pxVal(style.height)}
+          onModeChange={(m) => handleModeChange("height", m)}
+          onValueChange={(v) => handleSizeChange("height", v)}
+        />
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------------------
+// ColorTokenField — DS colour token selector for Component props
+// -------------------------------------------------------------------------
+
+function ColorTokenField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const designTokens = useEditorStore((s) => s.designTokens);
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const colorEntries: Array<{ name: string; hex: string }> = React.useMemo(() => {
+    if (!designTokens?.color) return [];
+    return Object.entries(designTokens.color).map(([name, token]) => ({
+      name,
+      hex: String(token.value),
+    }));
+  }, [designTokens]);
+
+  const currentEntry = colorEntries.find((e) => e.name === value);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Element)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div className="flex flex-col [gap:3px]">
+      <label className="[font-size:var(--s-text-xs)] [font-weight:var(--s-weight-medium)] [color:var(--s-text-sec)]">
+        {label}
+      </label>
+      <div className="relative" ref={ref}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center gap-2 [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-pri)] outline-none cursor-pointer text-left"
+        >
+          <span
+            className="w-3.5 h-3.5 rounded-sm flex-shrink-0"
+            style={{
+              background: currentEntry ? currentEntry.hex : "transparent",
+              border: currentEntry ? "1px solid rgba(0,0,0,0.1)" : "1px dashed var(--s-border)",
+            }}
+          />
+          <span className="flex-1 truncate">{currentEntry?.name || "None"}</span>
+        </button>
+
+        {open && (
+          <div className="absolute top-full left-0 right-0 mt-1 z-50 [background:var(--s-bg-panel)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] shadow-lg overflow-hidden">
+            <div className="max-h-48 overflow-y-auto py-1">
+              <button
+                type="button"
+                onClick={() => { onChange(""); setOpen(false); }}
+                className={`w-full flex items-center gap-2 [padding:4px_10px] [font-size:var(--s-text-sm)] text-left hover:[background:var(--s-bg-subtle)] ${!value ? "[background:var(--s-accent-soft)] [color:var(--s-accent)]" : "[color:var(--s-text-pri)]"}`}
+              >
+                <span className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ border: "1px dashed var(--s-border)" }} />
+                <span>None</span>
+              </button>
+              {colorEntries.map((entry) => (
+                <button
+                  key={entry.name}
+                  type="button"
+                  onClick={() => { onChange(entry.name); setOpen(false); }}
+                  className={`w-full flex items-center gap-2 [padding:4px_10px] [font-size:var(--s-text-sm)] text-left hover:[background:var(--s-bg-subtle)] ${value === entry.name ? "[background:var(--s-accent-soft)] [color:var(--s-accent)]" : "[color:var(--s-text-pri)]"}`}
+                >
+                  <span className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ background: entry.hex, border: "1px solid rgba(0,0,0,0.1)" }} />
+                  <span className="flex-1 truncate">{entry.name}</span>
+                  <span className="[font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] font-mono">{entry.hex}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PropField({
   propKey,
   def,
@@ -264,10 +536,28 @@ function PropField({
   onChange: (key: string, value: unknown) => void;
   nodeType?: string;
 }) {
+  const isModified = value !== undefined && value !== def.defaultValue;
+
+  // Wrap the field in a row that shows a reset button on hover when modified
+  const wrap = (field: React.ReactNode) => (
+    <div className="group relative" title={def.description}>
+      {field}
+      {isModified && def.defaultValue !== undefined && (
+        <button
+          onClick={() => onChange(propKey, def.defaultValue)}
+          title="Reset to default"
+          className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity [font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] hover:[color:var(--s-accent)] px-0.5"
+        >
+          ↺
+        </button>
+      )}
+    </div>
+  );
+
   // Color fields for fill/stroke props
   const colorProps = ["fill", "stroke"];
   if (colorProps.includes(propKey) && def.type === "string") {
-    return (
+    return wrap(
       <ColorField
         label={def.label}
         value={value !== undefined ? String(value) : String(def.defaultValue ?? "")}
@@ -276,19 +566,14 @@ function PropField({
     );
   }
 
-  // Special handling for fontFamily
-  if (propKey === "fontFamily") {
-    return (
-      <FontFamilyField
-        value={value !== undefined ? String(value) : ""}
-        onChange={(v) => onChange(propKey, v)}
-      />
-    );
+  // DS colour token selector
+  if (def.type === "colorToken") {
+    return wrap(<ColorTokenField label={def.label} value={value !== undefined ? String(value) : ""} onChange={(v) => onChange(propKey, v)} />);
   }
 
   // Special handling for icon name on Icon nodes
   if (propKey === "name" && nodeType === "Icon") {
-    return (
+    return wrap(
       <IconPicker
         value={value !== undefined ? String(value) : String(def.defaultValue ?? "Star")}
         onChange={(v) => onChange(propKey, v)}
@@ -297,12 +582,10 @@ function PropField({
   }
 
   if (def.options) {
-    return (
+    return wrap(
       <SelectField
         label={def.label}
-        value={
-          value !== undefined ? (value as string | number) : (def.defaultValue as string | number) ?? ""
-        }
+        value={value !== undefined ? (value as string | number) : (def.defaultValue as string | number) ?? ""}
         options={def.options}
         onChange={(v) => onChange(propKey, v)}
       />
@@ -311,39 +594,31 @@ function PropField({
 
   switch (def.type) {
     case "string":
-      return (
+      return wrap(
         <StringField
           label={def.label}
-          value={
-            value !== undefined ? String(value) : String(def.defaultValue ?? "")
-          }
+          value={value !== undefined ? String(value) : String(def.defaultValue ?? "")}
           onChange={(v) => onChange(propKey, v)}
         />
       );
     case "number":
-      return (
+      return wrap(
         <NumberField
           label={def.label}
-          value={
-            value !== undefined ? Number(value) : Number(def.defaultValue ?? 0)
-          }
+          value={value !== undefined ? Number(value) : Number(def.defaultValue ?? 0)}
           onChange={(v) => onChange(propKey, v)}
         />
       );
     case "boolean":
-      return (
+      return wrap(
         <BooleanField
           label={def.label}
-          value={
-            value !== undefined
-              ? Boolean(value)
-              : Boolean(def.defaultValue ?? false)
-          }
+          value={value !== undefined ? Boolean(value) : Boolean(def.defaultValue ?? false)}
           onChange={(v) => onChange(propKey, v)}
         />
       );
     case "array":
-      return (
+      return wrap(
         <ArrayField
           label={def.label}
           value={Array.isArray(value) ? value : (def.defaultValue as unknown[]) ?? []}
@@ -353,6 +628,130 @@ function PropField({
     default:
       return null;
   }
+}
+
+// Group order for the prop panel sections
+const GROUP_ORDER: PropGroup[] = ["Content", "Style", "Layout", "Behaviour", "Advanced"];
+
+function PropsPanel({
+  propDefs,
+  nodeProps,
+  nodeType,
+  onChange,
+}: {
+  propDefs: Record<string, PropDef>;
+  nodeProps: Record<string, unknown>;
+  nodeType: string;
+  onChange: (key: string, value: unknown) => void;
+}) {
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // Separate hidden props → Advanced group; visible props by group
+  const grouped = useMemo(() => {
+    const buckets: Record<string, Array<[string, PropDef]>> = {
+      ungrouped: [],
+      Content: [],
+      Style: [],
+      Layout: [],
+      Behaviour: [],
+      Advanced: [],
+    };
+    for (const [key, def] of Object.entries(propDefs)) {
+      if (def.hidden) {
+        buckets.Advanced.push([key, def]);
+      } else if (def.group) {
+        buckets[def.group].push([key, def]);
+      } else {
+        buckets.ungrouped.push([key, def]);
+      }
+    }
+    return buckets;
+  }, [propDefs]);
+
+  const renderPairs = (pairs: Array<[string, PropDef]>) =>
+    pairs.map(([key, def]) => (
+      <PropField
+        key={key}
+        propKey={key}
+        def={def}
+        value={nodeProps[key]}
+        onChange={onChange}
+        nodeType={nodeType}
+      />
+    ));
+
+  return (
+    <div className="flex flex-col">
+      {/* Ungrouped props (legacy / no group set) */}
+      {grouped.ungrouped.length > 0 && (
+        <div className="[padding:10px_12px] [border-bottom:1px_solid_var(--s-border)] flex flex-col [gap:8px]">
+          <div className="[font-size:var(--s-text-2xs)] [font-weight:var(--s-weight-semibold)] [color:var(--s-text-ter)] uppercase tracking-wider">
+            Component
+          </div>
+          {renderPairs(grouped.ungrouped)}
+        </div>
+      )}
+
+      {/* Grouped sections */}
+      {GROUP_ORDER.filter((g) => g !== "Advanced").map((group) => {
+        const pairs = grouped[group];
+        if (!pairs || pairs.length === 0) return null;
+        return (
+          <PropGroupSection key={group} title={group} defaultOpen={group === "Content" || group === "Style"}>
+            {renderPairs(pairs)}
+          </PropGroupSection>
+        );
+      })}
+
+      {/* Advanced section (hidden props) — collapsed by default */}
+      {grouped.Advanced.length > 0 && (
+        <div className="[border-top:1px_solid_var(--s-border)] [padding:8px_12px]">
+          <button
+            onClick={() => setAdvancedOpen(!advancedOpen)}
+            className="flex items-center justify-between w-full [font-size:var(--s-text-2xs)] [font-weight:var(--s-weight-semibold)] [color:var(--s-text-ter)] uppercase tracking-wider"
+          >
+            <span>Advanced</span>
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: advancedOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+              <polyline points="3,2 7,5 3,8" />
+            </svg>
+          </button>
+          {advancedOpen && (
+            <div className="flex flex-col [gap:8px] mt-2">
+              {renderPairs(grouped.Advanced)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PropGroupSection({
+  title,
+  children,
+  defaultOpen = true,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="[border-top:1px_solid_var(--s-border)] [padding:8px_12px]">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full [margin-bottom:6px] [font-size:var(--s-text-2xs)] [font-weight:var(--s-weight-semibold)] [color:var(--s-text-ter)] uppercase tracking-wider"
+      >
+        <span>{title}</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+          <polyline points="3,2 7,5 3,8" />
+        </svg>
+      </button>
+      {open && <div className="flex flex-col [gap:8px]">{children}</div>}
+    </div>
+  );
 }
 
 // -------------------------------------------------------------------------
@@ -818,19 +1217,32 @@ function CompileHealthSection() {
 
 type VariantGroup = { name: string; options: string[]; default: string };
 type DsComponentState = "default" | "hover" | "pressed" | "focus" | "disabled";
-type DsComponentProp = { name: string; type: string; default?: string | number | boolean; options?: string[]; description?: string };
+type DsComponentProp = { name: string; label?: string; type: string; default?: string | number | boolean; options?: string[]; description?: string };
 
 function DSComponentVariantSection({
   dsComponentName,
   selectedVariants,
+  componentProps = {},
+  importPath,
+  hasChildren,
   onVariantChange,
+  onPropChange,
+  onRestoreTemplate,
+  onDetach,
 }: {
   dsComponentName: string;
   selectedVariants: Record<string, string>;
+  componentProps?: Record<string, unknown>;
+  importPath?: string;
+  hasChildren?: boolean;
   onVariantChange: (variants: Record<string, string>) => void;
+  onPropChange?: (key: string, value: unknown) => void;
+  onRestoreTemplate?: (children: unknown[]) => void;
+  onDetach?: () => void;
 }) {
   const dsComponents = useEditorStore((s) => s.dsComponents);
   const [previewState, setPreviewState] = useState<string>("default");
+  const [restoring, setRestoring] = useState(false);
 
   const compDef = dsComponents.find((c) => c.name === dsComponentName);
   if (!compDef) return null;
@@ -840,6 +1252,37 @@ function DSComponentVariantSection({
   const typedProps = (compDef.props ?? []) as DsComponentProp[];
 
   if (variants.length === 0 && states.length === 0 && typedProps.length === 0) return null;
+
+  const handleRestoreTemplate = async () => {
+    if (!onRestoreTemplate || restoring) return;
+    setRestoring(true);
+    try {
+      // 1. Try the stored defaultTemplate (available when starter was re-applied after v0.10.4)
+      if (compDef.defaultTemplate) {
+        const tpl = compDef.defaultTemplate as Record<string, unknown>;
+        const children = Array.isArray(tpl.children) ? tpl.children : [];
+        if (children.length > 0) { onRestoreTemplate(children); return; }
+      }
+
+      // 2. Fetch from starter spec — scoped by importPath if available, else search all starters
+      const params = new URLSearchParams({ component: dsComponentName });
+      // Also try compDef.importPath as fallback when the node itself has no importPath
+      const resolvedImportPath = importPath ?? (compDef.importPath as string | undefined);
+      if (resolvedImportPath) params.set("importPath", resolvedImportPath);
+
+      const res = await fetch(`/api/studio/ds-starters?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json() as { defaultTemplate?: Record<string, unknown> | null };
+        const tpl = data.defaultTemplate;
+        const children = tpl && Array.isArray(tpl.children) ? tpl.children : [];
+        if (children.length > 0) { onRestoreTemplate(children); return; }
+      }
+
+      toast.error(`No default template found for "${dsComponentName}"`);
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   return (
     <div className="[border-top:1px_solid_var(--s-border)] [padding:10px_12px] flex flex-col [gap:10px]">
@@ -896,24 +1339,115 @@ function DSComponentVariantSection({
         </div>
       )}
 
-      {/* Typed props reference */}
-      {typedProps.length > 0 && (
-        <div className="flex flex-col [gap:4px]">
+      {/* Typed props — editable inputs when onPropChange is provided, read-only reference otherwise */}
+      {typedProps.filter((p) => p.type !== "node").length > 0 && (
+        <div className="flex flex-col [gap:6px]">
           <div className="[font-size:var(--s-text-xs)] [font-weight:var(--s-weight-medium)] [color:var(--s-text-sec)]">Props</div>
-          <div className="flex flex-col [gap:3px]">
-            {typedProps.map((prop) => (
-              <div key={prop.name} className="flex items-center justify-between [padding:2px_0]">
-                <span className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)] truncate">
-                  {prop.name}
-                  <span className="ml-1 [font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] font-mono">:{prop.type}</span>
-                </span>
-                <span className="[font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] font-mono ml-2 shrink-0">
-                  {String(prop.default ?? "—")}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-col [gap:6px]">
+            {typedProps.filter((p) => p.type !== "node").map((prop) => {
+              const currentValue = componentProps[prop.name] ?? prop.default;
+              if (!onPropChange) {
+                return (
+                  <div key={prop.name} className="flex items-center justify-between [padding:2px_0]">
+                    <span className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)] truncate">
+                      {prop.label ?? prop.name}
+                      <span className="ml-1 [font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] font-mono">:{prop.type}</span>
+                    </span>
+                    <span className="[font-size:var(--s-text-2xs)] [color:var(--s-text-ter)] font-mono ml-2 shrink-0">
+                      {String(prop.default ?? "—")}
+                    </span>
+                  </div>
+                );
+              }
+              // Editable mode
+              if (prop.type === "boolean") {
+                return (
+                  <div key={prop.name} className="flex items-center justify-between">
+                    <label className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)]">{prop.label ?? prop.name}</label>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(currentValue)}
+                      onChange={(e) => onPropChange(prop.name, e.target.checked)}
+                      className="cursor-pointer accent-[var(--s-accent)]"
+                    />
+                  </div>
+                );
+              }
+              if (prop.options && prop.options.length > 0) {
+                return (
+                  <div key={prop.name} className="flex flex-col [gap:3px]">
+                    <label className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)]">{prop.label ?? prop.name}</label>
+                    <select
+                      value={String(currentValue ?? "")}
+                      onChange={(e) => onPropChange(prop.name, e.target.value)}
+                      className="w-full [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-pri)] outline-none focus:[border-color:var(--s-accent)] cursor-pointer"
+                    >
+                      {prop.options.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+              if (prop.type === "number") {
+                return (
+                  <div key={prop.name} className="flex flex-col [gap:3px]">
+                    <label className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)]">{prop.label ?? prop.name}</label>
+                    <input
+                      type="number"
+                      value={currentValue != null ? Number(currentValue) : ""}
+                      onChange={(e) => onPropChange(prop.name, e.target.value === "" ? undefined : Number(e.target.value))}
+                      className="w-full [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-pri)] outline-none focus:[border-color:var(--s-accent)]"
+                    />
+                  </div>
+                );
+              }
+              // string / default
+              return (
+                <div key={prop.name} className="flex flex-col [gap:3px]">
+                  <label className="[font-size:var(--s-text-xs)] [color:var(--s-text-sec)]">{prop.label ?? prop.name}</label>
+                  <input
+                    type="text"
+                    value={String(currentValue ?? "")}
+                    onChange={(e) => onPropChange(prop.name, e.target.value)}
+                    placeholder={String(prop.default ?? "")}
+                    className="w-full [padding:4px_7px] [font-size:var(--s-text-sm)] [background:var(--s-bg-subtle)] [border:1px_solid_var(--s-border)] [border-radius:var(--s-r-md)] [color:var(--s-text-pri)] outline-none focus:[border-color:var(--s-accent)]"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
+
+      {/* Restore default structure */}
+      {onRestoreTemplate && (
+        <button
+          onClick={() => {
+            if (hasChildren) {
+              if (!confirm("Replace current children with the default template? This cannot be undone.")) return;
+            }
+            handleRestoreTemplate();
+          }}
+          disabled={restoring}
+          className="w-full [padding:5px_10px] [font-size:var(--s-text-xs)] [border-radius:var(--s-r-md)] [border:1px_dashed_var(--s-accent)] [color:var(--s-accent)] [background:transparent] hover:[background:var(--s-accent)]/10 transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {restoring ? "Restoring…" : "Reset to default structure"}
+        </button>
+      )}
+
+      {/* Detach instance */}
+      {onDetach && (
+        <button
+          onClick={() => {
+            if (confirm("Detach this instance? It will become a plain Frame and lose its component binding. This cannot be undone.")) {
+              onDetach();
+            }
+          }}
+          className="w-full [padding:5px_10px] [font-size:var(--s-text-xs)] [border-radius:var(--s-r-md)] [border:1px_solid_var(--s-border)] [color:var(--s-text-ter)] [background:transparent] hover:[background:var(--s-bg-hover)] hover:[color:var(--s-text-sec)] transition-colors cursor-pointer"
+        >
+          Detach instance
+        </button>
       )}
     </div>
   );
@@ -998,11 +1532,11 @@ export function PropertyPanel() {
   const updateNodeProps = useEditorStore((s) => s.updateNodeProps);
   const updateNodeStyle = useEditorStore((s) => s.updateNodeStyle);
   const updateNode = useEditorStore((s) => s.updateNode);
-  const removeNode = useEditorStore((s) => s.removeNode);
   const lockedNodeIds = useEditorStore((s) => s.lockedNodeIds);
   const toggleNodeCompile = useEditorStore((s) => s.toggleNodeCompile);
   const groupSelectedIntoFrame = useEditorStore((s) => s.groupSelectedIntoFrame);
   const designTokens = useEditorStore((s) => s.designTokens);
+  const dsComponents = useEditorStore((s) => s.dsComponents);
 
   const allSelectedIds = useMemo(() => {
     const ids: string[] = [];
@@ -1243,31 +1777,20 @@ export function PropertyPanel() {
           </div>
         )}
 
-        {/* Props section */}
+        {/* Props section — grouped by Content / Style / Layout / Behaviour / Advanced */}
         {Object.keys(propDefs).length > 0 && (
-          <div className="[padding:10px_12px] [border-bottom:1px_solid_var(--s-border)] flex flex-col [gap:8px]">
-            {Object.entries(propDefs).map(([key, def]) => (
-              <PropField
-                key={key}
-                propKey={key}
-                def={def}
-                value={nodeProps[key]}
-                onChange={handlePropChange}
-                nodeType={selectedNode.type}
-              />
-            ))}
+          <div className="[border-bottom:1px_solid_var(--s-border)]">
+            <PropsPanel
+              propDefs={propDefs}
+              nodeProps={nodeProps}
+              nodeType={selectedNode.type}
+              onChange={handlePropChange}
+            />
           </div>
         )}
 
-        {Object.keys(propDefs).length === 0 && (
-          <div className="[padding:10px_12px] [border-bottom:1px_solid_var(--s-border)]">
-            <p className="[font-size:var(--s-text-sm)] [color:var(--s-text-ter)]">
-              This component has no editable props.
-            </p>
-          </div>
-        )}
 
-        {/* DS Component variant + state picker (0.10.4) */}
+        {/* DS Component variant + state picker — legacy Frame+dsComponentName nodes */}
         {typeof nodeProps.dsComponentName === "string" && nodeProps.dsComponentName && (
           <DSComponentVariantSection
             dsComponentName={nodeProps.dsComponentName as string}
@@ -1278,6 +1801,49 @@ export function PropertyPanel() {
           />
         )}
 
+        {/* ComponentInstance props + variants (0.10.4.6) */}
+        {selectedNode.type === "ComponentInstance" &&
+          typeof nodeProps.componentName === "string" && nodeProps.componentName && (
+          <DSComponentVariantSection
+            dsComponentName={nodeProps.componentName as string}
+            selectedVariants={(nodeProps.selectedVariants as Record<string, string>) ?? {}}
+            componentProps={(nodeProps.componentProps as Record<string, unknown>) ?? {}}
+            importPath={typeof nodeProps.importPath === "string" ? nodeProps.importPath : undefined}
+            hasChildren={(selectedNode.children ?? []).length > 0}
+            onVariantChange={(variants) => {
+              if (selectedNodeId) updateNodeProps(selectedNodeId, { selectedVariants: variants });
+            }}
+            onPropChange={(key, value) => {
+              if (selectedNodeId) {
+                const existing = (nodeProps.componentProps as Record<string, unknown>) ?? {};
+                updateNodeProps(selectedNodeId, { componentProps: { ...existing, [key]: value } });
+              }
+            }}
+            onRestoreTemplate={(children) => {
+              if (selectedNodeId && children.length > 0) {
+                // cloneWithNewIds ensures every node in the tree gets a fresh unique ID
+                const freshChildren = (children as Node[]).map((n) =>
+                  cloneWithNewIds({ id: n.id ?? generateId(), ...n } as Node)
+                );
+                updateNode(selectedNodeId, { children: freshChildren });
+              }
+            }}
+            onDetach={() => {
+              if (!selectedNodeId) return;
+              // Convert ComponentInstance → Frame, strip component-specific props
+              const { componentName: _cn, importPath: _ip, componentProps: _cp, selectedVariants: _sv, ...restProps } = nodeProps as Record<string, unknown>;
+              void _cn; void _ip; void _cp; void _sv;
+              updateNode(selectedNodeId, { type: "Frame", props: restProps as Record<string, unknown> });
+            }}
+          />
+        )}
+
+        {/* Position & Size widget */}
+        <PositionSizeWidget />
+
+        {/* Style sections — contextual per node type */}
+        <StylePanel nodeId={selectedNode.id} nodeType={selectedNode.type} />
+
         {/* Interactions section (hidden for Image, Divider, Spacer) */}
         {!["Image", "Divider", "Spacer"].includes(selectedNode.type) && (
           <InteractionsSection
@@ -1286,7 +1852,7 @@ export function PropertyPanel() {
           />
         )}
 
-        {/* Data binding section (hidden for Text/Heading/Image -- not data-driven types) */}
+        {/* Data binding section (List/DataTable only) */}
         {!["Text", "Heading", "Image", "Divider", "Spacer"].includes(selectedNode.type) && (
           <DataBindingSection
             dataSource={selectedNode.dataSource}
@@ -1295,32 +1861,12 @@ export function PropertyPanel() {
           />
         )}
 
-        {/* Style sections */}
-        <StylePanel nodeId={selectedNode.id} nodeType={selectedNode.type} />
-
         {/* Constraints (shown when parent Frame has autoLayout off) */}
         <ConstraintWidget />
       </div>
 
       {/* Compile Health (structure linter) */}
       <CompileHealthSection />
-
-      {/* Delete button */}
-      {spec && selectedNode.id !== spec.tree.id && (
-        <div className="[padding:8px_12px] [border-top:1px_solid_var(--s-border)]">
-          <button
-            onClick={() => removeNode(selectedNode.id)}
-            disabled={isLocked}
-            className={`w-full [padding:5px_10px] [font-size:var(--s-text-sm)] [border-radius:var(--s-r-md)] transition-colors ${
-              isLocked
-                ? "[color:var(--s-text-ter)] [border:1px_solid_var(--s-border)] cursor-not-allowed"
-                : "[color:var(--s-danger)] [border:1px_solid_var(--s-danger-soft)] hover:[background:var(--s-danger-soft)]"
-            }`}
-          >
-            Delete {selectedNode.type}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

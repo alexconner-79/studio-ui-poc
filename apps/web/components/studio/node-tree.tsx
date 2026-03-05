@@ -123,12 +123,40 @@ function TreeItem({
     }
   }, [renamingNodeId, node.id, isRenaming, setRenamingNodeId]);
 
+  // Option+click expand-all: listen for broadcast event and apply to subtree descendants
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ rootId: string; expanded: boolean }>;
+      if (ev.detail.rootId === node.id) return; // the clicked node already updated itself
+      // Check if this node is a descendant of ev.detail.rootId by walking the spec tree
+      const spec = useEditorStore.getState().spec;
+      if (!spec) return;
+      function isDescendant(root: Node, targetId: string, searchId: string): boolean {
+        if (root.id === targetId) {
+          return !!(root.children?.some((c) => collectIds(c).has(searchId)));
+        }
+        return root.children?.some((c) => isDescendant(c, targetId, searchId)) ?? false;
+      }
+      function collectIds(n: Node): Set<string> {
+        const ids = new Set<string>([n.id]);
+        n.children?.forEach((c) => collectIds(c).forEach((id) => ids.add(id)));
+        return ids;
+      }
+      if (isDescendant(spec.tree, ev.detail.rootId, node.id)) {
+        setExpanded(ev.detail.expanded);
+      }
+    };
+    document.addEventListener("studio:tree-expand", handler);
+    return () => document.removeEventListener("studio:tree-expand", handler);
+  }, [node.id]);
+
   const isSelected = selectedId === node.id;
   const hasChildren = node.children && node.children.length > 0;
   const isContainer = CONTAINER_TYPES.has(node.type);
   const isHidden = hiddenNodeIds.has(node.id);
   const isLocked = lockedNodeIds.has(node.id);
   const isDesignOnly = node.compile === false;
+  const hasStyleOverrides = Object.keys(node.style ?? {}).length > 0;
 
   // Draggable (root is not draggable)
   const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
@@ -194,6 +222,21 @@ function TreeItem({
           <rect x="1" y="1" width="9" height="3.5" rx="1"/><rect x="1" y="6.5" width="9" height="3.5" rx="1"/>
         </svg>
       );
+      case "ComponentInstance": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-violet-500 flex-shrink-0">
+          <ellipse cx="5.5" cy="5.5" rx="4.5" ry="1.8"/>
+          <ellipse cx="5.5" cy="5.5" rx="4.5" ry="1.8" transform="rotate(60 5.5 5.5)"/>
+          <ellipse cx="5.5" cy="5.5" rx="4.5" ry="1.8" transform="rotate(120 5.5 5.5)"/>
+          <circle cx="5.5" cy="5.5" r="0.9" fill="currentColor" stroke="none"/>
+        </svg>
+      );
+      case "ComponentRef": return (
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-orange-400 flex-shrink-0">
+          <path d="M4.5 7.5 A2.5 2.5 0 0 1 4.5 3.5 L5.5 2.5"/>
+          <path d="M6.5 3.5 A2.5 2.5 0 0 1 6.5 7.5 L5.5 8.5"/>
+          <line x1="4" y1="5.5" x2="7" y2="5.5"/>
+        </svg>
+      );
       default: return (
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground/60 flex-shrink-0">
           <rect x="2" y="2" width="7" height="7" rx="1"/>
@@ -242,12 +285,21 @@ function TreeItem({
           setIsRenaming(true);
         }}
       >
-        {/* Expand/collapse toggle -- rotating SVG chevron */}
+        {/* Expand/collapse toggle -- rotating SVG chevron; Option+click expands/collapses entire subtree */}
         {hasChildren || isContainer ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setExpanded(!expanded);
+              const next = !expanded;
+              setExpanded(next);
+              if (e.altKey) {
+                // Broadcast to all descendant rows
+                document.dispatchEvent(
+                  new CustomEvent("studio:tree-expand", {
+                    detail: { rootId: node.id, expanded: next },
+                  })
+                );
+              }
             }}
             className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground flex-shrink-0"
           >
@@ -295,11 +347,26 @@ function TreeItem({
         ) : (
           <span
             className={`truncate ${
-              isContainer ? "text-purple-600 dark:text-purple-400" : ""
+              node.type === "ComponentInstance"
+                ? "text-violet-600 dark:text-violet-400"
+                : node.type === "ComponentRef"
+                ? "text-orange-500 dark:text-orange-400"
+                : isContainer
+                ? "text-purple-600 dark:text-purple-400"
+                : ""
             }`}
           >
             {node.name ?? node.type}
           </span>
+        )}
+
+        {/* Style override indicator dot */}
+        {hasStyleOverrides && !isRenaming && (
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: "var(--s-accent)" }}
+            title="Has style overrides"
+          />
         )}
 
         {/* Visibility toggle */}

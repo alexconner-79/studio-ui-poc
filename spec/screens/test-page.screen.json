@@ -38,24 +38,22 @@
             "type": "Button",
             "props": {
               "label": "Button",
-              "intent": "primary",
-              "size": "default"
+              "size": "default",
+              "variant": "default"
             }
           },
           {
             "id": "text_mlozdjqy_3",
             "type": "Text",
             "props": {
-              "text": "Text content",
-              "fontFamily": ""
+              "text": "Text content"
             }
           },
           {
             "id": "text_mlozdevu_2",
             "type": "Text",
             "props": {
-              "text": "Text content",
-              "fontFamily": ""
+              "text": "Text content"
             }
           }
         ]

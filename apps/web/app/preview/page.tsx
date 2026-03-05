@@ -1,6 +1,7 @@
 "use client";
 
-import React, { Suspense, useState, useRef, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { buildTokenCSS } from "@/lib/studio/token-to-css";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Node } from "@/lib/studio/types";
@@ -1024,10 +1025,36 @@ function PreviewContent() {
   const returnTo = searchParams.get("returnTo") ?? "/studio";
   const framework = searchParams.get("framework") ?? "";
   const projectId = searchParams.get("projectId");
+  const dsId = searchParams.get("dsId");
 
   const [selectedDevice, setSelectedDevice] = useState<Device>(
     () => ALL_DEVICES.find((d) => d.id === DEFAULT_DEVICE_ID) ?? ALL_DEVICES[0]
   );
+
+  // Fetch DS tokens and build CSS string for the preview iframe
+  const [previewTokenCSS, setPreviewTokenCSS] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dsId) return;
+    fetch(`/api/studio/design-systems/${dsId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const ds = data.designSystem ?? data;
+        const raw = ds?.tokens?.raw ?? ds?.tokens;
+        if (!raw || typeof raw !== "object") return;
+        setPreviewTokenCSS(buildTokenCSS(raw as Record<string, unknown>, ":root"));
+      })
+      .catch(() => {});
+  }, [dsId]);
+
+  // Ref shared across both iframe elements; re-sends CSS on each load event
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const sendTokens = useCallback(() => {
+    if (!previewTokenCSS || !iframeRef.current?.contentWindow) return;
+    iframeRef.current.contentWindow.postMessage(
+      { type: "studio:previewTokens", css: previewTokenCSS },
+      "*"
+    );
+  }, [previewTokenCSS]);
 
   // React Native / Expo projects → render spec directly in a clean phone frame
   if (framework === "expo") {
@@ -1087,8 +1114,10 @@ function PreviewContent() {
         {hasChrome ? (
           <DeviceChrome device={selectedDevice}>
             <iframe
+              ref={iframeRef}
               src={route}
               title={screen}
+              onLoad={sendTokens}
               style={{ width: "100%", height: "100%", border: "none", display: "block" }}
             />
           </DeviceChrome>
@@ -1105,8 +1134,10 @@ function PreviewContent() {
             minHeight: `calc(100vh - 48px)`,
           }}>
             <iframe
+              ref={iframeRef}
               src={route}
               title={screen}
+              onLoad={sendTokens}
               style={{ width: "100%", flex: 1, border: "none", minHeight: iframeHeight }}
             />
           </div>

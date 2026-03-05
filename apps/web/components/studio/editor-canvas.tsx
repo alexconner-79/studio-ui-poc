@@ -14,8 +14,10 @@ import {
 import { DeviceFrame } from "./device-frame";
 import { ZoomControls } from "./zoom-controls";
 import { SpacingOverlay } from "./spacing-overlay";
+import { NodeChromeOverlay } from "./node-chrome-overlay";
 import { InlineTextEditor } from "./inline-text-editor";
 import { CanvasRulers } from "./canvas-rulers";
+import { CanvasTokenBridge } from "./canvas-token-bridge";
 
 // -------------------------------------------------------------------------
 // Breakpoint definitions
@@ -66,7 +68,7 @@ function DrawingLayer() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [drawing, setDrawing] = useState<{ startX: number; startY: number; curX: number; curY: number } | null>(null);
 
-  const isActive = currentTool !== "select";
+  const isActive = currentTool !== "select" && currentTool !== "pan";
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -230,6 +232,7 @@ function DrawingLayer() {
     ellipse: "crosshair",
     line: "crosshair",
     text: "text",
+    pan: "grab",
   };
 
   return (
@@ -322,10 +325,14 @@ function CanvasContent({
     <div
       ref={setNodeRef}
       data-canvas-root
+      {...(previewMode ? { "data-preview": "" } : {})}
       className={`relative min-h-full bg-white dark:bg-gray-950 ${
         isOver && isPrimary && !previewMode ? "ring-2 ring-blue-400 ring-inset" : ""
       }`}
     >
+      {/* Emit active DS tokens as CSS variables — scoped to [data-canvas-root] */}
+      <CanvasTokenBridge />
+
       {/* Artboard backdrop — sits behind all content; clicking selects the root artboard */}
       {!previewMode && isPrimary && (
         <div
@@ -356,6 +363,7 @@ function CanvasContent({
         </div>
       )}
       {isPrimary && !previewMode && <SpacingOverlay />}
+      {isPrimary && !previewMode && <NodeChromeOverlay />}
       {isPrimary && !previewMode && <InlineTextEditor />}
       {isPrimary && !previewMode && <DrawingLayer />}
     </div>

@@ -162,6 +162,118 @@ function emitStyleAttr(style: NodeStyle | undefined): { classes: string[]; style
     skipKeys.add("constraints");
   }
 
+  // --- Transform components → single CSS transform string ---
+  const transformParts: string[] = [];
+  if (style.rotation !== undefined) transformParts.push(`rotate(${style.rotation}deg)`);
+  if (style.scaleX !== undefined) transformParts.push(`scaleX(${style.scaleX})`);
+  if (style.scaleY !== undefined) transformParts.push(`scaleY(${style.scaleY})`);
+  if (style.skewX !== undefined) transformParts.push(`skewX(${style.skewX}deg)`);
+  if (style.skewY !== undefined) transformParts.push(`skewY(${style.skewY}deg)`);
+  if (transformParts.length > 0) {
+    const existing = styleObj.transform as string | undefined;
+    styleObj.transform = existing ? `${existing} ${transformParts.join(" ")}` : transformParts.join(" ");
+  }
+  skipKeys.add("rotation"); skipKeys.add("scaleX"); skipKeys.add("scaleY");
+  skipKeys.add("skewX"); skipKeys.add("skewY");
+
+  // --- CSS Filters → filter property ---
+  if (style.cssFilters && style.cssFilters.length > 0) {
+    const parts = style.cssFilters.map((f) => {
+      if (f.type === "hue-rotate") return `hue-rotate(${f.value}deg)`;
+      if (f.type === "grayscale" || f.type === "sepia" || f.type === "invert") return `${f.type}(${f.value}%)`;
+      return `${f.type}(${f.value}%)`;
+    });
+    styleObj.filter = parts.join(" ");
+  }
+  skipKeys.add("cssFilters");
+
+  // --- Effects stack → boxShadow / filter / backdropFilter ---
+  if (style.effects && style.effects.length > 0) {
+    const shadows: string[] = [];
+    const filters: string[] = [];
+    const backdropFilters: string[] = [];
+    for (const effect of style.effects) {
+      if (effect.enabled === false) continue;
+      if (effect.type === "drop-shadow") {
+        shadows.push(`${effect.x}px ${effect.y}px ${effect.blur}px ${effect.spread}px ${effect.color}`);
+      } else if (effect.type === "inner-shadow") {
+        shadows.push(`inset ${effect.x}px ${effect.y}px ${effect.blur}px ${effect.spread}px ${effect.color}`);
+      } else if (effect.type === "layer-blur") {
+        filters.push(`blur(${effect.radius}px)`);
+      } else if (effect.type === "background-blur") {
+        backdropFilters.push(`blur(${effect.radius}px)`);
+      } else if (effect.type === "glass") {
+        backdropFilters.push(`blur(${effect.blurRadius}px)`);
+        if (!styleObj.backgroundColor) {
+          styleObj.backgroundColor = `rgba(255,255,255,${effect.backgroundOpacity})`;
+        }
+      }
+    }
+    if (shadows.length > 0) styleObj.boxShadow = shadows.join(", ");
+    if (filters.length > 0) {
+      styleObj.filter = styleObj.filter ? `${styleObj.filter} ${filters.join(" ")}` : filters.join(" ");
+    }
+    if (backdropFilters.length > 0) styleObj.backdropFilter = backdropFilters.join(" ");
+    skipKeys.add("effects");
+    skipKeys.add("boxShadow"); // handled via effects
+  } else {
+    skipKeys.add("effects");
+  }
+
+  // --- Multiple fills → background CSS ---
+  if (style.fills && style.fills.length > 0) {
+    const bgLayers: string[] = [];
+    for (const fill of [...style.fills].reverse()) {
+      if (fill.type === "solid") {
+        bgLayers.push(fill.color);
+      } else if (fill.type === "linear-gradient") {
+        const stops = fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(", ");
+        bgLayers.push(`linear-gradient(${fill.angle}deg, ${stops})`);
+      } else if (fill.type === "radial-gradient") {
+        const stops = fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(", ");
+        bgLayers.push(`radial-gradient(circle, ${stops})`);
+      } else if (fill.type === "image") {
+        bgLayers.push(`url(${fill.src})`);
+      }
+    }
+    if (bgLayers.length > 0) {
+      styleObj.background = bgLayers.join(", ");
+      skipKeys.add("backgroundColor"); // fills takes over
+    }
+    skipKeys.add("fills");
+  } else {
+    skipKeys.add("fills");
+  }
+
+  // --- Multiple strokes → border + box-shadow for inside/outside ---
+  if (style.strokes && style.strokes.length > 0) {
+    const innerShadows: string[] = [];
+    const outerShadows: string[] = [];
+    let centerStroke: (typeof style.strokes)[0] | undefined;
+    for (const stroke of style.strokes) {
+      if (stroke.position === "center") { centerStroke = stroke; }
+      else if (stroke.position === "inside") { innerShadows.push(`inset 0 0 0 ${stroke.width}px ${stroke.color}`); }
+      else if (stroke.position === "outside") { outerShadows.push(`0 0 0 ${stroke.width}px ${stroke.color}`); }
+    }
+    if (centerStroke) {
+      styleObj.borderWidth = centerStroke.width;
+      styleObj.borderColor = centerStroke.color;
+      styleObj.borderStyle = styleObj.borderStyle ?? "solid";
+    }
+    const allShadows = [...innerShadows, ...outerShadows];
+    if (allShadows.length > 0) {
+      const existing = styleObj.boxShadow as string | undefined;
+      styleObj.boxShadow = existing ? `${existing}, ${allShadows.join(", ")}` : allShadows.join(", ");
+    }
+    skipKeys.add("strokes");
+    if (centerStroke) {
+      skipKeys.add("borderWidth");
+      skipKeys.add("borderColor");
+    }
+  } else {
+    skipKeys.add("strokes");
+  }
+
   for (const [key, rawValue] of Object.entries(style)) {
     if (rawValue === undefined || rawValue === null) continue;
     if (skipKeys.has(key)) continue;
@@ -297,6 +409,118 @@ type ImportEntry = {
   isDefault?: boolean;
 };
 
+/**
+ * Maps every shadcn sub-component name to the file it is exported from.
+ * Used when resolving `studio:shadcn` imports so that e.g. `AccordionItem`
+ * resolves to `@/components/ui/accordion`, not `@/components/ui/accordion-item`.
+ */
+const SHADCN_FILE_MAP: Record<string, string> = {
+  // accordion.tsx
+  AccordionItem: "accordion", AccordionTrigger: "accordion", AccordionContent: "accordion",
+  // alert-dialog.tsx
+  AlertDialogAction: "alert-dialog", AlertDialogCancel: "alert-dialog",
+  AlertDialogContent: "alert-dialog", AlertDialogDescription: "alert-dialog",
+  AlertDialogFooter: "alert-dialog", AlertDialogHeader: "alert-dialog",
+  AlertDialogMedia: "alert-dialog", AlertDialogOverlay: "alert-dialog",
+  AlertDialogPortal: "alert-dialog", AlertDialogTitle: "alert-dialog",
+  AlertDialogTrigger: "alert-dialog",
+  // avatar.tsx
+  AvatarImage: "avatar", AvatarFallback: "avatar", AvatarBadge: "avatar",
+  AvatarGroup: "avatar", AvatarGroupCount: "avatar",
+  // breadcrumb.tsx
+  BreadcrumbList: "breadcrumb", BreadcrumbItem: "breadcrumb",
+  BreadcrumbLink: "breadcrumb", BreadcrumbPage: "breadcrumb",
+  BreadcrumbSeparator: "breadcrumb", BreadcrumbEllipsis: "breadcrumb",
+  // card.tsx
+  CardHeader: "card", CardFooter: "card", CardTitle: "card",
+  CardAction: "card", CardDescription: "card", CardContent: "card",
+  // carousel.tsx
+  CarouselContent: "carousel", CarouselItem: "carousel",
+  CarouselPrevious: "carousel", CarouselNext: "carousel",
+  // collapsible.tsx
+  CollapsibleTrigger: "collapsible", CollapsibleContent: "collapsible",
+  // command.tsx
+  CommandDialog: "command", CommandInput: "command", CommandList: "command",
+  CommandEmpty: "command", CommandGroup: "command", CommandItem: "command",
+  CommandShortcut: "command", CommandSeparator: "command",
+  // context-menu.tsx
+  ContextMenuTrigger: "context-menu", ContextMenuContent: "context-menu",
+  ContextMenuItem: "context-menu", ContextMenuCheckboxItem: "context-menu",
+  ContextMenuRadioItem: "context-menu", ContextMenuLabel: "context-menu",
+  ContextMenuSeparator: "context-menu", ContextMenuShortcut: "context-menu",
+  ContextMenuGroup: "context-menu", ContextMenuPortal: "context-menu",
+  ContextMenuSub: "context-menu", ContextMenuSubContent: "context-menu",
+  ContextMenuSubTrigger: "context-menu", ContextMenuRadioGroup: "context-menu",
+  // dialog.tsx
+  DialogClose: "dialog", DialogContent: "dialog", DialogDescription: "dialog",
+  DialogFooter: "dialog", DialogHeader: "dialog", DialogOverlay: "dialog",
+  DialogPortal: "dialog", DialogTitle: "dialog", DialogTrigger: "dialog",
+  // drawer.tsx
+  DrawerPortal: "drawer", DrawerOverlay: "drawer", DrawerTrigger: "drawer",
+  DrawerClose: "drawer", DrawerContent: "drawer", DrawerHeader: "drawer",
+  DrawerFooter: "drawer", DrawerTitle: "drawer", DrawerDescription: "drawer",
+  // dropdown-menu.tsx
+  DropdownMenuPortal: "dropdown-menu", DropdownMenuTrigger: "dropdown-menu",
+  DropdownMenuContent: "dropdown-menu", DropdownMenuGroup: "dropdown-menu",
+  DropdownMenuLabel: "dropdown-menu", DropdownMenuItem: "dropdown-menu",
+  DropdownMenuCheckboxItem: "dropdown-menu", DropdownMenuRadioGroup: "dropdown-menu",
+  DropdownMenuRadioItem: "dropdown-menu", DropdownMenuSeparator: "dropdown-menu",
+  DropdownMenuShortcut: "dropdown-menu", DropdownMenuSub: "dropdown-menu",
+  DropdownMenuSubTrigger: "dropdown-menu", DropdownMenuSubContent: "dropdown-menu",
+  // hover-card.tsx
+  HoverCardTrigger: "hover-card", HoverCardContent: "hover-card",
+  // input-otp.tsx
+  InputOTPGroup: "input-otp", InputOTPSlot: "input-otp", InputOTPSeparator: "input-otp",
+  // menubar.tsx
+  MenubarPortal: "menubar", MenubarMenu: "menubar", MenubarTrigger: "menubar",
+  MenubarContent: "menubar", MenubarGroup: "menubar", MenubarSeparator: "menubar",
+  MenubarLabel: "menubar", MenubarItem: "menubar", MenubarShortcut: "menubar",
+  MenubarCheckboxItem: "menubar", MenubarRadioGroup: "menubar",
+  MenubarRadioItem: "menubar", MenubarSub: "menubar",
+  MenubarSubTrigger: "menubar", MenubarSubContent: "menubar",
+  // navigation-menu.tsx
+  NavigationMenuList: "navigation-menu", NavigationMenuItem: "navigation-menu",
+  NavigationMenuContent: "navigation-menu", NavigationMenuTrigger: "navigation-menu",
+  NavigationMenuLink: "navigation-menu", NavigationMenuIndicator: "navigation-menu",
+  NavigationMenuViewport: "navigation-menu",
+  // pagination.tsx
+  PaginationContent: "pagination", PaginationLink: "pagination",
+  PaginationItem: "pagination", PaginationPrevious: "pagination",
+  PaginationNext: "pagination", PaginationEllipsis: "pagination",
+  // popover.tsx
+  PopoverTrigger: "popover", PopoverContent: "popover", PopoverAnchor: "popover",
+  PopoverHeader: "popover", PopoverTitle: "popover", PopoverDescription: "popover",
+  // radio-group.tsx
+  RadioGroupItem: "radio-group",
+  // resizable.tsx
+  ResizableHandle: "resizable", ResizablePanel: "resizable",
+  // select.tsx
+  SelectContent: "select", SelectGroup: "select", SelectItem: "select",
+  SelectLabel: "select", SelectScrollDownButton: "select",
+  SelectScrollUpButton: "select", SelectSeparator: "select",
+  SelectTrigger: "select", SelectValue: "select",
+  // sheet.tsx
+  SheetTrigger: "sheet", SheetClose: "sheet", SheetContent: "sheet",
+  SheetHeader: "sheet", SheetFooter: "sheet", SheetTitle: "sheet",
+  SheetDescription: "sheet",
+  // sidebar.tsx
+  SidebarContent: "sidebar", SidebarFooter: "sidebar", SidebarGroup: "sidebar",
+  SidebarGroupAction: "sidebar", SidebarGroupContent: "sidebar",
+  SidebarGroupLabel: "sidebar", SidebarHeader: "sidebar", SidebarInput: "sidebar",
+  SidebarInset: "sidebar", SidebarMenu: "sidebar", SidebarMenuAction: "sidebar",
+  SidebarMenuBadge: "sidebar", SidebarMenuButton: "sidebar",
+  SidebarMenuItem: "sidebar", SidebarMenuSkeleton: "sidebar",
+  SidebarMenuSub: "sidebar", SidebarMenuSubButton: "sidebar",
+  SidebarMenuSubItem: "sidebar",
+  // table.tsx
+  TableHeader: "table", TableBody: "table", TableFooter: "table",
+  TableHead: "table", TableRow: "table", TableCell: "table", TableCaption: "table",
+  // tabs.tsx
+  TabsList: "tabs", TabsTrigger: "tabs", TabsContent: "tabs",
+  // toggle-group.tsx
+  ToggleGroupItem: "toggle-group",
+};
+
 const IMPORT_MAP: Record<string, ImportEntry> = {
   Button: { specifier: "Button", source: "@/components/ui/button" },
   Card: { specifier: "Card", source: "@/components/ui/card" },
@@ -350,16 +574,30 @@ function buildImportLines(imports: Set<string>, config: StudioConfig): string {
       continue;
     }
 
-    // ExternalComponent imports (brownfield, 0.10.5): "__external:ComponentName:importPath"
-    if (key.startsWith("__external:")) {
-      const rest = key.slice(11);
+    // ComponentInstance / ExternalComponent imports: "__external:Name:pkg" or "__local:Name:path"
+    if (key.startsWith("__external:") || key.startsWith("__local:")) {
+      const prefixLen = key.startsWith("__external:") ? 11 : 8;
+      const rest = key.slice(prefixLen);
       const colonIdx = rest.indexOf(":");
       if (colonIdx !== -1) {
         const compName = rest.slice(0, colonIdx);
         const importSource = rest.slice(colonIdx + 1);
-        const existing = bySource.get(importSource) ?? [];
-        if (!existing.includes(compName)) existing.push(compName);
-        bySource.set(importSource, existing);
+        // "List.Item" → import only "List"; JSX uses the full dotted name
+        const rootImportName = compName.split(".")[0];
+
+        // studio:* paths are virtual (renderer-only). Resolve to the real local path.
+        let resolvedSource = importSource;
+        if (importSource.startsWith("studio:")) {
+          const subcompFile = SHADCN_FILE_MAP[rootImportName];
+          const mapEntry = IMPORT_MAP[rootImportName];
+          resolvedSource = subcompFile
+            ? `${config.importAlias}components/ui/${subcompFile}`
+            : (mapEntry?.source ?? `${config.importAlias}components/ui/${toKebabCase(rootImportName)}`);
+        }
+
+        const existing = bySource.get(resolvedSource) ?? [];
+        if (!existing.includes(rootImportName)) existing.push(rootImportName);
+        bySource.set(resolvedSource, existing);
       }
       continue;
     }
@@ -495,11 +733,61 @@ function emitDataSource(node: Node): { dataVarName: string; jsx: string } | null
 // Node emission
 // ---------------------------------------------------------------------------
 
+/**
+ * Merge className and style onto the root element of a JSX string.
+ * Finds the first opening tag and inserts/merges attributes directly,
+ * avoiding a wrapper div.
+ */
+function mergeStyleOntoJsx(
+  jsx: string,
+  classes: string[],
+  styleObj: Record<string, string | number>,
+): string {
+  if (classes.length === 0 && Object.keys(styleObj).length === 0) return jsx;
+
+  const tagMatch = jsx.match(/^(\s*<[\w.-]+)/);
+  if (!tagMatch) return jsx;
+
+  const tagEnd = tagMatch[0];
+  let rest = jsx.slice(tagEnd.length);
+
+  if (classes.length > 0) {
+    const classStr = classes.join(" ");
+    const classNameMatch = rest.match(/^(\s*)className="([^"]*)"/);
+    if (classNameMatch) {
+      rest = rest.replace(classNameMatch[0], `${classNameMatch[1]}className="${classNameMatch[2]} ${classStr}"`);
+    } else {
+      rest = ` className="${classStr}"` + rest;
+    }
+  }
+
+  if (Object.keys(styleObj).length > 0) {
+    const newEntries = Object.entries(styleObj)
+      .map(([k, v]) => `${k}: ${typeof v === "number" ? v : JSON.stringify(String(v))}`)
+      .join(", ");
+
+    const styleIdx = rest.indexOf("style={{");
+    if (styleIdx !== -1) {
+      const closingIdx = rest.indexOf("}}", styleIdx + 8);
+      if (closingIdx !== -1) {
+        const existing = rest.slice(styleIdx + 8, closingIdx).trim();
+        const merged = existing ? `${existing}, ${newEntries}` : newEntries;
+        rest = rest.slice(0, styleIdx) + `style={{ ${merged} }}` + rest.slice(closingIdx + 2);
+      } else {
+        rest += ` style={{ ${newEntries} }}`;
+      }
+    } else {
+      rest = ` style={{ ${newEntries} }}` + rest;
+    }
+  }
+
+  return tagEnd + rest;
+}
+
 function emitNode(node: Node): EmitResult {
   const props = node.props ?? {};
   const type = node.type;
 
-  // Compute style overlay (applied after the main JSX is generated)
   const nodeStyleResult = emitStyleAttr(node.style);
   const responsiveClasses = emitResponsiveClasses(node.responsive);
   const allClasses = [...nodeStyleResult.classes, ...responsiveClasses];
@@ -507,20 +795,9 @@ function emitNode(node: Node): EmitResult {
 
   const result = emitNodeInner(node, props, type);
 
-  // If the node has a style overlay, wrap it in a <div> with the style
   if (hasStyleOverlay) {
-    const styleParts: string[] = [];
-    if (allClasses.length > 0) {
-      styleParts.push(`className="${allClasses.join(" ")}"`);
-    }
-    if (Object.keys(nodeStyleResult.styleObj).length > 0) {
-      const entries = Object.entries(nodeStyleResult.styleObj)
-        .map(([k, v]) => `${k}: ${typeof v === "number" ? v : JSON.stringify(String(v))}`)
-        .join(", ");
-      styleParts.push(`style={{ ${entries} }}`);
-    }
     return {
-      jsx: `<div ${styleParts.join(" ")}>\n${indentLines(result.jsx, 2)}\n</div>`,
+      jsx: mergeStyleOntoJsx(result.jsx, allClasses, nodeStyleResult.styleObj),
       imports: result.imports,
     };
   }
@@ -597,9 +874,6 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
       const text = escapeText(props.text);
       const level = typeof props.level === "number" ? props.level : 1;
       const tag = `h${Math.min(Math.max(level, 1), 6)}`;
-      const fontFamily = typeof props.fontFamily === "string" && props.fontFamily ? props.fontFamily : "";
-      const styleAttr = fontFamily ? ` style={{ fontFamily: "${fontFamily}" }}` : "";
-      // Map variant or fall back to level-based sizing
       const HEADING_SIZE: Record<string, string> = {
         hero: "text-5xl font-bold tracking-tight",
         title: "text-3xl font-bold",
@@ -617,28 +891,26 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
       const variant = typeof props.variant === "string" ? props.variant : "";
       const sizeClass = HEADING_SIZE[variant] ?? HEADING_LEVEL_SIZE[level] ?? "text-xl font-semibold";
       return {
-        jsx: `<${tag} className="${sizeClass}"${styleAttr}>${text}</${tag}>`,
+        jsx: `<${tag} className="${sizeClass}">${text}</${tag}>`,
         imports: new Set(),
       };
     }
 
     case "Text": {
       const content = escapeText(props.text);
-      const fontFamily = typeof props.fontFamily === "string" && props.fontFamily ? props.fontFamily : "";
-      const styleAttr = fontFamily ? ` style={{ fontFamily: "${fontFamily}" }}` : "";
       if (props.variant === "body") {
         return {
-          jsx: `<p className="text-base"${styleAttr}>${content}</p>`,
+          jsx: `<p className="text-base">${content}</p>`,
           imports: new Set(),
         };
       }
       if (props.variant === "muted") {
         return {
-          jsx: `<p className="text-sm text-muted-foreground"${styleAttr}>${content}</p>`,
+          jsx: `<p className="text-sm text-muted-foreground">${content}</p>`,
           imports: new Set(),
         };
       }
-      return { jsx: `<p${styleAttr}>${content}</p>`, imports: new Set() };
+      return { jsx: `<p>${content}</p>`, imports: new Set() };
     }
 
     case "Image": {
@@ -686,7 +958,7 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
         typeof props.label === "string" ? props.label : undefined;
       if (label) {
         return {
-          jsx: `<div>\n  <label className="text-sm font-medium">${escapeText(label)}</label>\n  <Input${attrStr} />\n</div>`,
+          jsx: `<div className="space-y-1.5">\n  <label className="text-sm font-medium">${escapeText(label)}</label>\n  <Input${attrStr} />\n</div>`,
           imports: new Set(["Input"]),
         };
       }
@@ -749,10 +1021,10 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
         ? `p-${resolveSize(props.padding)}`
         : "p-4";
       const body = children.jsx
-        ? `\n${indentLines(children.jsx, 6)}\n    `
+        ? `\n${indentLines(children.jsx, 4)}\n  `
         : "";
       return {
-        jsx: `<Card>\n  <div className="${padding}">${body}</div>\n</Card>`,
+        jsx: `<Card className="${padding}">${body}</Card>`,
         imports: new Set(["Card", ...Array.from(children.imports)]),
       };
     }
@@ -760,8 +1032,9 @@ function emitNodeInner(node: Node, props: Record<string, unknown>, type: string)
     case "Button": {
       const label = escapeText(props.label ?? "Button");
       const attrs: string[] = [];
-      if (typeof props.intent === "string" && props.intent !== "primary") {
-        attrs.push(`variant="${props.intent}"`);
+      const btnVariant = typeof props.variant === "string" ? props.variant : (typeof props.intent === "string" ? props.intent : "");
+      if (btnVariant && btnVariant !== "default" && btnVariant !== "primary") {
+        attrs.push(`variant="${btnVariant}"`);
       }
       if (typeof props.size === "string" && props.size !== "default") {
         attrs.push(`size="${props.size}"`);
@@ -1348,7 +1621,8 @@ ${rowJsx}
       const gap = resolveGap(props.gap);
       const parts: string[] = [];
       if (autoLayout) {
-        parts.push(`display: "flex"`, `flexDirection: "${dir}"`, `gap: "${gap === "0" ? "0" : `var(--space-${gap}, 0.5rem)`}"`);
+        const gapVal = gap === "0" ? "0" : gap.startsWith("[") ? gap.slice(1, -1) : `var(--spacing-${gap}, 0.5rem)`;
+        parts.push(`display: "flex"`, `flexDirection: "${dir}"`, `gap: "${gapVal}"`);
       } else {
         parts.push(`position: "relative"`);
       }
@@ -1361,32 +1635,80 @@ ${rowJsx}
       return { jsx: `<div${styleStr}>${children.jsx ? `\n${indentLines(children.jsx, 2)}\n` : ""}</div>`, imports: children.imports };
     }
 
-    // -- External (brownfield) component (0.10.5) ----------------------------
+    // -- Legacy DSComponent nodes (pre-v0.10.4, no importPath) ----------------
+    // Treat as a transparent container — emit children wrapped in a div.
+    case "DSComponent": {
+      const children = emitChildren(node.children ?? []);
+      const jsx = children.jsx
+        ? `<div>\n${indentLines(children.jsx, 2)}\n</div>`
+        : `{/* ${typeof props.dsComponentName === "string" ? props.dsComponentName : "component"} */}`;
+      return { jsx, imports: children.imports };
+    }
 
+    // -- Component instance (DS component or brownfield ExternalComponent) ----
+
+    case "ComponentInstance":
     case "ExternalComponent": {
       const compName = typeof props.componentName === "string" && props.componentName
         ? props.componentName
-        : "UnknownComponent";
+        : (node.name ?? "UnknownComponent");
       const importPath = typeof props.importPath === "string" && props.importPath
         ? props.importPath
-        : "@unknown/components";
+        : null;
+      // Typed props: everything except internal bookkeeping fields
+      const INTERNAL_KEYS = new Set(["componentName", "importPath", "selectedVariants", "componentProps", "dsComponentName"]);
       const componentProps = (props.componentProps ?? {}) as Record<string, unknown>;
       const selectedVariants = (props.selectedVariants ?? {}) as Record<string, string>;
-      const allProps = { ...componentProps, ...selectedVariants };
+      const typedProps = Object.fromEntries(
+        Object.entries(props).filter(([k]) => !INTERNAL_KEYS.has(k))
+      );
+      const allProps = { ...typedProps, ...componentProps, ...selectedVariants };
+
+      // Strip boolean props that are NOT valid HTML boolean attributes.
+      // Both `true` and `false` are stripped for non-whitelisted props:
+      //   false — component default is false, omitting is identical
+      //   true  — Radix v1.x leaks some props (e.g. `collapsible`) to the DOM,
+      //           causing "Received `true` for non-boolean attribute" in React
+      const HTML_BOOL_ATTRS = new Set([
+        "disabled", "checked", "required", "readOnly", "autoFocus",
+        "hidden", "multiple", "selected", "open", "defaultChecked",
+        "defaultOpen", "asChild", "modal",
+      ]);
+      for (const k of Object.keys(allProps)) {
+        if (typeof allProps[k] === "boolean" && !HTML_BOOL_ATTRS.has(k)) delete allProps[k];
+      }
+
+      // Pull out children string so we emit it as JSX children, not a prop attribute
+      const childrenPropValue = typeof allProps.children === "string" ? allProps.children : null;
+      if (childrenPropValue !== null) delete allProps.children;
+
       const propEntries = Object.entries(allProps).map(([k, v]) => {
         if (typeof v === "string") return `${k}="${escapeText(v)}"`;
         return `${k}={${JSON.stringify(v)}}`;
       });
       const attrStr = propEntries.length > 0 ? " " + propEntries.join(" ") : "";
+      const children = emitChildren(node.children ?? []);
+
+      if (!importPath) {
+        // No package known — emit children in a div; user must wire up the import manually
+        const jsx = children.jsx
+          ? `<div>\n${indentLines(children.jsx, 2)}\n</div>`
+          : `{/* ${compName} — add importPath to compile as a real component */}`;
+        return { jsx, imports: children.imports };
+      }
+
       const importKey = `__external:${compName}:${importPath}`;
-      return { jsx: `<${compName}${attrStr} />`, imports: new Set([importKey]) };
-    }
-
-    // -- DS Component placeholder (design-only, not compiled to real code) ---
-
-    case "DSComponent": {
-      // DSComponent nodes are design-system placeholders; emit nothing at compile time
-      return { jsx: "{/* DS component placeholder */}", imports: new Set() };
+      let jsx: string;
+      if (children.jsx) {
+        jsx = `<${compName}${attrStr}>\n${indentLines(children.jsx, 2)}\n</${compName}>`;
+      } else if (childrenPropValue !== null) {
+        // Emit string children as JSX text content, not a prop attribute
+        jsx = `<${compName}${attrStr}>${escapeText(childrenPropValue)}</${compName}>`;
+      } else {
+        jsx = `<${compName}${attrStr} />`;
+      }
+      children.imports.add(importKey);
+      return { jsx, imports: children.imports };
     }
 
     // -- Repo component (fallback) ------------------------------------------

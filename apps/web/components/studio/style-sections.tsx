@@ -18,6 +18,16 @@ import {
   SegmentedSelect,
 } from "./style-fields";
 import { getTextStyles, getTokensForCategory, applyThemeOverrides } from "@/lib/studio/resolve-token";
+import {
+  getConstraints,
+  isSectionSupported,
+  isEffectSupported,
+  isFillTypeSupported,
+  isStrokePositionSupported,
+  getHiddenSummary,
+} from "@/lib/studio/framework-constraints";
+import type { EffectType, FillType, StrokePosition } from "@/lib/studio/framework-constraints";
+import { GradientEditor, type GradientValue } from "./gradient-editor";
 
 // ---------------------------------------------------------------------------
 // Collapsible section wrapper
@@ -42,7 +52,15 @@ function StyleSection({
         <span className="[font-size:var(--s-text-xs)] [font-weight:var(--s-weight-semibold)] uppercase [letter-spacing:var(--s-tracking-wide)] [color:var(--s-text-ter)]">
           {title}
         </span>
-        <span className="[font-size:8px] [color:var(--s-text-ter)]">{open ? "▾" : "▸"}</span>
+        <svg
+          width="10" height="10" viewBox="0 0 10 10"
+          fill="none" stroke="currentColor" strokeWidth="1.8"
+          strokeLinecap="round" strokeLinejoin="round"
+          className="[color:var(--s-text-ter)]"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}
+        >
+          <polyline points="3,2 7,5 3,8" />
+        </svg>
       </div>
       {open && <div className="space-y-2.5 pb-1">{children}</div>}
     </div>
@@ -118,17 +136,35 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
     [nodeId, updateNodeStyle, updateNodeResponsiveStyle, editingBreakpoint]
   );
 
+  // For array-typed style properties (effects, fills, strokes, cssFilters)
+  const handleComplexChange = useCallback(
+    (prop: string, value: unknown) => {
+      if (editingBreakpoint === "base") {
+        updateNodeStyle(nodeId, { [prop]: value } as Partial<NodeStyle>);
+      } else {
+        updateNodeResponsiveStyle(nodeId, editingBreakpoint, { [prop]: value } as Partial<NodeStyle>);
+      }
+    },
+    [nodeId, updateNodeStyle, updateNodeResponsiveStyle, editingBreakpoint]
+  );
+
   // Apply active theme overrides if a theme is selected
   const tokens = React.useMemo(() => {
     if (!designTokens) return null;
     if (!activeThemeId || !dsThemes[activeThemeId]) return designTokens;
     return applyThemeOverrides(designTokens, dsThemes[activeThemeId]);
   }, [designTokens, activeThemeId, dsThemes]);
+  const projectFramework = useEditorStore((s) => s.projectFramework) || "nextjs";
+
   const isTextNode = TEXT_BEARING_TYPES.has(nodeType);
   const isContainer = CONTAINER_TYPES.has(nodeType);
   const isFrame = nodeType === "Frame";
+  const isDivider = nodeType === "Divider";
+  const isSpacer = nodeType === "Spacer";
+  const isImage = nodeType === "Image";
   const nodeProps = node?.props as Record<string, unknown> | undefined;
   const autoLayout = isFrame ? (nodeProps?.autoLayout !== false) : false;
+  const hiddenSummary = getHiddenSummary(projectFramework);
 
   const handlePropsChange = useCallback(
     (key: string, value: unknown) => {
@@ -167,25 +203,8 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
         )}
       </div>
 
-      {/* Typography - shown for text-bearing nodes */}
-      {isTextNode && (
-        <TypographySection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
-      )}
-
-      {/* Size */}
-      <SizingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
-
-      {/* Spacing */}
-      <SpacingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
-
-      {/* Background & Border */}
-      <AppearanceSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
-
-      {/* Effects */}
-      <EffectsSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
-
-      {/* Layout - shown for containers */}
-      {isContainer && (
+      {/* Layout — containers only, shown first */}
+      {isContainer && !isDivider && !isSpacer && (
         <LayoutSection
           style={effectiveStyle}
           tokens={tokens}
@@ -197,8 +216,63 @@ export function StylePanel({ nodeId, nodeType }: { nodeId: string; nodeType: str
         />
       )}
 
-      {/* Position */}
+      {/* Typography — text-bearing nodes only */}
+      {isTextNode && (
+        <TypographySection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+      )}
+
+      {/* Size — all except Spacer (its only property is size, handled by PositionSizeWidget) */}
+      {!isSpacer && (
+      <SizingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+      )}
+
+      {/* Spacing — not for Divider, Spacer, or Image */}
+      {!isDivider && !isSpacer && !isImage && (
+      <SpacingSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+      )}
+
+      {/* Fills — not for Spacer or Divider */}
+      {!isSpacer && !isDivider && isSectionSupported(projectFramework, "fills") && (
+        <FillsSection style={effectiveStyle} onComplexChange={handleComplexChange} framework={projectFramework} />
+      )}
+
+      {/* Background & Border — not for Spacer */}
+      {!isSpacer && (
+      <AppearanceSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+      )}
+
+      {/* Strokes — not for Spacer or Divider */}
+      {!isSpacer && !isDivider && isSectionSupported(projectFramework, "strokes") && (
+        <StrokesSection style={effectiveStyle} onComplexChange={handleComplexChange} framework={projectFramework} />
+      )}
+
+      {/* Effects — not for Divider or Spacer */}
+      {!isDivider && !isSpacer && isSectionSupported(projectFramework, "effects") && (
+        <EffectsSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} onComplexChange={handleComplexChange} framework={projectFramework} />
+      )}
+
+      {/* CSS Filters — not for Divider or Spacer; web frameworks only */}
+      {!isDivider && !isSpacer && isSectionSupported(projectFramework, "cssFilters") && (
+        <CSSFiltersSection style={effectiveStyle} onComplexChange={handleComplexChange} />
+      )}
+
+      {/* Transform — not for Divider or Spacer */}
+      {!isDivider && !isSpacer && (
+        <TransformSection style={effectiveStyle} onChange={handleStyleChange} />
+      )}
+
+      {/* Position — not for Divider or Spacer */}
+      {!isDivider && !isSpacer && (
       <PositionSection style={effectiveStyle} tokens={tokens} onChange={handleStyleChange} />
+      )}
+
+      {/* Framework constraints disclosure */}
+      {hiddenSummary && (
+        <div className="px-3 py-2 text-[10px] [color:var(--s-text-ter)] flex items-start gap-1.5">
+          <span className="shrink-0 w-3.5 h-3.5 rounded-full border [border-color:var(--s-text-ter)] flex items-center justify-center text-[9px] font-bold mt-px">?</span>
+          <span>Some options are hidden because they are not supported by {projectFramework === "expo" ? "React Native (Expo)" : projectFramework}. Switch to a web framework to access all options.</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -368,18 +442,6 @@ function TypographySection({
       />
 
       <SegmentedSelect
-        label="Text Align"
-        value={style.textAlign}
-        options={[
-          { value: "left", label: "Left", icon: <AlignIcon align="left" /> },
-          { value: "center", label: "Center", icon: <AlignIcon align="center" /> },
-          { value: "right", label: "Right", icon: <AlignIcon align="right" /> },
-          { value: "justify", label: "Justify", icon: <AlignIcon align="justify" /> },
-        ]}
-        onChange={(v) => onChange("textAlign", v as StyleValue | undefined)}
-      />
-
-      <SegmentedSelect
         label="Decoration"
         value={style.textDecoration}
         options={[
@@ -400,6 +462,18 @@ function TypographySection({
           { value: "capitalize", label: "Capitalize", icon: <span className="text-[10px]">Ab</span> },
         ]}
         onChange={(v) => onChange("textTransform", v as StyleValue | undefined)}
+      />
+
+      <SegmentedSelect
+        label="Text Align"
+        value={style.textAlign}
+        options={[
+          { value: "left", label: "Left", icon: <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="2" y1="3" x2="14" y2="3"/><line x1="2" y1="7" x2="10" y2="7"/><line x1="2" y1="11" x2="14" y2="11"/></svg> },
+          { value: "center", label: "Centre", icon: <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="2" y1="3" x2="14" y2="3"/><line x1="4" y1="7" x2="12" y2="7"/><line x1="2" y1="11" x2="14" y2="11"/></svg> },
+          { value: "right", label: "Right", icon: <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="2" y1="3" x2="14" y2="3"/><line x1="6" y1="7" x2="14" y2="7"/><line x1="2" y1="11" x2="14" y2="11"/></svg> },
+          { value: "justify", label: "Justify", icon: <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="2" y1="3" x2="14" y2="3"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="2" y1="11" x2="14" y2="11"/></svg> },
+        ]}
+        onChange={(v) => onChange("textAlign", v as StyleValue | undefined)}
       />
 
       <ColorInput
@@ -759,34 +833,648 @@ function BorderRadiusExpanded({
 }
 
 // ---------------------------------------------------------------------------
-// Effects Section
+// Effects Section (stackable effects + opacity + blend mode)
 // ---------------------------------------------------------------------------
+
+type EffectEntry = NonNullable<NodeStyle["effects"]>[number];
+
+const EFFECT_TYPE_LABELS: Record<EffectEntry["type"], string> = {
+  "drop-shadow": "Drop Shadow",
+  "inner-shadow": "Inner Shadow",
+  "layer-blur": "Layer Blur",
+  "background-blur": "BG Blur",
+  "glass": "Glass",
+};
+
+const EFFECT_DEFAULTS: Record<EffectEntry["type"], Omit<EffectEntry, "type">> = {
+  "drop-shadow": { x: 2, y: 4, blur: 8, spread: 0, color: "#000000", opacity: 0.2 } as Omit<Extract<EffectEntry, { type: "drop-shadow" }>, "type">,
+  "inner-shadow": { x: 0, y: 2, blur: 4, spread: 0, color: "#000000", opacity: 0.15 } as Omit<Extract<EffectEntry, { type: "inner-shadow" }>, "type">,
+  "layer-blur": { radius: 4 } as Omit<Extract<EffectEntry, { type: "layer-blur" }>, "type">,
+  "background-blur": { radius: 8 } as Omit<Extract<EffectEntry, { type: "background-blur" }>, "type">,
+  "glass": { blurRadius: 12, backgroundOpacity: 0.15 } as Omit<Extract<EffectEntry, { type: "glass" }>, "type">,
+};
+
+function EffectEntryEditor({ effect, onUpdate }: { effect: EffectEntry; onUpdate: (e: EffectEntry) => void }) {
+  if (effect.type === "drop-shadow" || effect.type === "inner-shadow") {
+    return (
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
+          {(["x", "y", "blur", "spread"] as const).map((k) => (
+            <div key={k} className="flex flex-col gap-0.5">
+              <label className="text-[10px] [color:var(--s-text-ter)] capitalize">{k}</label>
+              <input type="number" value={(effect as Record<string, unknown>)[k] as number}
+                onChange={(e) => onUpdate({ ...effect, [k]: Number(e.target.value) })}
+                className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-1.5 items-end">
+          <div className="flex flex-col gap-0.5 flex-1">
+            <label className="text-[10px] [color:var(--s-text-ter)]">Color</label>
+            <input type="color" value={effect.color}
+              onChange={(e) => onUpdate({ ...effect, color: e.target.value })}
+              className="h-6 w-full rounded border cursor-pointer" />
+          </div>
+          <div className="flex flex-col gap-0.5 flex-1">
+            <label className="text-[10px] [color:var(--s-text-ter)]">Opacity</label>
+            <input type="number" value={Math.round(effect.opacity * 100)} min={0} max={100} step={1}
+              onChange={(e) => onUpdate({ ...effect, opacity: Number(e.target.value) / 100 })}
+              className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (effect.type === "layer-blur" || effect.type === "background-blur") {
+    return (
+      <div className="flex flex-col gap-0.5">
+        <label className="text-[10px] [color:var(--s-text-ter)]">Radius (px)</label>
+        <input type="number" value={effect.radius} min={0}
+          onChange={(e) => onUpdate({ ...effect, radius: Number(e.target.value) })}
+          className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+      </div>
+    );
+  }
+  if (effect.type === "glass") {
+    return (
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)]">Blur (px)</label>
+          <input type="number" value={effect.blurRadius} min={0}
+            onChange={(e) => onUpdate({ ...effect, blurRadius: Number(e.target.value) })}
+            className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)]">BG Opacity (%)</label>
+          <input type="number" value={Math.round(effect.backgroundOpacity * 100)} min={0} max={100}
+            onChange={(e) => onUpdate({ ...effect, backgroundOpacity: Number(e.target.value) / 100 })}
+            className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+function EffectRow({
+  effect,
+  onUpdate,
+  onRemove,
+  onToggle,
+}: {
+  effect: EffectEntry;
+  onUpdate: (updated: EffectEntry) => void;
+  onRemove: () => void;
+  onToggle: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const enabled = effect.enabled !== false;
+  return (
+    <div className="rounded [border:1px_solid_var(--s-border)]">
+      <div className="flex items-center gap-1.5 px-2 py-1.5">
+        <button
+          onClick={onToggle}
+          className={`w-3 h-3 rounded-full border-[1.5px] shrink-0 transition-colors ${enabled ? "[background:var(--s-accent)] [border-color:var(--s-accent)]" : "[border-color:var(--s-text-ter)]"}`}
+        />
+        <span className="flex-1 text-[11px] cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          {EFFECT_TYPE_LABELS[effect.type]}
+        </span>
+        <button onClick={() => setExpanded(!expanded)} className="[color:var(--s-text-ter)]">
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.1s" }}>
+            <polyline points="3,2 7,5 3,8" />
+          </svg>
+        </button>
+        <button onClick={onRemove} className="[color:var(--s-text-ter)] hover:[color:var(--s-text-pri)]">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
+          </svg>
+        </button>
+      </div>
+      {expanded && (
+        <div className="px-2 pb-2 [border-top:1px_solid_var(--s-border)] pt-1.5">
+          <EffectEntryEditor effect={effect} onUpdate={onUpdate} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function EffectsSection({
   style,
   tokens,
   onChange,
+  onComplexChange,
+  framework = "nextjs",
 }: {
   style: NodeStyle;
   tokens: DesignTokens | null;
   onChange: (prop: string, value: StyleValue | undefined) => void;
+  onComplexChange: (prop: string, value: unknown) => void;
+  framework?: string;
 }) {
+  const effects = style.effects ?? [];
+  const showBlendMode = isSectionSupported(framework, "blendMode");
+  const availableEffectTypes = (Object.keys(EFFECT_TYPE_LABELS) as EffectEntry["type"][]).filter(
+    (t) => isEffectSupported(framework, t as EffectType)
+  );
+
+  const updateEffects = useCallback((updated: NonNullable<NodeStyle["effects"]>) => {
+    onComplexChange("effects", updated.length > 0 ? updated : undefined);
+  }, [onComplexChange]);
+
   return (
     <StyleSection title="Effects">
       <SliderInput
         label="Opacity"
         value={style.opacity}
         onChange={(v) => onChange("opacity", v)}
-        min={0}
-        max={1}
-        step={0.01}
+        min={0} max={1} step={0.01}
       />
-      <ShadowEditor
-        label="Box Shadow"
-        value={style.boxShadow}
-        tokens={tokens}
-        onChange={(v) => onChange("boxShadow", v)}
+
+      {showBlendMode && (
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] [color:var(--s-text-ter)] font-medium">Blend Mode</label>
+          <select
+            value={style.mixBlendMode ?? "normal"}
+            onChange={(e) => onChange("mixBlendMode", e.target.value === "normal" ? undefined : e.target.value as StyleValue)}
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          >
+            {["normal","multiply","screen","overlay","darken","lighten","color-dodge","color-burn","hard-light","soft-light","difference","exclusion","hue","saturation","color","luminosity"].map((v) => (
+              <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1).replace(/-/g, " ")}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {effects.length > 0 && (
+        <div className="space-y-1">
+          {effects.map((effect, i) => (
+            <EffectRow
+              key={i}
+              effect={effect}
+              onToggle={() => updateEffects(effects.map((e, idx) => idx === i ? { ...e, enabled: !(e.enabled !== false) } : e))}
+              onUpdate={(updated) => updateEffects(effects.map((e, idx) => idx === i ? updated : e))}
+              onRemove={() => updateEffects(effects.filter((_, idx) => idx !== i))}
+            />
+          ))}
+        </div>
+      )}
+
+      <select
+        className="w-full h-7 px-2 text-[10px] bg-background border rounded [color:var(--s-text-ter)]"
+        value=""
+        onChange={(e) => {
+          if (!e.target.value) return;
+          const type = e.target.value as EffectEntry["type"];
+          updateEffects([...effects, { type, ...EFFECT_DEFAULTS[type] } as EffectEntry]);
+        }}
+      >
+        <option value="">+ Add effect</option>
+        {availableEffectTypes.map((t) => (
+          <option key={t} value={t}>{EFFECT_TYPE_LABELS[t]}</option>
+        ))}
+      </select>
+    </StyleSection>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Transform Section
+// ---------------------------------------------------------------------------
+
+function TransformSection({
+  style,
+  onChange,
+}: {
+  style: NodeStyle;
+  onChange: (prop: string, value: StyleValue | undefined) => void;
+}) {
+  return (
+    <StyleSection title="Transform">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Rotation (°)</label>
+          <input
+            type="number"
+            value={style.rotation ?? ""}
+            onChange={(e) => onChange("rotation", e.target.value !== "" ? Number(e.target.value) : undefined)}
+            placeholder="0"
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Flip</label>
+          <div className="flex gap-1">
+            <button
+              onClick={() => onChange("scaleX", style.scaleX === -1 ? undefined : -1)}
+              className={`flex-1 h-7 text-[10px] border rounded transition-colors ${style.scaleX === -1 ? "[background:var(--s-accent)] text-white border-transparent" : "bg-background"}`}
+            >H</button>
+            <button
+              onClick={() => onChange("scaleY", style.scaleY === -1 ? undefined : -1)}
+              className={`flex-1 h-7 text-[10px] border rounded transition-colors ${style.scaleY === -1 ? "[background:var(--s-accent)] text-white border-transparent" : "bg-background"}`}
+            >V</button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Scale X</label>
+          <input
+            type="number"
+            value={style.scaleX !== undefined && style.scaleX !== -1 ? style.scaleX : ""}
+            onChange={(e) => onChange("scaleX", e.target.value !== "" ? Number(e.target.value) : undefined)}
+            placeholder="1" step={0.1}
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Scale Y</label>
+          <input
+            type="number"
+            value={style.scaleY !== undefined && style.scaleY !== -1 ? style.scaleY : ""}
+            onChange={(e) => onChange("scaleY", e.target.value !== "" ? Number(e.target.value) : undefined)}
+            placeholder="1" step={0.1}
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Skew X (°)</label>
+          <input
+            type="number"
+            value={style.skewX ?? ""}
+            onChange={(e) => onChange("skewX", e.target.value !== "" ? Number(e.target.value) : undefined)}
+            placeholder="0"
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] font-medium">Skew Y (°)</label>
+          <input
+            type="number"
+            value={style.skewY ?? ""}
+            onChange={(e) => onChange("skewY", e.target.value !== "" ? Number(e.target.value) : undefined)}
+            placeholder="0"
+            className="h-7 px-2 text-[11px] bg-background border rounded"
+          />
+        </div>
+      </div>
+    </StyleSection>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CSS Filters Section
+// ---------------------------------------------------------------------------
+
+type CSSFilterEntry = NonNullable<NodeStyle["cssFilters"]>[number];
+
+const CSS_FILTER_META: Record<CSSFilterEntry["type"], { label: string; unit: string; min: number; max: number; defaultVal: number }> = {
+  brightness:   { label: "Brightness",  unit: "%",  min: 0,    max: 200,  defaultVal: 100 },
+  contrast:     { label: "Contrast",    unit: "%",  min: 0,    max: 200,  defaultVal: 100 },
+  saturate:     { label: "Saturation",  unit: "%",  min: 0,    max: 200,  defaultVal: 100 },
+  "hue-rotate": { label: "Hue Rotate",  unit: "°",  min: -180, max: 180,  defaultVal: 0 },
+  grayscale:    { label: "Grayscale",   unit: "%",  min: 0,    max: 100,  defaultVal: 0 },
+  sepia:        { label: "Sepia",       unit: "%",  min: 0,    max: 100,  defaultVal: 0 },
+  invert:       { label: "Invert",      unit: "%",  min: 0,    max: 100,  defaultVal: 0 },
+};
+
+function CSSFiltersSection({
+  style,
+  onComplexChange,
+}: {
+  style: NodeStyle;
+  onComplexChange: (prop: string, value: unknown) => void;
+}) {
+  const filters = style.cssFilters ?? [];
+
+  const update = useCallback((updated: NonNullable<NodeStyle["cssFilters"]>) => {
+    onComplexChange("cssFilters", updated.length > 0 ? updated : undefined);
+  }, [onComplexChange]);
+
+  return (
+    <StyleSection title="CSS Filters">
+      {filters.map((f, i) => {
+        const meta = CSS_FILTER_META[f.type];
+        return (
+          <div key={i} className="flex items-center gap-1.5">
+            <span className="text-[10px] [color:var(--s-text-ter)] w-[68px] shrink-0">{meta.label}</span>
+            <input
+              type="range" min={meta.min} max={meta.max} step={1}
+              value={f.value}
+              onChange={(e) => update(filters.map((x, idx) => idx === i ? { ...x, value: Number(e.target.value) } : x))}
+              className="flex-1 h-1 accent-[var(--s-accent)]"
+            />
+            <span className="text-[10px] [color:var(--s-text-ter)] w-[34px] text-right shrink-0">{f.value}{meta.unit}</span>
+            <button
+              onClick={() => update(filters.filter((_, idx) => idx !== i))}
+              className="[color:var(--s-text-ter)] hover:[color:var(--s-text-pri)] shrink-0"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
+              </svg>
+            </button>
+          </div>
+        );
+      })}
+      <select
+        className="w-full h-7 px-2 text-[10px] bg-background border rounded [color:var(--s-text-ter)]"
+        value=""
+        onChange={(e) => {
+          if (!e.target.value) return;
+          const type = e.target.value as CSSFilterEntry["type"];
+          update([...filters, { type, value: CSS_FILTER_META[type].defaultVal }]);
+        }}
+      >
+        <option value="">+ Add filter</option>
+        {(Object.keys(CSS_FILTER_META) as CSSFilterEntry["type"][]).map((t) => (
+          <option key={t} value={t}>{CSS_FILTER_META[t].label}</option>
+        ))}
+      </select>
+    </StyleSection>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Fills Section (multiple fills stack)
+// ---------------------------------------------------------------------------
+
+type FillEntry = NonNullable<NodeStyle["fills"]>[number];
+
+function FillRow({
+  fill,
+  onUpdate,
+  onRemove,
+}: {
+  fill: FillEntry;
+  onUpdate: (updated: FillEntry) => void;
+  onRemove: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded [border:1px_solid_var(--s-border)]">
+      <div className="flex items-center gap-1.5 px-2 py-1.5">
+        {/* Color swatch */}
+        <div className="w-4 h-4 rounded shrink-0 border [border-color:var(--s-border)]"
+          style={{ background: fill.type === "solid" ? fill.color : fill.type === "linear-gradient" ? `linear-gradient(${fill.angle}deg, ${fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(",")})` : fill.type === "radial-gradient" ? `radial-gradient(circle, ${fill.stops.map((s) => `${s.color} ${s.position * 100}%`).join(",")})` : "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 8px 8px" }}
+        />
+        <span className="flex-1 text-[11px] cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          {fill.type === "solid" ? fill.color : fill.type === "linear-gradient" ? `Linear ${fill.angle}°` : fill.type === "radial-gradient" ? "Radial" : fill.src}
+        </span>
+        <button onClick={() => setExpanded(!expanded)} className="[color:var(--s-text-ter)]">
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.1s" }}>
+            <polyline points="3,2 7,5 3,8" />
+          </svg>
+        </button>
+        <button onClick={onRemove} className="[color:var(--s-text-ter)] hover:[color:var(--s-text-pri)]">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
+          </svg>
+        </button>
+      </div>
+      {expanded && (
+        <div className="px-2 pb-2 [border-top:1px_solid_var(--s-border)] pt-1.5 space-y-1.5">
+          <FillEditor fill={fill} onUpdate={onUpdate} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FillEditor({ fill, onUpdate }: { fill: FillEntry; onUpdate: (updated: FillEntry) => void }) {
+  if (fill.type === "solid") {
+    return (
+      <>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)]">Color</label>
+          <input type="color" value={fill.color} onChange={(e) => onUpdate({ ...fill, color: e.target.value })}
+            className="h-7 w-full rounded border cursor-pointer" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <label className="text-[10px] [color:var(--s-text-ter)] w-14 shrink-0">Opacity (%)</label>
+          <input type="number" value={Math.round((fill.opacity ?? 1) * 100)} min={0} max={100}
+            onChange={(e) => onUpdate({ ...fill, opacity: Number(e.target.value) / 100 })}
+            className="flex-1 h-6 px-1.5 text-[11px] bg-background border rounded" />
+        </div>
+      </>
+    );
+  }
+  if (fill.type === "linear-gradient") {
+    return (
+      <GradientEditor
+        value={fill}
+        onChange={(updated) => onUpdate(updated as FillEntry)}
       />
+    );
+  }
+  if (fill.type === "radial-gradient") {
+    return (
+      <GradientEditor
+        value={fill}
+        onChange={(updated) => onUpdate(updated as FillEntry)}
+      />
+    );
+  }
+  if (fill.type === "image") {
+    return (
+      <>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)]">URL</label>
+          <input type="text" value={fill.src} onChange={(e) => onUpdate({ ...fill, src: e.target.value })}
+            placeholder="https://..." className="h-6 px-1.5 text-[11px] bg-background border rounded w-full" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <label className="text-[10px] [color:var(--s-text-ter)]">Size</label>
+          <select value={fill.size} onChange={(e) => onUpdate({ ...fill, size: e.target.value as "cover" | "contain" | "custom" })}
+            className="h-6 px-1.5 text-[11px] bg-background border rounded">
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </>
+    );
+  }
+  return null;
+}
+
+function FillsSection({
+  style,
+  onComplexChange,
+  framework = "nextjs",
+}: {
+  style: NodeStyle;
+  onComplexChange: (prop: string, value: unknown) => void;
+  framework?: string;
+}) {
+  const fills = style.fills ?? [];
+  const fillTypeOptions: { value: FillEntry["type"]; label: string }[] = [
+    { value: "solid", label: "Solid" },
+    { value: "linear-gradient", label: "Linear Gradient" },
+    { value: "radial-gradient", label: "Radial Gradient" },
+    { value: "image", label: "Image" },
+  ].filter((o) => isFillTypeSupported(framework, o.value as FillType));
+
+  const updateFills = useCallback((updated: NonNullable<NodeStyle["fills"]>) => {
+    onComplexChange("fills", updated.length > 0 ? updated : undefined);
+  }, [onComplexChange]);
+
+  return (
+    <StyleSection title="Fills">
+      {fills.length > 0 && (
+        <div className="space-y-1">
+          {fills.map((fill, i) => (
+            <FillRow
+              key={i}
+              fill={fill}
+              onUpdate={(updated) => updateFills(fills.map((f, idx) => idx === i ? updated : f))}
+              onRemove={() => updateFills(fills.filter((_, idx) => idx !== i))}
+            />
+          ))}
+        </div>
+      )}
+      <select
+        className="w-full h-7 px-2 text-[10px] bg-background border rounded [color:var(--s-text-ter)]"
+        value=""
+        onChange={(e) => {
+          if (!e.target.value) return;
+          const type = e.target.value as FillEntry["type"];
+          const newFill: FillEntry = type === "solid"
+            ? { type: "solid", color: "#000000", opacity: 1 }
+            : type === "linear-gradient"
+            ? { type: "linear-gradient", angle: 90, stops: [{ color: "#000000", position: 0 }, { color: "#ffffff", position: 1 }] }
+            : type === "radial-gradient"
+            ? { type: "radial-gradient", center: { x: 0.5, y: 0.5 }, stops: [{ color: "#000000", position: 0 }, { color: "#ffffff", position: 1 }] }
+            : { type: "image", src: "", size: "cover" };
+          updateFills([...fills, newFill]);
+        }}
+      >
+        <option value="">+ Add fill</option>
+        {fillTypeOptions.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </StyleSection>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Strokes Section (multiple strokes stack)
+// ---------------------------------------------------------------------------
+
+type StrokeEntry = NonNullable<NodeStyle["strokes"]>[number];
+
+function StrokeRow({
+  stroke,
+  onUpdate,
+  onRemove,
+  positionOptions,
+}: {
+  stroke: StrokeEntry;
+  onUpdate: (updated: StrokeEntry) => void;
+  onRemove: () => void;
+  positionOptions?: { value: StrokeEntry["position"]; label: string }[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded [border:1px_solid_var(--s-border)]">
+      <div className="flex items-center gap-1.5 px-2 py-1.5">
+        <div className="w-4 h-4 rounded shrink-0 border-2" style={{ borderColor: stroke.color }} />
+        <span className="flex-1 text-[11px] cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          {stroke.color} · {stroke.width}px · {stroke.position}
+        </span>
+        <button onClick={() => setExpanded(!expanded)} className="[color:var(--s-text-ter)]">
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.1s" }}>
+            <polyline points="3,2 7,5 3,8" />
+          </svg>
+        </button>
+        <button onClick={onRemove} className="[color:var(--s-text-ter)] hover:[color:var(--s-text-pri)]">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="2" y1="2" x2="8" y2="8" /><line x1="8" y1="2" x2="2" y2="8" />
+          </svg>
+        </button>
+      </div>
+      {expanded && (
+        <div className="px-2 pb-2 [border-top:1px_solid_var(--s-border)] pt-1.5 space-y-1.5">
+          <div className="flex flex-col gap-0.5">
+            <label className="text-[10px] [color:var(--s-text-ter)]">Color</label>
+            <input type="color" value={stroke.color} onChange={(e) => onUpdate({ ...stroke, color: e.target.value })}
+              className="h-7 w-full rounded border cursor-pointer" />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] [color:var(--s-text-ter)]">Width (px)</label>
+              <input type="number" value={stroke.width} min={1}
+                onChange={(e) => onUpdate({ ...stroke, width: Number(e.target.value) })}
+                className="h-6 px-1.5 text-[11px] bg-background border rounded" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] [color:var(--s-text-ter)]">Position</label>
+              <select value={stroke.position} onChange={(e) => onUpdate({ ...stroke, position: e.target.value as StrokeEntry["position"] })}
+                className="h-6 px-1 text-[11px] bg-background border rounded">
+                {(positionOptions ?? [
+                  { value: "center" as const, label: "Center" },
+                  { value: "inside" as const, label: "Inside" },
+                  { value: "outside" as const, label: "Outside" },
+                ]).map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[10px] [color:var(--s-text-ter)] w-14 shrink-0">Opacity (%)</label>
+            <input type="number" value={Math.round((stroke.opacity ?? 1) * 100)} min={0} max={100}
+              onChange={(e) => onUpdate({ ...stroke, opacity: Number(e.target.value) / 100 })}
+              className="flex-1 h-6 px-1.5 text-[11px] bg-background border rounded" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StrokesSection({
+  style,
+  onComplexChange,
+  framework = "nextjs",
+}: {
+  style: NodeStyle;
+  onComplexChange: (prop: string, value: unknown) => void;
+  framework?: string;
+}) {
+  const strokes = style.strokes ?? [];
+  const positionOptions: { value: StrokeEntry["position"]; label: string }[] = [
+    { value: "center", label: "Center" },
+    { value: "inside", label: "Inside" },
+    { value: "outside", label: "Outside" },
+  ].filter((o) => isStrokePositionSupported(framework, o.value as StrokePosition));
+
+  const updateStrokes = useCallback((updated: NonNullable<NodeStyle["strokes"]>) => {
+    onComplexChange("strokes", updated.length > 0 ? updated : undefined);
+  }, [onComplexChange]);
+
+  return (
+    <StyleSection title="Strokes">
+      {strokes.length > 0 && (
+        <div className="space-y-1">
+          {strokes.map((stroke, i) => (
+            <StrokeRow
+              key={i}
+              stroke={stroke}
+              onUpdate={(updated) => updateStrokes(strokes.map((s, idx) => idx === i ? updated : s))}
+              onRemove={() => updateStrokes(strokes.filter((_, idx) => idx !== i))}
+              positionOptions={positionOptions}
+            />
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => updateStrokes([...strokes, { color: "#000000", width: 1, position: "center", opacity: 1 }])}
+        className="w-full h-7 text-[10px] [color:var(--s-text-ter)] bg-background border rounded hover:[color:var(--s-text-pri)] transition-colors"
+      >
+        + Add stroke
+      </button>
     </StyleSection>
   );
 }

@@ -1,7 +1,7 @@
 {
   "id": "ios-hig",
   "name": "iOS Human Interface",
-  "description": "Apple Human Interface Guidelines — semantic system colours and spacing scale for iOS React Native apps",
+  "description": "Apple Human Interface Guidelines \u2014 semantic system colours and spacing scale for iOS React Native apps",
   "platform": "native",
   "preview": [
     "#007aff",
@@ -12,19 +12,19 @@
     "color": {
       "blue": {
         "value": "#007aff",
-        "description": "System Blue — links, interactive"
+        "description": "System Blue \u2014 links, interactive"
       },
       "green": {
         "value": "#34c759",
-        "description": "System Green — success, confirm"
+        "description": "System Green \u2014 success, confirm"
       },
       "red": {
         "value": "#ff3b30",
-        "description": "System Red — destructive, error"
+        "description": "System Red \u2014 destructive, error"
       },
       "orange": {
         "value": "#ff9500",
-        "description": "System Orange — warnings"
+        "description": "System Orange \u2014 warnings"
       },
       "yellow": {
         "value": "#ffcc00",
@@ -545,7 +545,19 @@
           "name": "buttons",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Alert",
+        "props": {
+          "componentName": "Alert",
+          "importPath": "@react-native-community/ios-hig",
+          "type": "info",
+          "message": "This is an alert"
+        },
+        "style": {},
+        "children": []
+      }
     },
     "ActionSheet": {
       "name": "ActionSheet",
@@ -713,7 +725,29 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Modal",
+        "props": {
+          "componentName": "Modal",
+          "importPath": "@react-native-community/ios-hig",
+          "open": false,
+          "title": "Modal Title"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Text",
+            "name": "Modal body content.",
+            "props": {
+              "text": "Modal body content."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "BottomSheet": {
       "name": "BottomSheet",
@@ -928,7 +962,37 @@
           "name": "onPress",
           "type": "function"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "Card",
+        "props": {
+          "componentName": "Card",
+          "importPath": "@react-native-community/ios-hig"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Card title",
+            "props": {
+              "text": "Card title",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Card content goes here.",
+            "props": {
+              "text": "Card content goes here."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Tag": {
       "name": "Tag",
@@ -1062,7 +1126,37 @@
           "name": "children",
           "type": "node"
         }
-      ]
+      ],
+      "defaultTemplate": {
+        "type": "ComponentInstance",
+        "name": "SafeAreaView",
+        "props": {
+          "componentName": "SafeAreaView",
+          "importPath": "@react-native-community/ios-hig"
+        },
+        "style": {},
+        "children": [
+          {
+            "type": "Heading",
+            "name": "Screen Title",
+            "props": {
+              "text": "Screen Title",
+              "level": 4
+            },
+            "style": {},
+            "children": []
+          },
+          {
+            "type": "Text",
+            "name": "Screen content goes here.",
+            "props": {
+              "text": "Screen content goes here."
+            },
+            "style": {},
+            "children": []
+          }
+        ]
+      }
     },
     "Divider": {
       "name": "Divider",

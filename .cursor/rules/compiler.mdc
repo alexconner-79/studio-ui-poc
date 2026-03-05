@@ -1,0 +1,81 @@
+---
+description: Compiler conventions and code generation for Studio UI
+globs: ["compiler/**", "apps/web/components/generated/**"]
+alwaysApply: false
+---
+
+# Studio Compiler
+
+The compiler reads screen spec JSON files and emits framework-specific code.
+
+## Entry Points
+
+- `compiler/compile-memory.ts` — `compileFromMemory(input)` — core compilation function
+- `compiler/compile.ts` — CLI entry: reads specs from disk, compiles, writes output
+- `compiler/lint.ts` — `lint()` — spec linter (schema, duplicate IDs, a11y checks)
+- `compiler/discover.ts` — `discoverScreens()` — finds all `*.screen.json` in the screens dir
+
+## How Compilation Works
+
+```
+spec/screens/*.screen.json
+       ↓
+  compileFromMemory({ specs, config })
+       ↓
+  emitter (nextjs.ts or expo.ts)
+       ↓
+  apps/web/components/generated/*.generated.tsx
+```
+
+1. `discoverScreens()` reads `spec/screens/` and returns `{ filePath, spec }[]`
+2. `compileFromMemory()` accepts specs + `StudioConfig`, runs the emitter per screen
+3. The emitter walks the node tree, resolves tokens, and emits React/Expo code
+4. Output files are written to `generatedDir` (default: `apps/web/components/generated/`)
+
+## Supported Frameworks
+
+- **nextjs** (`compiler/emitters/nextjs.ts`) — React + Tailwind/CSS, App Router pages
+- **expo** (`compiler/emitters/expo.ts`) — React Native, StyleSheet API
+
+Set via `studio.config.json` `"framework"` field.
+
+## CLI Usage
+
+From the monorepo root:
+
+```bash
+pnpm studio compile          # compile all screens
+pnpm studio compile home     # compile one screen
+pnpm studio lint             # lint all specs
+```
+
+## Adding a New Screen
+
+1. Create `spec/screens/my-page.screen.json` with the spec format (see spec-format rule)
+2. Run `pnpm studio compile my-page`
+3. The generated component appears at `apps/web/components/generated/MyPage.generated.tsx`
+4. A page route is created at `apps/web/app/my-page/page.tsx`
+
+## Key Types
+
+```typescript
+type CompileFromMemoryInput = {
+  specs: { name: string; spec: ScreenSpec }[];
+  config: StudioConfig;
+  componentDefs?: ComponentDefInput[];
+  skipValidation?: boolean;
+};
+
+type CompileResult = {
+  files: EmittedFile[];
+  errors: CompileError[];
+  summary: { succeeded: number; failed: number; skipped: number };
+};
+```
+
+## Emitter Conventions
+
+- The Next.js emitter converts `NodeStyle` to inline CSS objects
+- Token references (`$color.primary`) are resolved to CSS variable calls (`var(--color-primary)`)
+- The Expo emitter converts to React Native `StyleSheet.create` objects
+- Unsupported CSS properties (backdrop-filter, mix-blend-mode, etc.) are silently skipped in Expo

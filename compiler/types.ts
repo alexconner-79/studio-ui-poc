@@ -175,6 +175,48 @@ export type NodeStyle = {
   opacity?: number;
   boxShadow?: StyleValue;
 
+  // Effects stack — stackable, takes priority over boxShadow when present
+  effects?: Array<
+    | { type: "drop-shadow"; x: number; y: number; blur: number; spread: number; color: string; opacity: number; enabled?: boolean }
+    | { type: "inner-shadow"; x: number; y: number; blur: number; spread: number; color: string; opacity: number; enabled?: boolean }
+    | { type: "layer-blur"; radius: number; enabled?: boolean }
+    | { type: "background-blur"; radius: number; enabled?: boolean }
+    | { type: "glass"; blurRadius: number; backgroundOpacity: number; enabled?: boolean }
+  >;
+
+  // Multiple fills — backwards-compat: backgroundColor still works as a single solid fill
+  fills?: Array<
+    | { type: "solid"; color: string; opacity?: number }
+    | { type: "linear-gradient"; angle: number; stops: Array<{ color: string; position: number }>; opacity?: number }
+    | { type: "radial-gradient"; center: { x: number; y: number }; stops: Array<{ color: string; position: number }>; opacity?: number }
+    | { type: "image"; src: string; size: "cover" | "contain" | "custom"; position?: string; opacity?: number }
+  >;
+
+  // Multiple strokes — backwards-compat: borderWidth/borderColor still work for a single center stroke
+  strokes?: Array<{
+    color: string;
+    width: number;
+    position: "inside" | "center" | "outside";
+    dashPattern?: number[];
+    opacity?: number;
+  }>;
+
+  // Blend mode
+  mixBlendMode?: "normal" | "multiply" | "screen" | "overlay" | "darken" | "lighten" | "color-dodge" | "color-burn" | "hard-light" | "soft-light" | "difference" | "exclusion" | "hue" | "saturation" | "color" | "luminosity";
+
+  // Transform components — compiled into a single CSS transform string
+  rotation?: number;   // degrees (0–360)
+  scaleX?: number;     // 1 = normal, -1 = flipped
+  scaleY?: number;
+  skewX?: number;      // degrees
+  skewY?: number;
+
+  // CSS Filters
+  cssFilters?: Array<{
+    type: "brightness" | "contrast" | "saturate" | "hue-rotate" | "grayscale" | "sepia" | "invert";
+    value: number;
+  }>;
+
   // Layout (flex container)
   flexDirection?: "row" | "column";
   overflow?: "visible" | "hidden" | "auto" | "scroll";

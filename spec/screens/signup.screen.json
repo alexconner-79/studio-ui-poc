@@ -8,32 +8,49 @@
   "tree": {
     "id": "root",
     "type": "Stack",
-    "props": { "gap": "md", "padding": "lg" },
+    "props": {
+      "gap": "md",
+      "padding": "lg"
+    },
     "children": [
       {
         "id": "heading_1",
         "type": "Heading",
-        "props": { "text": "Create your account" }
+        "props": {
+          "text": "Create your account"
+        }
       },
       {
         "id": "text_1",
         "type": "Text",
-        "props": { "text": "Enter your details to get started.", "variant": "muted" }
+        "props": {
+          "text": "Enter your details to get started.",
+          "variant": "muted"
+        }
       },
       {
         "id": "input_email",
         "type": "Input",
-        "props": { "placeholder": "Email", "type": "email" }
+        "props": {
+          "placeholder": "Email",
+          "type": "email"
+        }
       },
       {
         "id": "input_password",
         "type": "Input",
-        "props": { "placeholder": "Password", "type": "password" }
+        "props": {
+          "placeholder": "Password",
+          "type": "password"
+        }
       },
       {
         "id": "submit",
         "type": "Button",
-        "props": { "label": "Sign up", "intent": "primary" }
+        "props": {
+          "label": "Sign up",
+          "variant": "default"
+        }
       },
       {
         "id": "divider_1",
@@ -42,7 +59,10 @@
       {
         "id": "login_link",
         "type": "Link",
-        "props": { "href": "/login", "text": "Already have an account? Log in" }
+        "props": {
+          "href": "/login",
+          "text": "Already have an account? Log in"
+        }
       }
     ]
   }
